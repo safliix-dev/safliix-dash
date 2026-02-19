@@ -23,7 +23,7 @@ export const filmAdapter: MediaFormEngineConfig<
       description: form.description,
       type: form.type,
       // Logique métier : prix nul si abonnement
-      rentalPrice: form.type === "abonnement" ? null : form.price,
+      rentalPrice: form.type === "abonnement" ? undefined : (form.price ?? undefined),
       format: form.format,
       category: form.category,
       gender: form.genre, // Mapping genre -> gender
@@ -37,7 +37,10 @@ export const filmAdapter: MediaFormEngineConfig<
       actors: form.actors,
       isSafliixProd: form.isSafliixProd,
       haveSubtitles: form.haveSubtitles,
-      mainLanguage: form.subtitleLanguages?.at(0) ?? "fr"
+      mainLanguage: form.subtitleLanguages?.at(0) ?? "fr",
+      ageRating: form.ageRating,
+      rightHolderId: form.rightHolderId,
+      blockCountries: form.blockCountries,
     };
   },
 
@@ -54,11 +57,22 @@ export const filmAdapter: MediaFormEngineConfig<
 
   // 3. Sauvegarde (Create ou Update)
   submitMetadata: async (payload, id) => {
+  try {
+    console.log("Payload envoyé:", payload);
+    console.log("ID envoyé:", id);
+
     const res = id 
       ? await filmsApi.update(id, payload) 
       : await filmsApi.create(payload);
+
+    console.log("Réponse API:", res);
     return res.id;
-  },
+  } catch (e) {
+    console.error("Erreur API complète:", e);
+    throw e;
+  }
+},
+
 
   // 4. Récupération des URLs S3
   presignUploads: async (id, files) => {

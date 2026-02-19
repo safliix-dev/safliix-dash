@@ -191,7 +191,7 @@ export interface FilmMetadataPayload {
   productionHouse: string;
   productionCountry: string;
   type: string;
-  rentalPrice: number | null;
+  rentalPrice: number | undefined;
   releaseDate: string;
   plateformDate: string;
   format: string;
@@ -206,7 +206,7 @@ export interface FilmMetadataPayload {
   mainLanguage: string;
   ageRating?: string;
   duration: number | null;
-  rightHolderId?: string;
+  rightHolderId: string;
   blockedCountries?: string[];
 }
 
@@ -233,7 +233,7 @@ export type FilmFormData = {
   isSafliixProd: boolean;
   haveSubtitles: boolean;
   subtitleLanguages: string[];
-  rightHolderId?: string;
+  rightHolderId: string;
   mainImage: File | null;
   secondaryImage: File | null;
   trailerFile: File | null;

@@ -70,6 +70,7 @@ export function useMediaFormEngine<
       }, 1500);
 
     } catch (error) {
+      console.log("Error during confirmSubmit:", error);
       setDialogStatus("error");
       console.error("[MediaFormEngine] Submit error:", error);
     }
