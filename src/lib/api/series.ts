@@ -4,19 +4,16 @@ import {
   type EpisodeDetail,
   type EpisodeListParams,
   type EpisodeMetadataPayload,
-  type EpisodeUploadDescriptor,
-  type EpisodeUploadSlot,
-  type SeasonUploadDescriptor,
-  type SeasonUploadSlot,
   type SeriesCreateOrUpdateResponse,
   type SeriesDetail,
   type SeriesListParams,
   type SeriesListResponse,
   type SeriesMetaOptionsResponse,
   type SeriesMetadataPayload,
-  type SeriesUploadDescriptor,
-  type SeriesUploadSlot,
+  
 } from "@/types/api/series";
+
+import { type UploadSlot, UploadFileDescriptor,UploadFinalizePayload } from "@/types/attachmentType";
 
 export const seriesApi = {
   list: (params: SeriesListParams, accessToken?: string) =>
@@ -30,17 +27,17 @@ export const seriesApi = {
   update: (id: string, payload: SeriesMetadataPayload, accessToken?: string) =>
     apiRequest<SeriesCreateOrUpdateResponse>(`/series/${id}`, { method: "PUT", body: payload, accessToken }),
 
-  presignUploads: (id: string, files: SeriesUploadDescriptor[], accessToken?: string) =>
-    apiRequest<SeriesUploadSlot[]>(`/series/${id}/uploads/presign`, {
+  presignUploads: (id: string, files: UploadFileDescriptor[], accessToken?: string) =>
+    apiRequest<UploadSlot[]>(`/series/${id}/uploads/presign`, {
       method: "POST",
       body: { files },
       accessToken,
     }),
 
-  finalizeUploads: (id: string, uploads: SeriesUploadSlot[], accessToken?: string) =>
+  finalizeUploads: (id: string, uploads: UploadFinalizePayload, accessToken?: string) =>
     apiRequest<{ ok: boolean }>(`/series/${id}/uploads/finalize`, {
       method: "POST",
-      body: { uploads: uploads.map((u) => ({ key: u.key, finalUrl: u.finalUrl })) },
+      body:uploads,
       accessToken,
     }),
 
@@ -50,14 +47,14 @@ export const seriesApi = {
   createSeason: (seriesId: string, payload: CreateSeasonPayload, accessToken?: string) =>
     apiRequest<{ seasonId: string }>(`/series/${seriesId}/seasons`, { method: "POST", body: payload, accessToken }),
 
-  presignSeasonUploads: (seriesId: string, seasonId: string, files: SeasonUploadDescriptor[], accessToken?: string) =>
-    apiRequest<SeasonUploadSlot[]>(`/series/${seriesId}/seasons/${seasonId}/uploads/presign`, {
+  presignSeasonUploads: (seriesId: string, seasonId: string, files: UploadFileDescriptor[], accessToken?: string) =>
+    apiRequest<UploadSlot[]>(`/series/${seriesId}/seasons/${seasonId}/uploads/presign`, {
       method: "POST",
       body: { files },
       accessToken,
     }),
 
-  finalizeSeasonUploads: (seriesId: string, seasonId: string, uploads: SeasonUploadSlot[], accessToken?: string) =>
+  finalizeSeasonUploads: (seriesId: string, seasonId: string, uploads: UploadSlot[], accessToken?: string) =>
     apiRequest<{ ok: boolean }>(`/series/${seriesId}/seasons/${seasonId}/uploads/finalize`, {
       method: "POST",
       body: { uploads: uploads.map((u) => ({ key: u.key, finalUrl: u.finalUrl })) },
@@ -77,14 +74,14 @@ export const seriesApi = {
       accessToken,
     }),
 
-  presignEpisodeUploads: (episodeId: string, files: EpisodeUploadDescriptor[], accessToken?: string) =>
-    apiRequest<EpisodeUploadSlot[]>(`/episodes/${episodeId}/uploads/presign`, {
+  presignEpisodeUploads: (episodeId: string, files: UploadFileDescriptor[], accessToken?: string) =>
+    apiRequest<UploadSlot[]>(`/episodes/${episodeId}/uploads/presign`, {
       method: "POST",
       body: { files },
       accessToken,
     }),
 
-  finalizeEpisodeUploads: (episodeId: string, uploads: EpisodeUploadSlot[], accessToken?: string) =>
+  finalizeEpisodeUploads: (episodeId: string, uploads: UploadSlot[], accessToken?: string) =>
     apiRequest<{ ok: boolean }>(`/episodes/${episodeId}/uploads/finalize`, {
       method: "POST",
       body: { uploads: uploads.map((u) => ({ key: u.key, finalUrl: u.finalUrl })) },

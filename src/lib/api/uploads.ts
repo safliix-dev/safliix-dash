@@ -1,15 +1,26 @@
-import { ApiError } from "./client";
+import { apiRequest } from "./client";
+import { type UploadFileDescriptor,
+  type UploadFinalizePayload,
+  type UploadSlot } from "@/types/attachmentType";  
 
-export async function uploadToPresignedUrl(url: string, file: Blob): Promise<void> {
-  const response = await fetch(url, {
-    method: "PUT",
-    body: file,
-    headers: {
-      "Content-Type": file.type || "application/octet-stream",
-    },
-  });
+export const uploadApi = {
+  
+  presignUploads: (entityId: string, entityType: string, files: UploadFileDescriptor[], accessToken?: string) =>
+    apiRequest<UploadSlot[]>(`/uploads/presign-uploads`, {
+      method: "POST",
+      body: { 
+        files,
+        entityId,
+        entityType },
+      accessToken,
+    }),
 
-  if (!response.ok) {
-    throw new ApiError("Upload to storage failed", response.status);
-  }
-}
+  finalizeUploads: (id: string, payload: UploadFinalizePayload, accessToken?: string) =>
+    apiRequest<{ ok: boolean }>(`/admin/movies/${id}/uploads/finalize`, {
+      method: "POST",
+      body: payload,
+      accessToken,
+    }),
+
+  
+};

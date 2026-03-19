@@ -1,32 +1,37 @@
+import axios from "axios";
+import { uploadApi } from "@/lib/api/uploads";
 import { filmsApi } from "@/lib/api/films";
-import { uploadToPresignedUrl } from "@/lib/api/uploads";
-import { FilmFormData,FilmUploadFinalizePayload, FilmMetadataPayload, FilmPresignedSlot,FilmUploadFileDescriptor,FilmUploadKey } from "@/types/api/films"; 
+import { FilmFormData, FilmMetadataPayload } from "@/types/api/films"; 
 import { MediaFormEngineConfig } from "@/lib/hooks/form/useMediaFormEngine";
+import { 
+  attachmentTypeMap, 
+  UploadFinalizePayload, 
+} from "@/types/attachmentType";
 
-const attachmentTypeMap: Record<FilmUploadKey, FilmUploadFileDescriptor["attachmentType"]> = {
-  main: "POSTER",      // L'image principale est un poster
-  secondary: "THUMBNAIL", 
-  trailer: "TRAILER",
-  movie: "MAIN",       // Le fichier film est le "MAIN"
-};
+// On définit les clés autorisées pour ce formulaire précis
+export type FilmSlot = "POSTER" | "MAIN" | "TRAILER" | "THUMBNAIL";
+export interface FilmPresignedSlot {
+  key: FilmSlot;      // Doit être "movieFile" | "trailerFile" | etc.
+  uploadUrl: string;
+  finalUrl: string;
+}
 
 export const filmAdapter: MediaFormEngineConfig<
   FilmFormData,
   FilmMetadataPayload,
-  string, // TSlot
+  FilmSlot,           
   FilmPresignedSlot
 > = {
-  // 1. On transforme les données du formulaire pour l'API
-  buildMetadata: (form) => {
+  // 1. Transformation des données pour l'API
+  buildMetadata: (form): FilmMetadataPayload => {
     return {
       title: form.title,
       description: form.description,
       type: form.type,
-      // Logique métier : prix nul si abonnement
       rentalPrice: form.type === "abonnement" ? undefined : (form.price ?? undefined),
       format: form.format,
       category: form.category,
-      gender: form.genre, // Mapping genre -> gender
+      gender: form.genre,
       duration: form.duration,
       productionCountry: form.country,
       productionHouse: form.productionHouse,
@@ -40,73 +45,101 @@ export const filmAdapter: MediaFormEngineConfig<
       mainLanguage: form.subtitleLanguages?.at(0) ?? "fr",
       ageRating: form.ageRating,
       rightHolderId: form.rightHolderId,
-      blockCountries: form.blockCountries,
+      blockedCountries: form.blockCountries,
     };
   },
 
-  // 2. On définit quels fichiers doivent être uploadés
-  collectFiles: (form) => {
+  // 2. Collecte des fichiers (Strictement typé)
+  collectFiles: (form): { key: FilmSlot; file: File }[] => {
     const slots = [
-      { key: "mainImage", file: form.mainImage },
-      { key: "movieFile", file: form.movieFile },
-      { key: "trailerFile", file: form.trailerFile },
+      { key: attachmentTypeMap.mainImage as FilmSlot, file: form.mainImage },
+      { key: attachmentTypeMap.movieFile as FilmSlot, file: form.movieFile },
+      { key: attachmentTypeMap.trailerFile as FilmSlot, file: form.trailerFile },
     ];
-    // On ne garde que les slots qui ont réellement un fichier
-    return slots.filter((s): s is { key: string; file: File } => s.file instanceof File);
+    
+    // On filtre pour ne garder que les vrais fichiers
+    return slots.filter((s): s is { key: FilmSlot; file: File } => s.file instanceof File);
   },
 
-  // 3. Sauvegarde (Create ou Update)
+  // 3. Sauvegarde Metadata
   submitMetadata: async (payload, id) => {
+  console.log("1. Début de l'appel API...");
   try {
-    console.log("Payload envoyé:", payload);
-    console.log("ID envoyé:", id);
-
     const res = id 
       ? await filmsApi.update(id, payload) 
       : await filmsApi.create(payload);
-
-    console.log("Réponse API:", res);
+    
+    console.log("2. Réponse reçue du serveur:", res);
+    
+    if (!res?.id) {
+       console.error("ERREUR: Le serveur n'a pas renvoyé d'ID !");
+       throw new Error("Format de réponse invalide");
+    }
+    
     return res.id;
-  } catch (e) {
-    console.error("Erreur API complète:", e);
-    throw e;
+  } catch (err) {
+    console.error("3. Erreur attrapée dans l'adapter:", err);
+    throw err;
   }
 },
 
-
   // 4. Récupération des URLs S3
-  presignUploads: async (id, files) => {
-    const descriptors: FilmUploadFileDescriptor[] = files.map(f => ({
-      key: f.key as FilmUploadKey,
-      name: f.file.name,
-      type: f.file.type || "application/octet-stream",
-      attachmentType: attachmentTypeMap[f.key as FilmUploadKey]
-    }));
+ presignUploads: async (id, files): Promise<FilmPresignedSlot[]> => {
+  if (files.length === 0) return [];
 
-    return filmsApi.presignUploads(id, descriptors);
-  },
+  const descriptors = files.map(f => ({
+    key: f.key,
+    name: f.file.name,
+    type: f.file.type || "application/octet-stream",
+    attachmentType: f.key
+  }));
 
-  // 5. Upload physique vers S3
-  uploadFile: async (url, file) => {
-    await uploadToPresignedUrl(url, file);
+  // 1. On récupère les slots de l'API (qui sont en UploadSlot<string>)
+  const slots = await uploadApi.presignUploads(id, "movie", descriptors);
+
+  // 2. On les transforme pour correspondre EXACTEMENT à FilmPresignedSlot
+  return slots.map(slot => ({
+    uploadUrl: slot.uploadUrl,
+    finalUrl: slot.finalUrl,
+    // On force le type ici car on sait que l'API renvoie les clés qu'on lui a données
+    key: slot.key as FilmSlot 
+  }));
+},
+
+  // 5. Upload S3 (Avec gestion du Signal et Progress)
+  uploadFile: async (url, file, onProgress, signal) => {
+    await axios.put(url, file, {
+      signal, // Permet l'annulation de la requête HTTP
+      headers: { 
+        'Content-Type': file.type || 'application/octet-stream' 
+      },
+      onUploadProgress: (progressEvent) => {
+        const total = progressEvent.total ?? 1;
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / total);
+        onProgress?.(percentCompleted);
+      },
+    });
   },
 
   // 6. Finalisation
-  // Dans ton filmAdapter
-finalizeUploads: async (id, slots) => {
-  // On prépare le payload selon l'interface FilmUploadFinalizePayload
-  const payload: FilmUploadFinalizePayload = {
-    uploads: slots.map((s) => ({
-      key: s.key as FilmUploadKey,
-      finalUrl: s.finalUrl,
-    })),
-  };
+  finalizeUploads: async (id, slots) => {
+    const payload: UploadFinalizePayload = {
+      uploads: slots.map((s) => ({
+        key: s.key,
+        finalUrl: s.finalUrl,
+      })),
+    };
 
-  // Appel à la méthode de ton API
-  const res = await filmsApi.finalizeUploads(id, payload);
-  
-  if (!res.ok) {
-    throw new Error("La finalisation de l'upload a échoué côté serveur.");
+    const res = await uploadApi.finalizeUploads(id, payload);
+    
+    // On vérifie que la réponse est valide (selon ta structure filmsApi)
+    if (!res || (res.ok === false)) {
+      throw new Error("La finalisation de l'upload a échoué côté serveur.");
+    }
+  },
+
+  // 7. Rollback (Suppression si annulation)
+  deleteEntity: async (id) => {
+    //await filmsApi.delete(id);
   }
-}
 };

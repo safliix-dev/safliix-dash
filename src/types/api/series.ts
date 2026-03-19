@@ -2,6 +2,32 @@ import { type PaginatedResponse } from "./common";
 
 export type SeriesStatus = "publish" | "pause" | "draft" | string;
 
+
+export type SeriesFormData = {
+  title: string;
+  description: string;
+  language: string;
+  productionHouse: string;
+  country: string;
+  blockCountries: string[];
+  releaseDate: string;
+  publishDate: string;
+  category: string;
+  seasonCount: number | null;
+  genre: string;
+  actors: string[];
+  director: string;
+  ageRating: string;
+  isSafliixProd: boolean;
+  haveSubtitles: boolean;
+  subtitleLanguages: string[];
+  rightHolderId?: string;
+  mainImage: File | null;
+  secondaryImage: File | null;
+  trailerFile: File | null;
+};
+
+
 export interface SerieStats {
   subscriberViewPercentage: number;
   totalViews: number;
@@ -101,19 +127,6 @@ export interface SeriesMetadataPayload {
 
 export interface SeriesCreateOrUpdateResponse { id: string }
 
-export type SeriesUploadKey = "poster" | "hero" | "trailer" | "actor_photo";
-
-export interface SeriesUploadDescriptor { key: SeriesUploadKey; name: string; type: string }
-
-export interface SeriesUploadSlot {
-  key: SeriesUploadKey;
-  uploadUrl: string;
-  finalUrl: string;
-}
-
-export interface SeriesUploadFinalizePayload {
-  uploads: Array<Pick<SeriesUploadSlot, "key" | "finalUrl">>;
-}
 
 export interface SeriesMetaOptionsResponse {
   options: Record<string, string[]>;
@@ -126,17 +139,6 @@ export interface CreateSeasonPayload {
   description?: string;
 }
 
-export interface SeasonUploadDescriptor { key: "poster"; name: string; type: string }
-
-export interface SeasonUploadSlot {
-  key: "poster";
-  uploadUrl: string;
-  finalUrl: string;
-}
-
-export interface SeasonFinalizePayload {
-  uploads: Array<Pick<SeasonUploadSlot, "key" | "finalUrl">>;
-}
 
 // Episodes
 export interface EpisodeListParams { page?: number; pageSize?: number }
@@ -168,16 +170,3 @@ export interface EpisodeMetadataPayload {
   productionFlag: string;
 }
 
-export type EpisodeUploadKey = "poster" | "video" | "subtitle";
-export interface EpisodeUploadDescriptor {
-  key: EpisodeUploadKey;
-  name: string;
-  type: string;
-  attachmentType: "MAIN" | "TRAILER" | "BONUS" | "MAKING_OF" | "CLIP" | "PREVIEW" | "ADVERTISEMENT" | "THUMBNAIL" | "POSTER" | "BANNER";
-}
-export interface EpisodeUploadSlot {
-  key: EpisodeUploadKey;
-  uploadUrl: string;
-  finalUrl: string;
-}
-export interface EpisodeFinalizePayload { uploads: Array<Pick<EpisodeUploadSlot, "key" | "finalUrl">> }

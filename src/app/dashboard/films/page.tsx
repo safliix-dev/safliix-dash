@@ -14,9 +14,9 @@ import { imageRightsApi } from "@/lib/api/imageRights";
 import { RightsHolderMoviesReport, type MovieReportEntry } from "@/ui/pdf/RightsHolderMoviesReport";
 import type { RightsHolderContentResponse } from "@/types/api/imageRights";
 import type { FilmListItem } from "@/types/api/films";
-import { filmsApi } from "@/lib/api/films";
+import { jobApi } from "@/lib/api/job";
 
-import { EncodingJob } from "@/types/api/encodingJob";
+import { EncodingJob } from "@/types/api/job";
 import { NormalizedStats } from "@/ui/specific/films/components/videoCard";
 
 type DistributionMode = "location" | "abonnement";
@@ -153,7 +153,7 @@ const extractFilmStats = (
 			return film.stats.stats.totalViews;
 		}
 
-		return 0; // location → pas de views
+		return 0; 
 	};
 
 
@@ -172,19 +172,14 @@ const extractFilmStats = (
     const load = async () => {
       setLoading(true);
       try {
-        const res = await filmsApi.list({status: "PROCESSING"},accessToken
-        );
-				const jobs : EncodingJob[] = res.items.map((i) => ({
-					id:i.id,
-					title:i.title,
-					status:i.status,
-					startedAt:"",
-					progress:0
-				}));
+        const res = await jobApi.list({type:"MOVIE"},accessToken);
+				if(Array.isArray(res))
+        {
+          setEncodingJobs(res);
+				  console.dir(res, {depth:2});
+        }  
 
-				setEncodingJobs(jobs);
-				console.dir(res, {depth:2});
-        
+
       } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') return;
         const friendly = formatApiError(err);

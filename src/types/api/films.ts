@@ -1,4 +1,4 @@
-import { type PaginatedResponse, type PageInfo } from "./common";
+import { type PaginatedResponse } from "./common";
 
 export type FilmStatus = "DRAFT" | "PROCESSING" | "PUBLISHED" | "ARCHIVED";
 
@@ -116,24 +116,6 @@ export interface FilmActionResponse {
   status: FilmStatus;
 }
 
-export type FilmUploadKey = "main" | "secondary" | "trailer" | "movie";
-
-export interface FilmUploadFileDescriptor {
-  key: FilmUploadKey;
-  name: string;
-  type: string;
-  attachmentType: "MAIN" | "TRAILER" | "BONUS" | "MAKING_OF" | "CLIP" | "PREVIEW" | "ADVERTISEMENT" | "THUMBNAIL" | "POSTER" | "BANNER";
-}
-
-export interface FilmUploadSlot {
-  key: FilmUploadKey;
-  uploadUrl: string;
-  finalUrl: string;
-}
-
-export interface FilmUploadFinalizePayload {
-  uploads: Array<Pick<FilmUploadSlot, "key" | "finalUrl">>;
-}
 
 export interface FilmMetaCategory {
   id: string;
@@ -241,11 +223,7 @@ export type FilmFormData = {
   entertainmentMode: string;
 };
 
-export type FilmPresignedSlot = {
-  key: string;        // Ex: "mainImage", "movieFile" (doit correspondre aux clés de TSlot)
-  uploadUrl: string;  // L'URL signée temporaire (ex: URL S3 avec token) pour le PUT
-  finalUrl: string;   // L'URL publique ou privée finale que le serveur enregistrera en BDD
-};
+
 
 export interface FilmCreateOrUpdateResponse {
   id: string;

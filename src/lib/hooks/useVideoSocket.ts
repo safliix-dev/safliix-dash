@@ -1,70 +1,108 @@
-import { useEffect } from "react";
+// hooks/useJobSocket.ts
+import { useEffect, useRef, useState, useCallback } from "react";
 import { videoSocket } from "@/lib/socket/socket-client";
 import { useAccessToken } from "@/lib/auth/useAccessToken";
+import type { JobProgressPayload, JobRoom } from "@/types/socket";
 
-// Définition de l'interface pour la progression (doit correspondre au Backend)
-export interface VideoProgressPayload {
-  s3Key: string;
-  stage: string;
-  progress: number;
-  status: "pending" | "running" | "completed" | "failed";
-  updatedAt: string;
-  message?: string;
-}
+// Map pour stocker les compteurs de rooms
+const roomRefCounter = new Map<string, number>();
 
-// Typage des rooms pour éviter les erreurs de saisie
-export type ProgressRoom = "films_room" | "episodes_room";
-
-/**
- * Hook pour s'abonner aux mises à jour de progression vidéo via Socket.io
- * @param room La "salle" à rejoindre (films ou épisodes)
- * @param onUpdate Callback exécuté à chaque mise à jour reçue
- */
-export const useVideoSocket = (
-  room: ProgressRoom,
-  onUpdate: (data: VideoProgressPayload) => void
+export const useJobSocket = (
+  room: JobRoom,
+  onJobUpdate: (data: JobProgressPayload) => void
 ) => {
   const accessToken = useAccessToken();
+  const [isConnected, setIsConnected] = useState(videoSocket.connected);
+  
+  const onJobUpdateRef = useRef(onJobUpdate);
+  onJobUpdateRef.current = onJobUpdate;
+
+  // ✅ Fonction pour configurer l'auth correctement
+  const setupAuth = useCallback((token: string) => {
+    // Différentes façons selon la version de socket.io-client
+    
+    // Méthode 1: Si .auth accepte un objet
+    if (typeof videoSocket.auth === 'object') {
+      videoSocket.auth = { token };
+    } 
+    // Méthode 2: Si .auth est une fonction callback
+    else if (typeof videoSocket.auth === 'function') {
+      videoSocket.auth = (cb: (authData: { token: string }) => void) => cb({ token });
+    }
+    // Méthode 3: Utiliser les options de connexion
+    else {
+      // Reconnecter avec les nouvelles options
+      if (videoSocket.connected) {
+        videoSocket.disconnect();
+      }
+     // videoSocket.io.opts.auth = { token };
+    }
+  }, []);
 
   useEffect(() => {
     if (!accessToken) return;
 
-    // Configuration de l'authentification
-    videoSocket.auth = { token: accessToken };
+    // ✅ Configuration de l'auth
+    setupAuth(accessToken);
 
-    // Connexion manuelle si nécessaire
-    if (!videoSocket.connected) {
-      videoSocket.connect();
-    }
+    const roomName = `jobs:${room}`;
 
-    // Gestion des événements de connexion
+    // Gestionnaire de compteur de références
+    const currentCount = roomRefCounter.get(roomName) || 0;
+    roomRefCounter.set(roomName, currentCount + 1);
+
+    // Handlers
     const onConnect = () => {
-      console.log(`📡 Connecté au namespace video-progress - Room: ${room}`);
-      videoSocket.emit("join_room", room);
+      console.log(`📡 Connecté - Room: ${roomName}`);
+      setIsConnected(true);
+      
+      // Rejoindre la room si c'est le premier ou si reconnecté
+      if (roomRefCounter.has(roomName)) {
+        videoSocket.emit("join_room", roomName);
+      }
     };
 
     const onDisconnect = () => {
-      console.log("❌ Socket déconnecté");
+      console.log("❌ Déconnecté");
+      setIsConnected(false);
     };
 
-    // Écouteurs d'événements
+    const onJobProgress = (data: JobProgressPayload) => {
+      onJobUpdateRef.current(data);
+    };
+
+    // Listeners
     videoSocket.on("connect", onConnect);
     videoSocket.on("disconnect", onDisconnect);
-    videoSocket.on("progress_update", onUpdate);
+    videoSocket.on("job_progress", onJobProgress);
 
-    // Si le socket est déjà connecté lors du changement de room/page
-    if (videoSocket.connected) {
-      videoSocket.emit("join_room", room);
+    // Connexion si nécessaire
+    if (!videoSocket.connected) {
+      videoSocket.connect();
+    } else {
+      // Déjà connecté, rejoindre la room
+      videoSocket.emit("join_room", roomName);
     }
 
-    // Nettoyage lors du démontage du composant
     return () => {
-      videoSocket.emit("leave_room", room);
+      // Cleanup listeners
       videoSocket.off("connect", onConnect);
       videoSocket.off("disconnect", onDisconnect);
-      videoSocket.off("progress_update", onUpdate);
-    };
-  }, [accessToken, room, onUpdate]);
+      videoSocket.off("job_progress", onJobProgress);
 
-  return videoSocket;
+      // Décrémenter le compteur
+      const newCount = (roomRefCounter.get(roomName) || 1) - 1;
+      
+      if (newCount <= 0) {
+        roomRefCounter.delete(roomName);
+        if (videoSocket.connected) {
+          videoSocket.emit("leave_room", roomName);
+        }
+      } else {
+        roomRefCounter.set(roomName, newCount);
+      }
+    };
+  }, [accessToken, room, setupAuth]);
+
+  return { isConnected };
 };

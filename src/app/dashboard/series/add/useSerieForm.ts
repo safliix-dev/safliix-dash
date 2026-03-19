@@ -1,21 +1,27 @@
 'use client';
 
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useCallback } from "react";
+import { useMediaFormEngine } from "@/lib/hooks/form/useMediaFormEngine";
+import { useMetaOptions } from "@/lib/hooks/form/useMetaOptions";
 import { seriesApi } from "@/lib/api/series";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
-import { useToast } from "@/ui/components/toast/ToastProvider";
-import { formatApiError } from "@/lib/api/errors";
-import { withRetry } from "@/lib/api/retry";
-import { SeriesFormData } from "./types";
-import type { SeriesMetadataPayload } from "@/types/api/series";
+import { seriesAdapter } from "./serieAdapter";
+import { useSession } from "next-auth/react";
 
-export function useSeriesForm() {
-  const toast = useToast();
-  const accessToken = useAccessToken();
+export function useSeriesForm(initialId?: string) {
+  const { data: session } = useSession();
+  const accessToken = session?.accessToken;
 
-  const form = useForm<SeriesFormData>({
-    defaultValues: {
+  // 1. Chargement des options de métadonnées (catégories, genres, etc.)
+  const loadMetaOptions = useCallback(() => {
+    return seriesApi.metaOptions(accessToken);
+  }, [accessToken]);
+
+  const meta = useMetaOptions(loadMetaOptions);
+
+  // 2. Initialisation du moteur avec l'adapter et les valeurs par défaut
+  const engine = useMediaFormEngine(
+    seriesAdapter,
+    {
       title: "",
       description: "",
       language: "",
@@ -37,75 +43,19 @@ export function useSeriesForm() {
       posterFile: null,
       heroFile: null,
       trailerFile: null,
-    },
-  });
-
-  const [uiStep, setUiStep] = useState<"meta" | "files">("meta");
-  const [seriesId, setSeriesId] = useState<string | null>(null);
-  const [savingMeta, setSavingMeta] = useState(false);
-
-  /* ---------------- build payload ---------------- */
-
-  const buildMetadata = (data: SeriesFormData): SeriesMetadataPayload => ({
-    title: data.title,
-    description: data.description,
-    productionHouse: data.productionHouse,
-    productionCountry: data.country,
-    releaseDate: data.releaseDate,
-    plateformDate: data.publishDate,
-    seasonCount: data.seasonCount,
-    category: data.category,
-    entertainmentMode: "SERIE",
-    gender: data.genre,
-    director: data.director,
-    actors: data.actors.map((name : string) => ({ name })),
-    isSafliixProd: data.isSafliixProd,
-    haveSubtitles: data.haveSubtitles,
-    subtitleLanguages: data.subtitleLanguages,
-    mainLanguage: data.language,
-    ageRating: data.ageRating || undefined,
-    rightHolderId: data.rightHolderId || undefined,
-    blockedCountries: data.blockCountries,
-  });
-
-  /* ---------------- step 1 : metadata ---------------- */
-
-  const saveMetadata = async (data: SeriesFormData) => {
-    setSavingMeta(true);
-    try {
-      const payload = buildMetadata(data);
-      const { id } = await withRetry(
-        () => seriesApi.create(payload, accessToken),
-        { retries: 1 }
-      );
-
-      setSeriesId(id);
-      setUiStep("files");
-
-      toast.success({
-        title: "Série",
-        description: "Métadonnées enregistrées.",
-      });
-    } catch (err) {
-      const friendly = formatApiError(err);
-      toast.error({ title: "Série", description: friendly.message });
-    } finally {
-      setSavingMeta(false);
     }
-  };
+  );
 
-  useEffect(() =>{
-    saveMetadata(form.getValues)
-  })
+  // 3. Hydratation de l'ID pour le mode édition
+  useEffect(() => {
+    if (initialId && !engine.entityId) {
+      engine.setEntityId(initialId);
+    }
+  }, [initialId, engine.entityId, engine.setEntityId]);
 
   return {
-    ...form,
-
-    uiStep,
-    seriesId,
-    savingMeta,
-
-    setUiStep,
-    saveMetadata,
+    ...engine,
+    meta,
+    accessToken,
   };
 }
