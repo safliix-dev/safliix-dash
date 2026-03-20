@@ -641,17 +641,7 @@ function MetadataStepContent({ control, errors, meta, countries, typeValue }: an
 
 // Sous-composant pour l'étape Fichiers
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function FilesStepContent({
-  _control,
-  setValue,
-  movieFile,
-  trailerFile,
-  typeValue,
-  onPreview,
-  onOpenConfirm,
-  meta,
-  dialogStatus
-}: any) {
+function FilesStepContent({ setValue, movieFile, trailerFile, typeValue, onPreview, onOpenConfirm, meta, dialogStatus }: any) {
   return (
     <>
       <div className="grid grid-cols-6 grid-rows-2 gap-4">

@@ -62,7 +62,7 @@ const filmSample: FilmDetail = {
   ],
 };
 
-export default function Page({ params: _params }: { params: { id: string } }) {
+export default function Page(_props: { params: { id: string } }) {
   const film = filmSample;
 
   return (

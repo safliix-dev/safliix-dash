@@ -61,7 +61,7 @@ const userSample: UserDetail = {
   ],
 };
 
-export default function Page({ params: _params }: { params: { id: string } }) {
+export default function Page(_props: { params: { id: string } }) {
   // ✅ user est maintenant défini
   const user = useMemo(() => userSample, []);
 

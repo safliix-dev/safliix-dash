@@ -42,13 +42,8 @@ export default function ClientPDFDownload(props: ClientPDFDownloadProps) {
   return <PDFGeneratorAndDownloader {...props} onComplete={() => setShouldGenerate(false)} />;
 }
 
-function PDFGeneratorAndDownloader({ 
-  document, 
-  fileName, 
-  _label,
-  className,
-  onComplete 
-}: ClientPDFDownloadProps & { onComplete: () => void }) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function PDFGeneratorAndDownloader({ document, fileName, label: _label, className, onComplete }: ClientPDFDownloadProps & { onComplete: () => void }) {
   const [instance] = usePDF({ document });
 
   useEffect(() => {

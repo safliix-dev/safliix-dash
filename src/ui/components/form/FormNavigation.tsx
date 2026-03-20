@@ -13,10 +13,8 @@ export interface FormNavigationProps {
   finalLabel?: string;
 }
 
-export function FormNavigation({
-  currentStep,
-  _totalSteps,
-  onPrevious,
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function FormNavigation({ currentStep, totalSteps: _totalSteps, onPrevious,
   isSubmitting = false,
   isLastStep = false,
   nextLabel = "Continuer",
