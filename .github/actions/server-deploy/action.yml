@@ -1,0 +1,130 @@
+# ============================================
+# === Action: Deploy to Server ===
+# ============================================
+#
+# Deploie l'application sur le serveur via SSH.
+# Utilise le deploy.sh standard.
+#
+# Copie le dossier infra/ sur le serveur via SCP
+# avant d'executer deploy.sh.
+#
+# ============================================
+
+name: 'Deploy to Server'
+description: 'Deploy application to server with SSH'
+
+inputs:
+  server-host:
+    description: 'Server hostname or IP'
+    required: true
+  server-user:
+    description: 'SSH username'
+    required: true
+  ssh-private-key:
+    description: 'SSH private key'
+    required: true
+  ssh-port:
+    description: 'SSH port on target server'
+    required: true
+  image-full:
+    description: 'Full image name with tag'
+    required: true
+  deployment-type:
+    description: 'Deployment type (full or hotfix)'
+    required: false
+    default: 'full'
+  deploy-env:
+    description: 'Target environment (dev, staging, prod)'
+    required: false
+    default: 'dev'
+  deploy-path:
+    description: 'Deployment path on server'
+    required: false
+    default: '/srv/safliix-shared-project/safliix-dash'
+  harbor-user:
+    description: 'Harbor registry username'
+    required: true
+  harbor-password:
+    description: 'Harbor registry password'
+    required: true
+
+outputs:
+  deployment-status:
+    description: 'Status of deployment'
+    value: ${{ steps.deploy.outputs.status }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup SSH agent
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ inputs.ssh-private-key }}
+
+    - name: Clean and prepare connection variables
+      id: clean_vars
+      shell: bash
+      run: |
+        CLEANED_HOST=$(echo "${{ inputs.server-host }}" | tr -d '\r\n\t ' | sed 's/[[:space:]]//g')
+        echo "cleaned_host=${CLEANED_HOST}" >> $GITHUB_OUTPUT
+        echo "Cleaned host: '${CLEANED_HOST}'"
+        echo "Username: '${{ inputs.server-user }}'"
+
+    - name: Add server to known_hosts
+      shell: bash
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -p ${{ inputs.ssh-port }} -H "${{ steps.clean_vars.outputs.cleaned_host }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+    - name: Test SSH connection
+      shell: bash
+      run: |
+        echo "Testing SSH connection..."
+        ssh -p ${{ inputs.ssh-port }} \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -o ConnectTimeout=10 \
+            "${{ inputs.server-user }}@${{ steps.clean_vars.outputs.cleaned_host }}" \
+            "echo 'SSH connection successful'"
+
+    - name: Copy deployment files to server
+      shell: bash
+      run: |
+        echo "Copying deployment files..."
+
+        if [ -d "infra" ]; then
+          echo "Structure infra detectee"
+          scp -P ${{ inputs.ssh-port }} -r -o StrictHostKeyChecking=no \
+              -o UserKnownHostsFile=/dev/null \
+              -o ConnectTimeout=10 \
+              infra/ \
+              "${{ inputs.server-user }}@${{ steps.clean_vars.outputs.cleaned_host }}:${{ inputs.deploy-path }}/"
+        fi
+
+    - name: Deploy to server
+      id: deploy
+      shell: bash
+      env:
+        HARBOR_USER: ${{ inputs.harbor-user }}
+        HARBOR_PASSWORD: ${{ inputs.harbor-password }}
+        DEPLOY_ENV: ${{ inputs.deploy-env }}
+      run: |
+        DEPLOY_SCRIPT="deploy.sh"
+        if ssh -p ${{ inputs.ssh-port }} -o StrictHostKeyChecking=no \
+               -o UserKnownHostsFile=/dev/null \
+               "${{ inputs.server-user }}@${{ steps.clean_vars.outputs.cleaned_host }}" \
+               "test -f ${{ inputs.deploy-path }}/infra/deployment/deploy.sh"; then
+          DEPLOY_SCRIPT="infra/deployment/deploy.sh"
+        fi
+
+        echo "Deploying with new image..."
+        ssh -p ${{ inputs.ssh-port }} -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            "${{ inputs.server-user }}@${{ steps.clean_vars.outputs.cleaned_host }}" \
+            "cd ${{ inputs.deploy-path }} && \
+             chmod +x ${DEPLOY_SCRIPT} && \
+             DEPLOY_ENV='${DEPLOY_ENV}' HARBOR_USER='${HARBOR_USER}' HARBOR_PASSWORD='${HARBOR_PASSWORD}' \
+             ./${DEPLOY_SCRIPT} '${{ inputs.image-full }}'"
+
+        echo "status=success" >> $GITHUB_OUTPUT
+        echo "Deploiement termine avec succes"

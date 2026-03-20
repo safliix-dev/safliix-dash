@@ -1,0 +1,68 @@
+# =============================================================================
+# docker-compose-template.yml — safliix-dash
+# Template INFRA-FAANG1 pour docker-compose multi-environnements
+# Calque sur sachrist (gold standard frontend Next.js)
+# Generated via envsubst — DO NOT edit the generated file directly
+# =============================================================================
+
+name: safliix-dash
+
+services:
+  safliix-dash:
+    image: ${IMAGE_FULL}
+    container_name: ${CONTAINER_NAME:-safliix-dash}
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - ENV=${ENV:-dev}
+      - NEXTAUTH_URL=https://${VIRTUAL_HOST}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - NEXT_PUBLIC_KEYCLOAK_URL=${NEXT_PUBLIC_KEYCLOAK_URL}
+      - NEXT_PUBLIC_KEYCLOAK_REALM=${NEXT_PUBLIC_KEYCLOAK_REALM}
+      - NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=${NEXT_PUBLIC_KEYCLOAK_CLIENT_ID}
+      - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:${HOST_PORT:-3002}:${CONTAINER_PORT}"
+    labels:
+      - "com.safliix.monitoring=enabled"
+      - "com.safliix.service=safliix-dash"
+      - "com.safliix.tier=application"
+      - "com.safliix.environment=${ENV:-dev}"
+      - "com.safliix.metrics.enabled=true"
+      - "com.safliix.metrics.port=${CONTAINER_PORT}"
+      - "com.safliix.logs.enabled=true"
+      - "com.safliix.team=frontend"
+      - "com.safliix.stack=nextjs-react"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - safliix-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${CONTAINER_PORT}/ || exit 1"]
+      interval: ${HEALTH_INTERVAL:-15s}
+      timeout: ${HEALTH_TIMEOUT:-5s}
+      retries: ${HEALTH_RETRIES:-2}
+      start_period: ${HEALTH_START_PERIOD:-10s}
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '0.5'
+        reservations:
+          memory: 128m
+          cpus: '0.1'
+
+networks:
+  safliix-network:
+    external: true
+    name: ${NETWORK_EXTERNAL_NAME:-safliix-dev-common-network}

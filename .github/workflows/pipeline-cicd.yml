@@ -1,0 +1,412 @@
+# ============================================
+# === CI/CD Pipeline - safliix-dash (Next.js Admin Dashboard) ===
+# ============================================
+#
+# dashboard.safliix.com — Admin dashboard frontend
+#
+# Variables CI/CD:
+#   Toutes les variables non-secretes sont dans .github/infra-config-centralized.yml
+#   Chargees automatiquement par l'action load-config dans chaque job.
+#
+# Repository Secrets:
+#   HARBOR_USERNAME        — Harbor registry username
+#   HARBOR_PASSWORD        — Harbor registry password
+#   DISCORD_WEBHOOK_URL    — Discord webhook for notifications
+#
+# Server Secrets (Repository-level, prefixed by environment):
+#   DEV_SERVER_HOST        — Dev server hostname or IP
+#   DEV_SERVER_PORT        — Dev server SSH port
+#   DEV_SERVER_USER        — Dev server SSH username
+#   DEV_SSH_PRIVATE_KEY    — Dev server SSH private key
+#
+#   STAGING_SERVER_HOST    — Staging server hostname or IP
+#   STAGING_SERVER_PORT    — Staging server SSH port
+#   STAGING_SERVER_USER    — Staging server SSH username
+#   STAGING_SSH_PRIVATE_KEY — Staging server SSH private key
+#
+#   PROD_SERVER_HOST       — Production server hostname or IP
+#   PROD_SERVER_PORT       — Production server SSH port
+#   PROD_SERVER_USER       — Production server SSH username
+#   PROD_SSH_PRIVATE_KEY   — Production server SSH private key
+#
+# Repository Secrets (Quality):
+#   SONAR_TOKEN            — SonarQube authentication token
+#
+# Pipeline stages:
+#   0. sonarqube-scan — SonarQube analysis (Phase 2, non-bloquant)
+#   1. build-push     — Build Docker image & push to Harbor
+#   2. deploy-dev     — Deploy to dev (on develop branch)
+#   3. deploy-staging — Deploy to staging (on main branch)
+#   4. deploy-prod    — Deploy to production (on main, after staging)
+#   5. notify         — Discord + Gmail notification (always)
+#
+# ============================================
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+
+jobs:
+  # ============================================
+  # Job 0: SonarQube Analysis (Phase 2 — non-bloquant)
+  # ============================================
+  sonarqube-scan:
+    name: SonarQube Analysis
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' && (
+        (github.ref == 'refs/heads/develop' ||
+         github.ref == 'refs/heads/main' ||
+         startsWith(github.ref, 'refs/tags/v')) &&
+        (contains(github.event.head_commit.modified, 'app/') ||
+         contains(github.event.head_commit.added, 'app/') ||
+         contains(github.event.head_commit.modified, 'src/') ||
+         contains(github.event.head_commit.added, 'src/') ||
+         contains(github.event.head_commit.modified, 'lib/') ||
+         contains(github.event.head_commit.added, 'lib/'))
+      )
+
+    outputs:
+      status: ${{ steps.sonar-analysis.outputs.status }}
+      quality-gate: ${{ steps.sonar-analysis.outputs.quality-gate }}
+      dashboard-url: ${{ steps.sonar-analysis.outputs.dashboard-url }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Load CI/CD config
+        uses: ./.github/actions/load-config
+
+      - name: Cache SonarQube Scanner
+        uses: actions/cache@v3
+        with:
+          path: |
+            sonar-scanner-*
+            ~/.sonar/cache
+          key: sonar-scanner-${{ runner.os }}-v1
+
+      - name: Cache SonarQube Analysis
+        uses: actions/cache@v3
+        with:
+          path: .scannerwork
+          key: sonar-analysis-${{ env.APP_NAME }}-${{ github.sha }}
+          restore-keys: |
+            sonar-analysis-${{ env.APP_NAME }}-
+
+      - name: Run SonarQube Analysis
+        id: sonar-analysis
+        uses: ./.github/actions/sonarqube-scan
+        with:
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+          sonar-host-url: ${{ env.SONAR_HOST_URL }}
+          project-key: ${{ env.APP_NAME }}
+
+  # ============================================
+  # Job 1: Build & Push to Harbor
+  # ============================================
+  build-push:
+    name: Build & Push to Harbor
+    runs-on: ubuntu-latest
+    needs: [sonarqube-scan]
+    if: |
+      always() &&
+      github.event_name == 'push' &&
+      (needs.sonarqube-scan.result == 'success' || needs.sonarqube-scan.result == 'skipped')
+
+    outputs:
+      image-tag: ${{ steps.meta.outputs.version }}
+      image-full: ${{ steps.build.outputs.image-full }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Load CI/CD config
+        uses: ./.github/actions/load-config
+
+      - name: Generate image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.PROJECT_NAME }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=0.1.0-build.{{date 'YYYYMMDD.HHmmss'}},enable=${{ github.ref == 'refs/heads/develop' }}
+            type=raw,value=1.0.0+{{date 'YYYYMMDD'}},enable=${{ github.ref == 'refs/heads/main' }}
+            type=semver,pattern={{version}},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=sha,prefix=sha-,format=short
+
+      - name: Build and Push to Harbor
+        id: build
+        uses: ./.github/actions/harbor-build-push
+        with:
+          harbor-registry: ${{ env.REGISTRY }}
+          harbor-username: ${{ secrets.HARBOR_USERNAME }}
+          harbor-password: ${{ secrets.HARBOR_PASSWORD }}
+          image-name: ${{ env.PROJECT_NAME }}/${{ env.IMAGE_NAME }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          dockerfile: infra/docker/Dockerfile
+          build-args: |
+            NODE_ENV=production
+
+  # ============================================
+  # Job 2: Deploy to Dev (develop branch)
+  # ============================================
+  deploy-dev:
+    name: Deploy to Dev
+    runs-on: ubuntu-latest
+    needs: [build-push]
+    if: |
+      always() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/develop' &&
+      needs.build-push.result == 'success'
+    environment: development
+
+    outputs:
+      deploy-status: ${{ steps.deploy.outputs.deployment-status }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Load CI/CD config
+        uses: ./.github/actions/load-config
+
+      - name: Deploy to Dev Server
+        id: deploy
+        uses: ./.github/actions/server-deploy
+        with:
+          server-host: ${{ secrets.DEV_SERVER_HOST }}
+          server-user: ${{ secrets.DEV_SERVER_USER }}
+          ssh-private-key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          ssh-port: ${{ secrets.DEV_SERVER_PORT }}
+          image-full: ${{ needs.build-push.outputs.image-full }}
+          deployment-type: 'full'
+          deploy-env: 'dev'
+          deploy-path: ${{ env.DEPLOY_PATH }}
+          harbor-user: ${{ secrets.HARBOR_USERNAME }}
+          harbor-password: ${{ secrets.HARBOR_PASSWORD }}
+
+      - name: Health check
+        run: |
+          echo "Waiting for service to start..."
+          sleep 15
+          echo "Checking health at https://${{ env.DEV_DOMAIN }}..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "https://${{ env.DEV_DOMAIN }}" || echo "000")
+          echo "HTTP Status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+            echo "Health check passed"
+          else
+            echo "::warning::Health check returned HTTP $HTTP_STATUS - service may still be starting"
+          fi
+
+  # ============================================
+  # Job 3: Deploy to Staging (main branch — desactive)
+  # ============================================
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-push]
+    if: |
+      always() &&
+      false
+    environment: staging
+
+    outputs:
+      deploy-status: ${{ steps.deploy.outputs.deployment-status }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Load CI/CD config
+        uses: ./.github/actions/load-config
+
+      - name: Deploy to Staging Server
+        id: deploy
+        uses: ./.github/actions/server-deploy
+        with:
+          server-host: ${{ secrets.STAGING_SERVER_HOST }}
+          server-user: ${{ secrets.STAGING_SERVER_USER }}
+          ssh-private-key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          ssh-port: ${{ secrets.STAGING_SERVER_PORT }}
+          image-full: ${{ needs.build-push.outputs.image-full }}
+          deployment-type: 'full'
+          deploy-env: 'staging'
+          deploy-path: ${{ env.DEPLOY_PATH }}
+          harbor-user: ${{ secrets.HARBOR_USERNAME }}
+          harbor-password: ${{ secrets.HARBOR_PASSWORD }}
+
+  # ============================================
+  # Job 4: Deploy to Production (main branch, after staging)
+  # ============================================
+  deploy-prod:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-push]
+    if: |
+      always() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.build-push.result == 'success'
+    environment:
+      name: production
+      url: https://dashboard.safliix.com
+
+    outputs:
+      deploy-status: ${{ steps.deploy.outputs.deployment-status }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Load CI/CD config
+        uses: ./.github/actions/load-config
+
+      - name: Deploy to Production Server
+        id: deploy
+        uses: ./.github/actions/server-deploy
+        with:
+          server-host: ${{ secrets.PROD_SERVER_HOST }}
+          server-user: ${{ secrets.PROD_SERVER_USER }}
+          ssh-private-key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          ssh-port: ${{ secrets.PROD_SERVER_PORT }}
+          image-full: ${{ needs.build-push.outputs.image-full }}
+          deployment-type: 'full'
+          deploy-env: 'prod'
+          deploy-path: ${{ env.DEPLOY_PATH }}
+          harbor-user: ${{ secrets.HARBOR_USERNAME }}
+          harbor-password: ${{ secrets.HARBOR_PASSWORD }}
+
+  # ============================================
+  # Job 5: Notifications (always)
+  # ============================================
+  notify-success:
+    name: Notify Success
+    runs-on: ubuntu-latest
+    needs: [sonarqube-scan, build-push, deploy-dev, deploy-staging, deploy-prod]
+    if: |
+      always() && (
+        needs.deploy-dev.result == 'success' ||
+        needs.deploy-staging.result == 'success' ||
+        needs.deploy-prod.result == 'success'
+      )
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Load CI/CD config
+        uses: ./.github/actions/load-config
+
+      - name: Determine environment and service URL
+        id: determine-env
+        run: |
+          if [ "${{ needs.deploy-prod.result }}" == "success" ]; then
+            echo "environment=PRODUCTION" >> $GITHUB_OUTPUT
+            echo "service_url=https://${{ env.PROD_DOMAIN }}" >> $GITHUB_OUTPUT
+          elif [ "${{ needs.deploy-staging.result }}" == "success" ]; then
+            echo "environment=STAGING" >> $GITHUB_OUTPUT
+            echo "service_url=https://${{ env.STAGING_DOMAIN }}" >> $GITHUB_OUTPUT
+          else
+            echo "environment=DEV" >> $GITHUB_OUTPUT
+            echo "service_url=https://${{ env.DEV_DOMAIN }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Success Notification
+        uses: ./.github/actions/notifications
+        with:
+          workflow-status: 'success'
+          image-full: ${{ needs.build-push.outputs.image-full || 'hotfix-restart' }}
+          discord-webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          portainer-url: ${{ env.PORTAINER_URL }}
+          grafana-url: ${{ env.GRAFANA_URL }}
+          service-url: ${{ steps.determine-env.outputs.service_url }}
+          sonarqube-url: ${{ env.SONAR_HOST_URL }}
+          environment: ${{ steps.determine-env.outputs.environment }}
+          github-repository: ${{ github.repository }}
+          github-sha: ${{ github.sha }}
+          github-actor: ${{ github.actor }}
+          gmail-username: ${{ secrets.GMAIL_USERNAME }}
+          gmail-password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          gmail-recipients: ${{ secrets.GMAIL_RECIPIENTS }}
+
+  notify-failure:
+    name: Notify Failure
+    runs-on: ubuntu-latest
+    needs: [sonarqube-scan, build-push, deploy-dev, deploy-staging, deploy-prod]
+    if: |
+      always() &&
+      (needs.sonarqube-scan.result == 'failure' ||
+       needs.build-push.result == 'failure' ||
+       (needs.deploy-dev.result != 'skipped' && needs.deploy-dev.result != 'success') ||
+       (needs.deploy-staging.result != 'skipped' && needs.deploy-staging.result != 'success') ||
+       (needs.deploy-prod.result != 'skipped' && needs.deploy-prod.result != 'success'))
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Load CI/CD config
+        uses: ./.github/actions/load-config
+
+      - name: Determine failure details
+        id: determine-failure
+        run: |
+          if [ "${{ needs.sonarqube-scan.result }}" == "failure" ]; then
+            echo "failed-job=scan" >> $GITHUB_OUTPUT
+            echo "error-details=Quality Gate failed - bugs critiques detectes" >> $GITHUB_OUTPUT
+            echo "environment=DEV" >> $GITHUB_OUTPUT
+            echo "service_url=https://${{ env.DEV_DOMAIN }}" >> $GITHUB_OUTPUT
+          elif [ "${{ needs.build-push.result }}" == "failure" ]; then
+            echo "failed-job=build" >> $GITHUB_OUTPUT
+            echo "error-details=Build Docker ou push Harbor echoue" >> $GITHUB_OUTPUT
+            if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+              echo "environment=PRODUCTION" >> $GITHUB_OUTPUT
+              echo "service_url=https://${{ env.PROD_DOMAIN }}" >> $GITHUB_OUTPUT
+            else
+              echo "environment=DEV" >> $GITHUB_OUTPUT
+              echo "service_url=https://${{ env.DEV_DOMAIN }}" >> $GITHUB_OUTPUT
+            fi
+          elif [ "${{ needs.deploy-prod.result }}" == "failure" ]; then
+            echo "failed-job=deploy" >> $GITHUB_OUTPUT
+            echo "error-details=Deploiement PRODUCTION echoue" >> $GITHUB_OUTPUT
+            echo "environment=PRODUCTION" >> $GITHUB_OUTPUT
+            echo "service_url=https://${{ env.PROD_DOMAIN }}" >> $GITHUB_OUTPUT
+          elif [ "${{ needs.deploy-staging.result }}" == "failure" ]; then
+            echo "failed-job=deploy" >> $GITHUB_OUTPUT
+            echo "error-details=Deploiement STAGING echoue" >> $GITHUB_OUTPUT
+            echo "environment=STAGING" >> $GITHUB_OUTPUT
+            echo "service_url=https://${{ env.STAGING_DOMAIN }}" >> $GITHUB_OUTPUT
+          else
+            echo "failed-job=deploy" >> $GITHUB_OUTPUT
+            echo "error-details=Deploiement DEV echoue" >> $GITHUB_OUTPUT
+            echo "environment=DEV" >> $GITHUB_OUTPUT
+            echo "service_url=https://${{ env.DEV_DOMAIN }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Failure Notification
+        uses: ./.github/actions/notifications
+        with:
+          workflow-status: 'failure'
+          image-full: ${{ needs.build-push.outputs.image-full || 'N/A' }}
+          failed-job: ${{ steps.determine-failure.outputs.failed-job }}
+          error-details: ${{ steps.determine-failure.outputs.error-details }}
+          discord-webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          portainer-url: ${{ env.PORTAINER_URL }}
+          grafana-url: ${{ env.GRAFANA_URL }}
+          service-url: ${{ steps.determine-failure.outputs.service_url }}
+          sonarqube-url: ${{ env.SONAR_HOST_URL }}
+          environment: ${{ steps.determine-failure.outputs.environment }}
+          github-repository: ${{ github.repository }}
+          github-sha: ${{ github.sha }}
+          github-actor: ${{ github.actor }}
+          gmail-username: ${{ secrets.GMAIL_USERNAME }}
+          gmail-password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          gmail-recipients: ${{ secrets.GMAIL_RECIPIENTS }}

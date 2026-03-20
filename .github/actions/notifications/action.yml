@@ -1,0 +1,267 @@
+# ============================================
+# === Action: Notifications ===
+# ============================================
+#
+# Envoi de notifications multi-canaux avec
+# classification d'erreur.
+# Canaux: Discord + Gmail (optionnel)
+#
+# Aligne sur ouebx/authorinApp-backend
+# avec ajout de la ligne Environnement
+# (a backporter sur ouebx — voir IMP-007)
+#
+# ============================================
+
+name: 'Notifications'
+description: 'Envoi de notifications multi-canaux avec classification erreur'
+
+inputs:
+  workflow-status:
+    description: 'Statut du workflow (success/failure)'
+    required: true
+  image-full:
+    description: 'Image deployee'
+    required: false
+    default: 'N/A'
+  discord-webhook:
+    description: 'Webhook Discord'
+    required: true
+  portainer-url:
+    description: 'URL Portainer'
+    required: false
+  grafana-url:
+    description: 'URL Grafana'
+    required: false
+  service-url:
+    description: 'URL du service'
+    required: false
+  sonarqube-url:
+    description: 'URL SonarQube'
+    required: false
+    default: 'https://sonarqube.safliix.com'
+  environment:
+    description: 'Environnement de deploiement'
+    required: true
+  github-repository:
+    description: 'Repository GitHub'
+    required: true
+  github-sha:
+    description: 'SHA du commit'
+    required: true
+  github-actor:
+    description: 'Auteur du commit'
+    required: true
+  # Inputs pour classification d'erreur
+  failed-job:
+    description: 'Job qui a echoue (scan/build/deploy)'
+    required: false
+  error-details:
+    description: 'Details erreur'
+    required: false
+  # Inputs Gmail
+  gmail-username:
+    description: 'Gmail username'
+    required: false
+  gmail-password:
+    description: 'Gmail app password'
+    required: false
+  gmail-recipients:
+    description: 'Gmail recipients (comma separated)'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Prepare notification content
+      id: prepare
+      shell: bash
+      run: |
+        echo "ℹ️ Preparation du contenu de notification..."
+
+        # Determiner le statut et emoji
+        if [ "${{ inputs.workflow-status }}" = "success" ]; then
+          if [ "${{ inputs.image-full }}" != "N/A" ]; then
+            STATUS="**Pipeline reussi !** ✅"
+            EMOJI="✅"
+          else
+            STATUS="**Hotfix deploye !** ✅"
+            EMOJI="✅"
+          fi
+          COLOR="3066993"  # Vert
+        else
+          STATUS="**Pipeline echoue !** ❌"
+          EMOJI="❌"
+          COLOR="15158332"  # Rouge
+        fi
+
+        # Branche info
+        if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+          BRANCH_INFO="${{ github.ref_name }}"
+        elif [[ "${{ github.ref }}" == refs/heads/develop ]]; then
+          BRANCH_INFO="develop"
+        elif [[ "${{ github.ref }}" == refs/heads/hotfix/* ]]; then
+          BRANCH_INFO="${{ github.ref_name }}"
+        else
+          BRANCH_INFO="$(echo ${{ github.ref }} | sed 's/refs\/heads\///')"
+        fi
+
+        # Image info
+        if [ "${{ inputs.image-full }}" != "N/A" ]; then
+          IMAGE_INFO="Image: **${{ inputs.image-full }}**"
+        else
+          IMAGE_INFO="Redemarrage du conteneur existant"
+        fi
+
+        # Sujet pour Gmail
+        GMAIL_SUBJECT="[${EMOJI}] ${{ github.event.repository.name }} - Pipeline ${BRANCH_INFO}"
+
+        # Stocker les outputs
+        echo "status=${STATUS}" >> $GITHUB_OUTPUT
+        echo "emoji=${EMOJI}" >> $GITHUB_OUTPUT
+        echo "color=${COLOR}" >> $GITHUB_OUTPUT
+        echo "branch_info=${BRANCH_INFO}" >> $GITHUB_OUTPUT
+        echo "image_info=${IMAGE_INFO}" >> $GITHUB_OUTPUT
+        echo "gmail_subject=${GMAIL_SUBJECT}" >> $GITHUB_OUTPUT
+
+    - name: Send Discord notification
+      id: discord-send
+      continue-on-error: true
+      shell: bash
+      run: |
+        echo "ℹ️ Envoi notification Discord..."
+
+        # Construction message Discord
+        DISCORD_CONTENT="${{ steps.prepare.outputs.status }}\\n \\nProjet : **${{ inputs.github-repository }}**\\n \\nBranche : **${{ steps.prepare.outputs.branch_info }}**\\n \\nCommit : **${{ inputs.github-sha }}**\\n \\nAuteur : **${{ inputs.github-actor }}**\\n \\n${{ steps.prepare.outputs.image_info }}"
+
+        # Ajouter section STATUS
+        DISCORD_CONTENT="${DISCORD_CONTENT}\\n \\nEnvironnement : **${{ inputs.environment }}**"
+        DISCORD_CONTENT="${DISCORD_CONTENT}\\n \\nStatus : **${{ inputs.workflow-status }}**"
+
+        # Ajouter details d'erreur si echec
+        if [ "${{ inputs.workflow-status }}" = "failure" ] && [ -n "${{ inputs.failed-job }}" ]; then
+          DISCORD_CONTENT="${DISCORD_CONTENT}\\n \\n❌ Job echoue : **${{ inputs.failed-job }}**"
+        fi
+
+        if [ "${{ inputs.workflow-status }}" = "failure" ] && [ -n "${{ inputs.error-details }}" ]; then
+          DISCORD_CONTENT="${DISCORD_CONTENT}\\n \\n❌ Erreur : ${{ inputs.error-details }}"
+        fi
+
+        # Ajouter liens
+        DISCORD_CONTENT="${DISCORD_CONTENT}\\n \\nLogs CI/CD : **https://github.com/${{ inputs.github-repository }}/actions/runs/${{ github.run_id }}**"
+
+        if [ -n "${{ inputs.portainer-url }}" ]; then
+          DISCORD_CONTENT="${DISCORD_CONTENT}\\n \\nLien Portainer : **${{ inputs.portainer-url }}**"
+        fi
+
+        if [ -n "${{ inputs.grafana-url }}" ]; then
+          DISCORD_CONTENT="${DISCORD_CONTENT}\\n \\nLien Grafana : **${{ inputs.grafana-url }}**"
+        fi
+
+        if [ -n "${{ inputs.service-url }}" ]; then
+          DISCORD_CONTENT="${DISCORD_CONTENT}\\n \\nLien service : **${{ inputs.service-url }}**"
+        fi
+
+        if [ -n "${{ inputs.sonarqube-url }}" ]; then
+          DISCORD_CONTENT="${DISCORD_CONTENT}\\n \\nLien SonarQube : **${{ inputs.sonarqube-url }}/dashboard?id=${{ github.event.repository.name }}**"
+        fi
+
+        # Envoyer a Discord
+        HTTP_CODE=$(curl -w "%{http_code}" -o /dev/null -s \
+             -H "Content-Type: application/json" \
+             -X POST \
+             -d "{\"content\": \"$DISCORD_CONTENT\", \"username\": \"GitHub Actions Sachrist\", \"avatar_url\": \"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png\"}" \
+             "${{ inputs.discord-webhook }}")
+
+        if [ "$HTTP_CODE" = "204" ]; then
+          echo "✅ Discord notification envoyee"
+          echo "discord_status=success" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Echec Discord (HTTP: $HTTP_CODE)"
+          echo "discord_status=failed" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Send Gmail notification
+      id: gmail-send
+      continue-on-error: true
+      if: inputs.gmail-username != '' && inputs.gmail-password != ''
+      uses: dawidd6/action-send-mail@v3
+      with:
+        # Gmail SMTP
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ inputs.gmail-username }}
+        password: ${{ inputs.gmail-password }}
+        secure: starttls
+
+        # Destinataires
+        to: ${{ inputs.gmail-recipients }}
+        from: ${{ inputs.gmail-username }}
+
+        # Sujet avec contexte
+        subject: ${{ steps.prepare.outputs.gmail_subject }}
+
+        # Corps email structure
+        body: |
+          ${{ steps.prepare.outputs.status }}
+          ===================================================================
+          DETAILS DU DEPLOIEMENT
+          ===================================================================
+          PROJET        : ${{ inputs.github-repository }}
+
+          BRANCHE       : ${{ steps.prepare.outputs.branch_info }}
+
+          ENVIRONNEMENT : ${{ inputs.environment }}
+
+          COMMIT        : ${{ inputs.github-sha }}
+
+          AUTEUR        : ${{ inputs.github-actor }}
+
+          ${{ steps.prepare.outputs.image_info }}
+          ===================================================================
+          RESULTATS
+          ===================================================================
+          STATUS        : ${{ inputs.workflow-status }}
+          ${{ inputs.failed-job != '' && format('❌ JOB ECHOUE     : {0}', inputs.failed-job) || '' }}
+          ${{ inputs.error-details != '' && format('❌ DETAIL ERREUR : {0}', inputs.error-details) || '' }}
+          ===================================================================
+          LIENS UTILES
+          ===================================================================
+          LOGS CI/CD    : https://github.com/${{ inputs.github-repository }}/actions/runs/${{ github.run_id }}
+
+          PORTAINER     : ${{ inputs.portainer-url }}
+
+          GRAFANA       : ${{ inputs.grafana-url }}
+
+          SERVICE       : ${{ inputs.service-url }}
+
+          SONARQUBE     : ${{ inputs.sonarqube-url }}/dashboard?id=${{ github.event.repository.name }}
+
+          REPOSITORY    : https://github.com/${{ inputs.github-repository }}
+          ===================================================================
+          Message automatique genere par GitHub Actions Sachrist
+          ===================================================================
+
+    - name: Notification summary
+      shell: bash
+      run: |
+        echo "=== RESUME NOTIFICATIONS ==="
+        echo "Status: ${{ inputs.workflow-status }}"
+        echo "Environment: ${{ inputs.environment }}"
+        echo "Failed Job: ${{ inputs.failed-job }}"
+        echo "Discord: ${{ steps.discord-send.outputs.discord_status || 'success' }}"
+        echo "Gmail: ${{ steps.gmail-send.outcome || 'skipped' }}"
+        echo "Image: ${{ inputs.image-full }}"
+        echo "SonarQube: ${{ inputs.sonarqube-url }}"
+        echo "Grafana: ${{ inputs.grafana-url }}"
+        echo "Service: ${{ inputs.service-url }}"
+        echo "================================="
+
+        if [ "${{ steps.discord-send.outputs.discord_status }}" = "failed" ]; then
+          echo "⚠️ WARNING: Discord notification failed"
+        fi
+
+        if [ "${{ steps.gmail-send.outcome }}" = "failure" ]; then
+          echo "⚠️ WARNING: Gmail notification failed"
+        elif [ "${{ steps.gmail-send.outcome }}" = "skipped" ]; then
+          echo "ℹ️ INFO: Gmail notification skipped (credentials not configured)"
+        fi

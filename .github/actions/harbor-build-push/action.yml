@@ -1,0 +1,186 @@
+# ============================================
+# === Action: Harbor Build & Push ===
+# ============================================
+#
+# Build et push une image Docker vers Harbor Registry.
+# Utilise les actions Docker officielles pour:
+# - Cache GitHub Actions (gha)
+# - Labels OCI automatiques
+# - Support multi-plateforme (futur)
+# - Preparation Phase 2 (SBOM, Cosign)
+#
+# Specifique Next.js: injecte NEXT_PUBLIC_* via build-args
+#
+# ============================================
+
+name: 'Harbor Build & Push'
+description: 'Build et push image Docker vers Harbor avec Docker Actions officielles'
+
+inputs:
+  harbor-registry:
+    description: 'Harbor registry URL'
+    required: true
+  harbor-username:
+    description: 'Harbor username'
+    required: true
+  harbor-password:
+    description: 'Harbor password'
+    required: true
+  image-name:
+    description: 'Image name (project/image)'
+    required: true
+  tags:
+    description: 'Image tags (multiline, from docker/metadata-action)'
+    required: true
+  labels:
+    description: 'Image labels (multiline)'
+    required: false
+    default: ''
+  dockerfile:
+    description: 'Path to Dockerfile'
+    required: false
+    default: 'infra/docker/Dockerfile'
+  context:
+    description: 'Build context path'
+    required: false
+    default: '.'
+  build-args:
+    description: 'Build arguments (multiline)'
+    required: false
+    default: ''
+
+outputs:
+  image-digest:
+    description: 'Image digest (sha256:...)'
+    value: ${{ steps.build-push.outputs.digest }}
+  image-tag:
+    description: 'Primary image tag'
+    value: ${{ steps.extract-tag.outputs.tag }}
+  image-full:
+    description: 'Full image reference (first tag)'
+    value: ${{ steps.extract-tag.outputs.image-full }}
+
+runs:
+  using: 'composite'
+  steps:
+    # ============================================
+    # Pre-build validation
+    # ============================================
+    - name: Pre-build validation
+      shell: bash
+      run: |
+        echo "=== PRE-BUILD VALIDATION ==="
+
+        # Test connectivite Harbor (5s max)
+        echo "Testing Harbor connectivity..."
+        if ! curl -sf --max-time 5 "https://${{ inputs.harbor-registry }}/api/v2.0/systeminfo" >/dev/null 2>&1; then
+          echo "::error::Harbor registry inaccessible: ${{ inputs.harbor-registry }}"
+          exit 1
+        fi
+        echo "Harbor registry accessible"
+
+        # Verification credentials
+        if [ -z "${{ inputs.harbor-username }}" ]; then
+          echo "::error::Harbor username missing"
+          exit 1
+        fi
+        if [ -z "${{ inputs.harbor-password }}" ]; then
+          echo "::error::Harbor password missing"
+          exit 1
+        fi
+        echo "Harbor credentials present"
+
+        # Verification Dockerfile
+        if [ ! -f "${{ inputs.dockerfile }}" ]; then
+          echo "::error::Dockerfile not found: ${{ inputs.dockerfile }}"
+          exit 1
+        fi
+        echo "Dockerfile found: ${{ inputs.dockerfile }}"
+
+        echo "Pre-validation OK"
+
+    # ============================================
+    # Docker Setup
+    # ============================================
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Harbor
+      id: docker-login
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ inputs.harbor-registry }}
+        username: ${{ inputs.harbor-username }}
+        password: ${{ inputs.harbor-password }}
+
+    - name: Verify login
+      shell: bash
+      run: |
+        echo "Login Harbor OK"
+
+    # ============================================
+    # Extract tag info
+    # ============================================
+    - name: Extract primary tag
+      id: extract-tag
+      shell: bash
+      run: |
+        # Extract first tag from multiline tags
+        FIRST_TAG=$(echo "${{ inputs.tags }}" | head -1)
+        PRIMARY_TAG=$(echo "$FIRST_TAG" | awk -F: '{print $NF}')
+        echo "tag=$PRIMARY_TAG" >> $GITHUB_OUTPUT
+        echo "image-full=$FIRST_TAG" >> $GITHUB_OUTPUT
+
+        echo "=== IMAGE INFO ==="
+        echo "Primary tag: $PRIMARY_TAG"
+        echo "Full image: $FIRST_TAG"
+        echo "All tags:"
+        echo "${{ inputs.tags }}" | while read -r tag; do
+          echo "  - $tag"
+        done
+
+    # ============================================
+    # Build and Push
+    # ============================================
+    - name: Build and Push
+      id: build-push
+      uses: docker/build-push-action@v5
+      with:
+        context: ${{ inputs.context }}
+        file: ${{ inputs.dockerfile }}
+        push: true
+        tags: ${{ inputs.tags }}
+        labels: ${{ inputs.labels }}
+        build-args: ${{ inputs.build-args }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        provenance: false
+
+    - name: Build result
+      shell: bash
+      run: |
+        echo "=== BUILD RESULT ==="
+        echo "Build OK"
+        echo "Push Harbor OK"
+        echo ""
+        echo "Registry: ${{ inputs.harbor-registry }}"
+        echo "Image: ${{ inputs.image-name }}"
+        echo "Tag: ${{ steps.extract-tag.outputs.tag }}"
+        echo "Digest: ${{ steps.build-push.outputs.digest }}"
+        echo "===================="
+
+    # ============================================
+    # Failure handling
+    # ============================================
+    - name: Handle failure
+      if: failure()
+      shell: bash
+      run: |
+        echo "=== BUILD FAILED ==="
+        echo "::error::Build ou push Harbor echoue - verifiez les logs ci-dessus"
+        echo ""
+        echo "Troubleshooting:"
+        echo "  1. Verifier les credentials Harbor"
+        echo "  2. Verifier le Dockerfile: ${{ inputs.dockerfile }}"
+        echo "  3. Verifier la connectivite reseau"
+        echo "  4. Verifier l'espace disque Harbor"
