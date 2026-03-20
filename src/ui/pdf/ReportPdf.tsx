@@ -85,7 +85,7 @@ export function ReportPdf({ rightsholder, periodStart, periodEnd, entries }: Pro
 
         <View style={styles.infoRow}>
           <Text style={styles.infoCell}>
-            <Text style={styles.infoCellLabel}>NOM DE L'AYANT DROIT :</Text> {rightsholder}
+            <Text style={styles.infoCellLabel}>NOM DE L&apos;AYANT DROIT :</Text> {rightsholder}
           </Text>
           <Text style={styles.infoCell}></Text>
           <Text style={styles.infoCell}></Text>
@@ -96,7 +96,7 @@ export function ReportPdf({ rightsholder, periodStart, periodEnd, entries }: Pro
 
         <View style={styles.table}>
           <View style={styles.headerRow}>
-            <Text style={[styles.colOrder, styles.headerText]}>N° D'ORDRE</Text>
+            <Text style={[styles.colOrder, styles.headerText]}>N° D&apos;ORDRE</Text>
             <Text style={[styles.colTitle, styles.headerText]}>TITRE DU FILMS</Text>
             <Text style={[styles.colCategory, styles.headerText]}>CATEGORIE</Text>
             <Text style={[styles.colFormat, styles.headerText]}>FORMAT</Text>

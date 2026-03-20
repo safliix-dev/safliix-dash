@@ -15,7 +15,7 @@ export interface FormNavigationProps {
 
 export function FormNavigation({
   currentStep,
-  totalSteps,
+  _totalSteps,
   onPrevious,
   isSubmitting = false,
   isLastStep = false,

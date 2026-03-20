@@ -10,6 +10,7 @@ import { useToast } from "@/ui/components/toast/ToastProvider";
 import type { PlanDetail } from "@/types/api/subscriptions";
 
 export default function Page({ params }: { params: { id: string } } | { params: Promise<{ id: string }> }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const planParams = (params as any)?.then ? use(params as Promise<{ id: string }>) : (params as { id: string });
   const planId = planParams.id;
   const accessToken = useAccessToken();

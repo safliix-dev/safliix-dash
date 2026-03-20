@@ -139,7 +139,7 @@ export const filmAdapter: MediaFormEngineConfig<
   },
 
   // 7. Rollback (Suppression si annulation)
-  deleteEntity: async (id) => {
+  deleteEntity: async (_id) => {
     //await filmsApi.delete(id);
   }
 };

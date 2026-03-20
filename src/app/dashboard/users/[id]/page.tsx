@@ -61,7 +61,7 @@ const userSample: UserDetail = {
   ],
 };
 
-export default function Page({ params }: { params: { id: string } }) {
+export default function Page({ params: _params }: { params: { id: string } }) {
   const user = useMemo(() => userSample, []);
 
   return (

@@ -322,7 +322,7 @@ export function useUploadWorkflow<TSlot extends string>() {
             );
           }
           await finalizePromise;
-        } catch (e:unknown) {
+        } catch (_e:unknown) {
           throw new Error("Erreur lors de la validation finale en base de données.");
         }
       }

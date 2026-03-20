@@ -12,5 +12,6 @@ export interface MediaFileFields {
 export interface BaseMetadata {
   title?: string;
   name?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any; // Pour permettre d'autres champs
 }

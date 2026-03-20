@@ -20,7 +20,7 @@ export interface StatsQueryParams extends TimeRangeParams {
   groupBy?: string;
 }
 
-export interface FilmsStatsResponse extends BaseStatsResponse {}
+export type FilmsStatsResponse = BaseStatsResponse;
 
 export interface RevenueStatsResponse extends BaseStatsResponse {
   totals?: {
@@ -31,7 +31,7 @@ export interface RevenueStatsResponse extends BaseStatsResponse {
   };
 }
 
-export interface UsersStatsResponse extends BaseStatsResponse {}
+export type UsersStatsResponse = BaseStatsResponse;
 
 export interface PubGeoBreakdown {
   label: string;

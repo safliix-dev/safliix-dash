@@ -44,6 +44,7 @@ export default function Page() {
       try {
         const res = await imageRightsApi.list({ page: 1, pageSize: 20 }, accessToken);
         if (cancelled) return;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const items = Array.isArray((res as any)?.items) ? (res as any).items : Array.isArray(res) ? (res as any) : [];
         const mapped = items.map((holder) => ({
           ...holder,

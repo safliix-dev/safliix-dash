@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Controller, useWatch } from "react-hook-form";
-import Image from "next/image";
 
 // Composants communs
 import { FormStepLayout } from "@/ui/components/form/FormStepLayout";
@@ -181,6 +180,7 @@ export default function Page() {
 }
 
 // Sous-composant pour l'étape Métadonnées
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function MetadataStepContent({ control, errors, meta, countries }: any) {
   return (
     <div className="flex flex-col gap-3">
@@ -549,7 +549,8 @@ function MetadataStepContent({ control, errors, meta, countries }: any) {
 }
 
 // Sous-composant pour l'étape Fichiers
-function FilesStepContent({ control, setValue, trailerFile, actorsValue, onPreview }: any) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function FilesStepContent({ _control, setValue, _trailerFile, actorsValue, _onPreview }: any) {
   return (
     <>
       <div className="grid grid-cols-6 grid-rows-2 gap-4">

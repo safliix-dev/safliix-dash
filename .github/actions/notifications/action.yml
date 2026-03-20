@@ -147,22 +147,22 @@ runs:
         fi
 
         # Ajouter liens
-        DISCORD_CONTENT="${DISCORD_CONTENT}\\n \\nLogs CI/CD : **https://github.com/${{ inputs.github-repository }}/actions/runs/${{ github.run_id }}**"
+        DISCORD_CONTENT="${DISCORD_CONTENT}\\n \\nLogs CI/CD : <https://github.com/${{ inputs.github-repository }}/actions/runs/${{ github.run_id }}>"
 
         if [ -n "${{ inputs.portainer-url }}" ]; then
-          DISCORD_CONTENT="${DISCORD_CONTENT}\\n \\nLien Portainer : **${{ inputs.portainer-url }}**"
+          DISCORD_CONTENT="${DISCORD_CONTENT}\\n \\nLien Portainer : <${{ inputs.portainer-url }}>"
         fi
 
         if [ -n "${{ inputs.grafana-url }}" ]; then
-          DISCORD_CONTENT="${DISCORD_CONTENT}\\n \\nLien Grafana : **${{ inputs.grafana-url }}**"
+          DISCORD_CONTENT="${DISCORD_CONTENT}\\n \\nLien Grafana : <${{ inputs.grafana-url }}>"
         fi
 
         if [ -n "${{ inputs.service-url }}" ]; then
-          DISCORD_CONTENT="${DISCORD_CONTENT}\\n \\nLien service : **${{ inputs.service-url }}**"
+          DISCORD_CONTENT="${DISCORD_CONTENT}\\n \\nLien service : <${{ inputs.service-url }}>"
         fi
 
         if [ -n "${{ inputs.sonarqube-url }}" ]; then
-          DISCORD_CONTENT="${DISCORD_CONTENT}\\n \\nLien SonarQube : **${{ inputs.sonarqube-url }}/dashboard?id=${{ github.event.repository.name }}**"
+          DISCORD_CONTENT="${DISCORD_CONTENT}\\n \\nLien SonarQube : <${{ inputs.sonarqube-url }}/dashboard?id=${{ github.event.repository.name }}>"
         fi
 
         # Envoyer a Discord

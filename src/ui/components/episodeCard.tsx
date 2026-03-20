@@ -21,7 +21,7 @@ export default function EpisodeCard({ id }: { id: string }) {
         </div>
         <div className="flex flex-col justify-between mb-10">
 					<h4>Episode 01</h4>
-					<h3 className="text-sm">Titre de l'épisode</h3>
+					<h3 className="text-sm">Titre de l&apos;épisode</h3>
 					<p className="text-sm text-neutral-400">Durée : 45 min</p>
         </div>
 				<div className="absolute bottom-2 left-2 right-2 flex items-center gap-2">

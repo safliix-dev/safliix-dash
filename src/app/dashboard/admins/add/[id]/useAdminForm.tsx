@@ -81,7 +81,7 @@ export function useAdminForm(id?: string) {
       const payload: AdminFormState | AdminUpdateFormState = isEditMode
       ? (Object.fromEntries(
           Object.entries(pendingAdmin).filter(
-            ([_, value]) => value !== "" && value !== undefined
+            ([, value]) => value !== "" && value !== undefined
           )
         ) as AdminUpdateFormState)
       : pendingAdmin;

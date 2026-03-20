@@ -72,7 +72,7 @@ export default function Page() {
           </div>
           <div className="flex-4 p-10">
             <h4 className="mb-4">Analyse</h4>
-            <p className="mb-4">Vue d'ensemble</p>
+            <p className="mb-4">Vue d&apos;ensemble</p>
             <div className="flex items-center gap-8 flex-wrap">
               {totalsEntries.length === 0 && (
                 <div className="text-sm text-white/70">Aucune donnée de revenu disponible.</div>

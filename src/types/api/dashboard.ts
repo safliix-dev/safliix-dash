@@ -1,6 +1,6 @@
 import { type TimeRangeParams } from "./common";
 
-export interface DashboardMetricsParams extends TimeRangeParams {}
+export type DashboardMetricsParams = TimeRangeParams;
 
 export interface DashboardMetricsResponse {
   revenueTotal: number;
@@ -49,7 +49,7 @@ export interface LocationSubscriptionSeries {
   series: LocationSubscriptionPoint[];
 }
 
-export interface DashboardRepartitionParams extends TimeRangeParams {}
+export type DashboardRepartitionParams = TimeRangeParams;
 
 export interface DashboardRepartitionResponse {
   countries: TopCountry[];

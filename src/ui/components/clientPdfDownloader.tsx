@@ -45,8 +45,8 @@ export default function ClientPDFDownload(props: ClientPDFDownloadProps) {
 function PDFGeneratorAndDownloader({ 
   document, 
   fileName, 
-  label, 
-  className, 
+  _label,
+  className,
   onComplete 
 }: ClientPDFDownloadProps & { onComplete: () => void }) {
   const [instance] = usePDF({ document });

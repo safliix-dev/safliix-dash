@@ -51,7 +51,7 @@ export interface PlanItem {
 
 export type PlanListResponse = PaginatedResponse<PlanItem>;
 
-export interface PlanDetail extends PlanItem {}
+export type PlanDetail = PlanItem;
 
 export interface PlanPayload {
   name: string;
