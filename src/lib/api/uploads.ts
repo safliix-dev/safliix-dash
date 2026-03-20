@@ -11,7 +11,8 @@ export const uploadApi = {
       body: { 
         files,
         entityId,
-        entityType },
+        entityType 
+      },
       accessToken,
     }),
 
