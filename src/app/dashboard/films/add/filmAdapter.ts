@@ -139,7 +139,8 @@ export const filmAdapter: MediaFormEngineConfig<
   },
 
   // 7. Rollback (Suppression si annulation)
-  deleteEntity: async (id) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  deleteEntity: async (_id) => {
     //await filmsApi.delete(id);
   }
 };

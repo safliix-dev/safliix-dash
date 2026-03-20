@@ -14,7 +14,7 @@ export class ApiError<T = unknown> extends Error {
 
 export interface RequestOptions<TBody = unknown> {
   method?: HttpMethod;
-  params?: Record<string, any>;
+  params?: Record<string, unknown>;
   body?: TBody;
   headers?: Record<string, string>;
   auth?: boolean;
@@ -42,7 +42,7 @@ const buildUrl = (path: string, params?: RequestOptions["params"]) => {
 const shouldSendBody = (method: HttpMethod) => !["GET", "HEAD"].includes(method);
 
 // utils/api.ts
-export function serializeParams(params?: Record<string, any>): Record<string, string | number | boolean> | undefined {
+export function serializeParams(params?: Record<string, unknown>): Record<string, string | number | boolean> | undefined {
   if (!params) return undefined;
 
   const serialized: Record<string, string | number | boolean> = {};

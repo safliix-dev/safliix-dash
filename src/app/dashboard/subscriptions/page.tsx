@@ -128,7 +128,7 @@ export default function Page() {
           </tbody>
         </table>
         {!loading && !error && transactions.length === 0 && (
-          <div className="p-4 text-sm text-white/70">Aucune transaction d'abonnement.</div>
+          <div className="p-4 text-sm text-white/70">Aucune transaction d&apos;abonnement.</div>
         )}
       </div>
     </div>

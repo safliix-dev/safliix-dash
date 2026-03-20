@@ -1,0 +1,43 @@
+# ============================================================================
+# SAFLIIX-DASH — Centralized Infrastructure Configuration
+# ============================================================================
+# Source of truth for all CI/CD pipeline variables (non-secret).
+# Loaded by .github/actions/load-config into $GITHUB_ENV.
+# Calque sur sachrist (ADR-0100)
+# ============================================================================
+
+# === APP ===
+APP_NAME: safliix-dash
+PROJECT_NAME: safliix-dash
+IMAGE_NAME: app
+
+# === REGISTRY ===
+REGISTRY: harbor.safliix.com
+
+# === QUALITY ===
+SONAR_HOST_URL: https://sonarqube.safliix.com
+
+# === DEPLOYMENT ===
+DEPLOY_BASE: /srv
+DEPLOY_SHARED_PROJECT: safliix-shared-project
+DEPLOY_PROJECT: safliix-dash
+DEPLOY_PATH: /srv/safliix-shared-project/safliix-dash
+DEPLOY_SCRIPT: infra/deployment/deploy.sh
+COMPOSE_FILE: docker-compose.yml
+
+# === DOMAINS ===
+DEV_DOMAIN: dashboard.dev.safliix.com
+STAGING_DOMAIN: dashboard.staging.safliix.com
+PROD_DOMAIN: dashboard.safliix.com
+
+# === PORTS ===
+CONTAINER_PORT: 3000
+HOST_PORT: 3002
+
+# === MONITORING ===
+PORTAINER_URL: https://portainer.safliix.com
+GRAFANA_URL: https://grafana.safliix.com
+
+# === FRAMEWORK ===
+FRAMEWORK: nextjs
+NODE_VERSION: 20

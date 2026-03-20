@@ -56,10 +56,10 @@ export function useDeleteWithConfirmation<T extends { id: string }>(
       );
 
       setTimeout(closeDialog, 800);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatus("error");
       setResultMessage(
-        err?.message ?? "Une erreur est survenue lors de la suppression."
+        (err instanceof Error ? err.message : null) ?? "Une erreur est survenue lors de la suppression."
       );
     }
   };

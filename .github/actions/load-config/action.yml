@@ -1,0 +1,54 @@
+# ============================================
+# === Action: Load Centralized Config ===
+# ============================================
+#
+# Lit .github/infra-config-centralized.yml et exporte
+# toutes les variables CI/CD dans $GITHUB_ENV.
+#
+# Source of truth unique pour le pipeline.
+#
+# ============================================
+
+name: 'Load Centralized Config'
+description: 'Charge les variables CI/CD depuis .github/infra-config-centralized.yml'
+
+inputs:
+  config-path:
+    description: 'Chemin du fichier config (relatif a la racine du repo)'
+    required: false
+    default: '.github/infra-config-centralized.yml'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Validate config file exists
+      shell: bash
+      run: |
+        if [ ! -f "${{ inputs.config-path }}" ]; then
+          echo "::error::Fichier ${{ inputs.config-path }} introuvable."
+          echo "::error::Ce fichier est la source of truth des variables CI/CD."
+          exit 1
+        fi
+
+    - name: Load config into GITHUB_ENV
+      shell: bash
+      run: |
+        CONFIG="${{ inputs.config-path }}"
+
+        # Lire chaque ligne KEY: VALUE (ignorer commentaires et lignes vides)
+        while IFS= read -r line; do
+          # Ignorer commentaires et lignes vides
+          [[ "$line" =~ ^#.*$ ]] && continue
+          [[ -z "$line" ]] && continue
+
+          # Extraire KEY et VALUE
+          KEY=$(echo "$line" | cut -d':' -f1 | xargs)
+          VALUE=$(echo "$line" | cut -d':' -f2- | xargs)
+
+          if [ -n "$KEY" ] && [ -n "$VALUE" ]; then
+            echo "$KEY=$VALUE" >> $GITHUB_ENV
+          fi
+        done < "$CONFIG"
+
+        echo "=== Config centralisee chargee ==="
+        grep -v '^#' "$CONFIG" | grep -v '^$' | head -20

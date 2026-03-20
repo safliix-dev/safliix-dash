@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/ui/components/toast/ToastProvider";
@@ -79,7 +81,7 @@ export function useAdminForm(id?: string) {
       const payload: AdminFormState | AdminUpdateFormState = isEditMode
       ? (Object.fromEntries(
           Object.entries(pendingAdmin).filter(
-            ([_, value]) => value !== "" && value !== undefined
+            ([, value]) => value !== "" && value !== undefined
           )
         ) as AdminUpdateFormState)
       : pendingAdmin;

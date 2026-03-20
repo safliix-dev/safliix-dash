@@ -23,6 +23,7 @@ export type MediaFormEngineConfig<
 };
 
 export function useMediaFormEngine<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   TForm extends Record<string, any>,
   TMeta,
   TSlot extends string,

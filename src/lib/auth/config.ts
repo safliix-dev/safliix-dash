@@ -9,6 +9,7 @@ if (!issuer || !clientId || !clientSecret) {
   console.warn("[auth] KEYCLOAK_ISSUER/CLIENT_ID/CLIENT_SECRET manquants. Configure .env.local.");
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function refreshAccessToken(token: any) {
   try {
     const tokenEndpoint = `${issuer}/protocol/openid-connect/token`;

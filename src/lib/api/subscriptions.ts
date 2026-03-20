@@ -10,7 +10,6 @@ import {
   type PlanPayloadUpdate,
   type SubscriptionListParams,
   type SubscriptionListResponse,
-  type PromotionListResponse,
   PromotionPayload,
   PromotionItem,
   PromotionPayloadUpdate

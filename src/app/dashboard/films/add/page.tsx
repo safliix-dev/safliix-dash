@@ -225,6 +225,7 @@ export default function Page() {
 }
 
 // Sous-composant pour l'étape Métadonnées
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function MetadataStepContent({ control, errors, meta, countries, typeValue }: any) {
   return (
     <>
@@ -639,17 +640,8 @@ function MetadataStepContent({ control, errors, meta, countries, typeValue }: an
 }
 
 // Sous-composant pour l'étape Fichiers
-function FilesStepContent({ 
-  control, 
-  setValue, 
-  movieFile, 
-  trailerFile, 
-  typeValue, 
-  onPreview,
-  onOpenConfirm,
-  meta,
-  dialogStatus 
-}: any) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function FilesStepContent({ setValue, movieFile, trailerFile, typeValue, onPreview, onOpenConfirm, meta, dialogStatus }: any) {
   return (
     <>
       <div className="grid grid-cols-6 grid-rows-2 gap-4">
