@@ -1,3 +1,5 @@
+"use client";
+
 import Header from "@/ui/components/header";
 import { useEffect, useState } from "react";
 import { introApi } from "@/lib/api/reports";
