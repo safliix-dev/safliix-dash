@@ -44,8 +44,7 @@ export default function Page() {
       try {
         const res = await imageRightsApi.list({ page: 1, pageSize: 20 }, accessToken);
         if (cancelled) return;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const items: Record<string, any>[] = Array.isArray((res as any)?.items) ? (res as any).items : Array.isArray(res) ? (res as any) : [];
+        const items = res.items ?? [];
         const mapped = items.map((holder) => ({
           ...holder,
           fullName: holder.fullName || `${holder.firstName ?? ""} ${holder.lastName ?? ""}`.trim(),
