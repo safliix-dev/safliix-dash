@@ -4,7 +4,7 @@
     import { useMetaOptions } from "@/lib/hooks/form/useMetaOptions";
     import { filmsApi } from "@/lib/api/films";
     import { filmAdapter } from "./filmAdapter";
-
+    import { type FilmFormData } from "@/types/api/films";
     import { useSession } from "next-auth/react";
 
     export function useFilmForm(initialId?: string) {
@@ -21,35 +21,38 @@
       const meta = useMetaOptions(loadMetaOptions);
 
       // 2. Configuration du moteur (Engine)
+      const defaultValues: FilmFormData = {
+        title: "",
+        productionHouse: "",
+        country: "",
+        type: "location",
+        price: null,
+        releaseDate: "",
+        publishDate: "",
+        format: "COURT-METRAGE",
+        category: "",
+        genre: "",
+        actors: [],
+        director: "",
+        duration: null,
+        blockCountries: [],
+        rightHolderId: "",
+        entertainmentMode: "Film",
+        description: "",
+        isSafliixProd: false,
+        haveSubtitles: false,
+        language: "",
+        ageRating: "",
+        subtitleLanguages: [],
+        movieFile: null,
+        trailerFile: null,
+        mainImage: null,
+        secondaryImage: null,
+      };
+
       const engine = useMediaFormEngine(
-        filmAdapter, 
-        {
-          title: "",
-          productionHouse: "",
-          country: "",
-          type: "location",
-          price: null,
-          releaseDate: "",
-          publishDate: "",
-          format: "COURT-METRAGE",
-          category: "",
-          genre: "",
-          actors: [],
-          director: "",
-          duration: null,
-          blockCountries: [],
-          rightHolderId: "",
-          entertainmentMode: "Film",
-          description: "",
-          isSafliixProd: false,
-          haveSubtitles: false,
-          language: "",
-          ageRating: "",
-          movieFile: null,
-          trailerFile: null,
-          mainImage: null,
-          secondaryImage: null,
-        }
+        filmAdapter,
+        defaultValues
       );
 
       // 3. Gestion de l'ID (Si on est en mode édition, on hydrate l'entityId)

@@ -6,6 +6,7 @@ import { useMetaOptions } from "@/lib/hooks/form/useMetaOptions";
 import { seriesApi } from "@/lib/api/series";
 import { seriesAdapter } from "./serieAdapter";
 import { useSession } from "next-auth/react";
+import { type SeriesFormData } from "@/types/api/series";
 
 export function useSeriesForm(initialId?: string) {
   const { data: session } = useSession();
@@ -19,31 +20,33 @@ export function useSeriesForm(initialId?: string) {
   const meta = useMetaOptions(loadMetaOptions);
 
   // 2. Initialisation du moteur avec l'adapter et les valeurs par défaut
+  const defaultValues: SeriesFormData = {
+    title: "",
+    description: "",
+    language: "",
+    productionHouse: "",
+    country: "",
+    blockCountries: [],
+    releaseDate: "",
+    publishDate: "",
+    category: "",
+    seasonCount: null,
+    genre: "",
+    actors: [],
+    director: "",
+    ageRating: "",
+    isSafliixProd: true,
+    haveSubtitles: false,
+    subtitleLanguages: [],
+    rightHolderId: "",
+    mainImage: null,
+    secondaryImage: null,
+    trailerFile: null,
+  };
+
   const engine = useMediaFormEngine(
     seriesAdapter,
-    {
-      title: "",
-      description: "",
-      language: "",
-      productionHouse: "",
-      country: "",
-      blockCountries: [],
-      releaseDate: "",
-      publishDate: "",
-      category: "",
-      seasonCount: null,
-      genre: "",
-      actors: [],
-      director: "",
-      ageRating: "",
-      isSafliixProd: true,
-      haveSubtitles: false,
-      subtitleLanguages: [],
-      rightHolderId: "",
-      mainImage: null,
-      secondaryImage: null,
-      trailerFile: null,
-    }
+    defaultValues
   );
 
   // 3. Hydratation de l'ID pour le mode édition
