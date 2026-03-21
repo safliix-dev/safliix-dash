@@ -52,7 +52,6 @@ export function useDashboardData(): DashboardData {
         setHighlights(highlightsRes);
         setRepartition(repartitionRes);
       } catch (err) {
-        console.log("Error fetching dashboard data", err);
         if (cancelled || controller.signal.aborted) return;
         const friendly = formatApiError(err);
         setError(friendly.message);
@@ -72,6 +71,7 @@ export function useDashboardData(): DashboardData {
       cancelled = true;
       controller.abort();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nonce, accessToken]);
 
   return {

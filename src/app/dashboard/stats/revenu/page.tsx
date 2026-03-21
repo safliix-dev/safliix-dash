@@ -67,7 +67,7 @@ export default function Page() {
       <div className="flex-2 ">
         <div className="flex items-center gap-4 h-58  p-10 mb-4 shadow-md shadow-base-200 rounded-lg bg-neutral">
           <div className="flex-1">
-            <img src = "/shape.png"/>
+            <img src="/shape.png" alt="" />
             <h4 className="font-bold">Total Revenu</h4>
           </div>
           <div className="flex-4 p-10">

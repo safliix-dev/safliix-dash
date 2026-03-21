@@ -51,6 +51,7 @@ export function useSeriesForm(initialId?: string) {
     if (initialId && !engine.entityId) {
       engine.setEntityId(initialId);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialId, engine.entityId, engine.setEntityId]);
 
   return {

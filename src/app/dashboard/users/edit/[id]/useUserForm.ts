@@ -88,8 +88,7 @@ export function useUserForm(id?: string) {
 
     usersApi.detail(id,accessToken)
       .then((data) => {
-        console.dir(data,{depth:2})
-        reset({
+          reset({
           email: data.email,
           firstName: data.firstName,
           lastName: data.lastName,
@@ -103,6 +102,7 @@ export function useUserForm(id?: string) {
           description: "Impossible de charger l'utilisateur.",
         });
       });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   return {
