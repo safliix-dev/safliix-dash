@@ -4,7 +4,7 @@ import { formatApiError } from "@/lib/api/errors";
 import { uploadToPresignedUrl } from "@/lib/api/uploads";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { useAccessToken } from "@/lib/auth/useAccessToken";
-import { type EpisodeUploadDescriptor } from "@/types/api/series";
+import { type UploadFileDescriptor as EpisodeUploadDescriptor } from "@/types/attachmentType";
 import { useEpisodeFormSteps } from "./useEpisodeFormSteps";
 
 export type EpisodeForm = {
