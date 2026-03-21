@@ -9,10 +9,8 @@ import { formatApiError } from "@/lib/api/errors";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import type { PlanDetail } from "@/types/api/subscriptions";
 
-export default function Page({ params }: { params: { id: string } } | { params: Promise<{ id: string }> }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const planParams = (params as any)?.then ? use(params as Promise<{ id: string }>) : (params as { id: string });
-  const planId = planParams.id;
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id: planId } = use(params);
   const accessToken = useAccessToken();
   const toast = useToast();
   const [plan, setPlan] = useState<PlanDetail | null>(null);

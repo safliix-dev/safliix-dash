@@ -3,13 +3,14 @@ import Link from "next/link";
 import SeriesEpisodeAddClient from "./client";
 
 type Props = {
-  params: { id: string };
-  searchParams: { season?: string };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ season?: string }>;
 };
 
 export default async function Page({ params, searchParams }: Props) {
   const { id } = await params;
-  const seasonId = searchParams?.season ?? "";
+  const { season } = await searchParams;
+  const seasonId = season ?? "";
 
   return (
     <div className="space-y-4">

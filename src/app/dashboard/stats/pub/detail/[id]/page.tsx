@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import Header from "@/ui/components/header";
 import Link from "next/link";
 import { statsApi } from "@/lib/api/stats";
@@ -9,7 +9,8 @@ import { formatApiError } from "@/lib/api/errors";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { type PubStatsDetail } from "@/types/api/stats";
 
-export default function Page({ params }: { params: { id: string } }) {
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [pub, setPub] = useState<PubStatsDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +23,7 @@ export default function Page({ params }: { params: { id: string } }) {
       setLoading(true);
       setError(null);
       try {
-        const res = await statsApi.pubDetail(params.id, accessToken);
+        const res = await statsApi.pubDetail(id, accessToken);
         if (cancelled) return;
         setPub(res);
       } catch (err) {
@@ -36,13 +37,13 @@ export default function Page({ params }: { params: { id: string } }) {
     };
     load();
     return () => { cancelled = true; };
-  }, [accessToken, toast, params.id]);
+  }, [accessToken, toast, id]);
 
   return (
     <div className="space-y-5">
       <Header title="Détail campagne pub" className="rounded-2xl border border-base-300 shadow-sm px-5">
         <div className="flex items-center gap-3 text-sm text-white/80">
-          <span className="badge badge-outline border-primary/50 text-primary">ID {params.id}</span>
+          <span className="badge badge-outline border-primary/50 text-primary">ID {id}</span>
           {pub?.status && (
             <>
               <span className="w-[1px] h-4 bg-base-300" />
