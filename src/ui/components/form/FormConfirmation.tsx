@@ -11,11 +11,11 @@ interface BaseMetadata {
 }
 
 interface MediaFileFields {
-  mainImage?: File;
-  movieFile?: File;
-  trailerFile?: File;
-  episodeFile?: File;
-  subtitleFile?: File;
+  mainImage?: File | null;
+  movieFile?: File | null;
+  trailerFile?: File | null;
+  episodeFile?: File | null;
+  subtitleFile?: File | null;
 }
 
 interface FormConfirmationProps<T, TSlot extends string> {

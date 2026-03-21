@@ -2,11 +2,11 @@ export type SuggestionOption = { label: string; value: string };
 export type ActorType = { actorId?: string; name: string };
 // types/forms.ts
 export interface MediaFileFields {
-  mainImage?: File;
-  movieFile?: File;
-  trailerFile?: File;
-  episodeFile?: File;
-  subtitleFile?: File;
+  mainImage?: File | null;
+  movieFile?: File | null;
+  trailerFile?: File | null;
+  episodeFile?: File | null;
+  subtitleFile?: File | null;
 }
 
 export interface BaseMetadata {
