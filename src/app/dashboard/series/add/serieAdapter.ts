@@ -42,8 +42,8 @@ export const seriesAdapter: MediaFormEngineConfig<
   // 2. Collecte des fichiers spécifiques aux séries
   collectFiles: (form) => {
     const slots = [
-      { key: "posterFile", file: form.posterFile },
-      { key: "heroFile", file: form.heroFile },
+      { key: "posterFile", file: form.mainImage },
+      { key: "heroFile", file: form.secondaryImage },
       { key: "trailerFile", file: form.trailerFile },
     ];
     return slots.filter((s): s is { key: string; file: File } => s.file instanceof File);

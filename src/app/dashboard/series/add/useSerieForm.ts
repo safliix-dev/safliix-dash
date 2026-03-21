@@ -40,8 +40,8 @@ export function useSeriesForm(initialId?: string) {
       haveSubtitles: false,
       subtitleLanguages: [],
       rightHolderId: "",
-      posterFile: null,
-      heroFile: null,
+      mainImage: null,
+      secondaryImage: null,
       trailerFile: null,
     }
   );
