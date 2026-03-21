@@ -80,7 +80,7 @@ export default function SeasonAddClient({ id }: { id: string }) {
             seriesApi.presignSeasonUploads(
               pendingSeason.serieId,
               seasonId,
-              [{ key: "poster", name: pendingSeason.poster!.name, type: pendingSeason.poster!.type }],
+              [{ key: "poster", name: pendingSeason.poster!.name, type: pendingSeason.poster!.type, attachmentType: "POSTER" as const }],
               accessToken,
             ),
           { retries: 1 },
