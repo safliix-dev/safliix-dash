@@ -10,7 +10,7 @@ import { imageRightsApi } from "@/lib/api/imageRights";
 import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { formatApiError } from "@/lib/api/errors";
-
+import Image from "next/image";
 const placeholderAvatar = "/gildas.png";
 
 const statusBadge: Record<string, string> = {
@@ -105,7 +105,9 @@ export default function Page() {
           </Link>
         </div>
         <div className="flex gap-3">
-          <img
+          <Image
+            width={48}
+            height={48}
             src={content.poster || "/image-icon.jpg"}
             alt={content.title}
             className="w-20 h-24 object-cover rounded-xl border border-base-300"
@@ -152,7 +154,10 @@ export default function Page() {
           <div className="flex items-center gap-3">
             <div className="avatar">
               <div className="mask mask-squircle h-16 w-16">
-                <img src={holder.avatar || placeholderAvatar} alt={holder.fullName} />
+                <Image
+                  width={48}
+                  height={48} 
+                  src={holder.avatar || placeholderAvatar} alt={holder.fullName} />
               </div>
             </div>
             <div>

@@ -1,30 +1,27 @@
-import Header from "@/ui/components/header";
+// app/dashboard/series/[id]/episodes/add/page.tsx
+
 import Link from "next/link";
-import SeriesEpisodeAddClient from "./client";
+import { EpisodeFormClient } from "./client";
 
 type Props = {
-  params: { id: string };
-  searchParams: { season?: string };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ season?: string }>;
 };
 
 export default async function Page({ params, searchParams }: Props) {
-  const { id } = await params;
-  const seasonId = searchParams?.season ?? "";
+  const { id: seriesId } = await params;
+ const { season: seasonId } = await searchParams;  
 
-  return (
-    <div className="space-y-4">
-      <Header title="Ajouter un épisode">
-        <div className="flex gap-2">
-          <Link href={`/dashboard/series/detail/${id}`} className="btn btn-ghost btn-sm">
-            Retour
-          </Link>
-          <button className="btn btn-primary btn-sm" form="episode-form" type="submit">
-            Publier épisode
-          </button>
-        </div>
-      </Header>
+  if (!seasonId) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-red-500">Aucune saison sélectionnée. Veuillez choisir une saison.</p>
+        <Link href={`/dashboard/series/detail/${seriesId}`} className="btn btn-primary mt-4">
+          Retour à la série
+        </Link>
+      </div>
+    );
+  }
 
-      <SeriesEpisodeAddClient seriesId={id} seasonId={seasonId} />
-    </div>
-  );
+  return <EpisodeFormClient seriesId={seriesId} seasonId={seasonId} />;
 }

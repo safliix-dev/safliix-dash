@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 export default function EpisodeCard({ id }: { id: string }) {
     return (
@@ -13,7 +14,9 @@ export default function EpisodeCard({ id }: { id: string }) {
 					<span className="text-sm">Voir</span>
         </Link>
         <div className="flex flex-col items-center">
-					<img
+					<Image
+						width={48}
+						height={48}
 						src="/image-icon.jpg"
 						alt="Poster"
 						className="w-24 h-24 object-cover rounded-md"

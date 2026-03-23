@@ -9,10 +9,14 @@ import { formatApiError } from "@/lib/api/errors";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import type { PlanDetail } from "@/types/api/subscriptions";
 
-export default function Page({ params }: { params: { id: string } } | { params: Promise<{ id: string }> }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const planParams = (params as any)?.then ? use(params as Promise<{ id: string }>) : (params as { id: string });
-  const planId = planParams.id;
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+export default function Page({ params }: Props) {
+  // 👈 Utiliser use() pour résoudre la Promise
+  const { id: planId } = use(params);
+  
   const accessToken = useAccessToken();
   const toast = useToast();
   const [plan, setPlan] = useState<PlanDetail | null>(null);
@@ -22,6 +26,7 @@ export default function Page({ params }: { params: { id: string } } | { params: 
   useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
+    
     const load = async () => {
       setLoading(true);
       setError(null);
@@ -38,7 +43,9 @@ export default function Page({ params }: { params: { id: string } } | { params: 
         if (!cancelled) setLoading(false);
       }
     };
+    
     load();
+    
     return () => {
       cancelled = true;
       controller.abort();
@@ -80,10 +87,10 @@ export default function Page({ params }: { params: { id: string } } | { params: 
           </div>
           <div className="space-y-1 text-sm text-white/70">
             <p>
-              Tarif : {plan?.price?.toLocaleString() ?? "—"} {plan?.currency || ""} · {plan?.period || "—"}
+              Tarif : {plan?.price?.toLocaleString() ?? "—"} {plan?.currency || ""} · {plan?.yearlyDiscount || "—"}
             </p>
             <p>Appareils simultanés : {plan?.devices ?? "—"}</p>
-            <p>Qualité max : {plan?.quality ?? "—"}</p>
+            <p>Qualité max : {plan?.videoQuality ?? "—"}</p>
             <p>Essai : —</p>
           </div>
           {plan?.features?.length ? (

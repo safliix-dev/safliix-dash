@@ -10,6 +10,7 @@ import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { formatApiError } from "@/lib/api/errors";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { type AdsItem } from "@/types/api/ads";
+import Image from "next/image";
 
 type GeoValue = { label: string; value: number; max: number; color: string };
 type Campaign = {
@@ -308,7 +309,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
       <div className="grid grid-cols-12 gap-4 items-start">
         <div className="col-span-12 lg:col-span-4 flex gap-4">
           <div className="relative h-32 w-48 overflow-hidden rounded-xl border border-base-300/60 bg-neutral/60 shadow-inner">
-            <img src={campaign.poster} alt={campaign.creative} className="h-full w-full object-cover" />
+            <Image src={campaign.poster ?? ""} alt={campaign.creative} className="h-full w-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
             <div className="absolute bottom-2 left-3">
               <p className="text-sm font-semibold text-white">{campaign.creative}</p>

@@ -1,6 +1,6 @@
 import { ColumnConfig } from "@/ui/components/dataTable";
 import Link from "next/link";
-
+import Image from "next/image";
 
 export type Person = {
   id:string;
@@ -8,7 +8,7 @@ export type Person = {
   numero: number;
   tel: string;
   mail: string;
-  status: 'actif' | 'inactif';
+  status: string;
   genre: 'H' | 'F' | '-';
   date: string; // ex: '2025-06-30'
   imgProfileUrl: string;
@@ -22,7 +22,7 @@ export const columns : ColumnConfig<Person>[] = [
       <Link href={`/dashboard/users/${person.numero}`} className="flex items-center gap-3 hover:text-primary">
         <div className="avatar">
           <div className="mask mask-squircle h-12 w-12">
-            <img src={person.imgProfileUrl} alt={person.nom} />
+            <Image width={48} height={48} src={person.imgProfileUrl} alt={person.nom} />
           </div>
         </div>
         

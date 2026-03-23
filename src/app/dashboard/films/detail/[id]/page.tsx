@@ -2,7 +2,7 @@
 
 import Header from "@/ui/components/header";
 import Link from "next/link";
-
+import Image from "next/image";
 type FilmDetail = {
   id: string;
   title: string;
@@ -62,7 +62,7 @@ const filmSample: FilmDetail = {
   ],
 };
 
-export default function Page(_props: { params: { id: string } }) {
+export default function Page() {
   const film = filmSample;
 
   return (
@@ -78,7 +78,7 @@ export default function Page(_props: { params: { id: string } }) {
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-4 bg-neutral rounded-2xl border border-base-300 p-4 space-y-4">
           <div className="flex flex-col items-center gap-3">
-            <img src={film.poster} alt={film.title} className="w-48 h-64 object-cover rounded-xl border border-base-300" />
+            <Image width={96} height={96} src={film.poster} alt={film.title} className="w-48 h-64 object-cover rounded-xl border border-base-300" />
             <div className="text-center space-y-1">
               <h2 className="text-xl font-semibold text-white">{film.title}</h2>
               <p className="text-white/60 text-sm">{film.category}</p>

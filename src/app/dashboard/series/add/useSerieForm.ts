@@ -11,47 +11,60 @@ export function useSeriesForm(initialId?: string) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
 
-  // 1. Chargement des options de métadonnées (catégories, genres, etc.)
+  /**
+   * 1. Chargement des options (aligné film)
+   */
   const loadMetaOptions = useCallback(() => {
+    // même logique que film (tu peux réactiver le guard si besoin)
+    // if (!accessToken) return Promise.reject("No access token");
     return seriesApi.metaOptions(accessToken);
   }, [accessToken]);
 
   const meta = useMetaOptions(loadMetaOptions);
 
-  // 2. Initialisation du moteur avec l'adapter et les valeurs par défaut
+  /**
+   * 2. Engine (corrigé + cohérent avec adapter)
+   */
   const engine = useMediaFormEngine(
     seriesAdapter,
     {
       title: "",
       description: "",
-      language: "",
       productionHouse: "",
       country: "",
-      blockCountries: [],
       releaseDate: "",
       publishDate: "",
-      category: "",
       seasonCount: null,
+      category: "",
       genre: "",
       actors: [],
       director: "",
-      ageRating: "",
-      isSafliixProd: true,
+      blockCountries: [],
+      rightHolderId: "",
+      entertainmentMode: "SERIE",
+      isSafliixProd: false,
       haveSubtitles: false,
       subtitleLanguages: [],
-      rightHolderId: "",
-      posterFile: null,
-      heroFile: null,
+      language: "",
+      ageRating: "",
+
+      /**
+       * ⚠️ TRÈS IMPORTANT : correspondre à collectFiles()
+       */
+      secondaryImage: null,
+      mainImage: null,
       trailerFile: null,
     }
   );
 
-  // 3. Hydratation de l'ID pour le mode édition
+  /**
+   * 3. Hydratation ID (identique film)
+   */
   useEffect(() => {
     if (initialId && !engine.entityId) {
       engine.setEntityId(initialId);
     }
-  }, [initialId, engine.entityId, engine.setEntityId]);
+  }, [initialId, engine.entityId, engine.setEntityId, engine]);
 
   return {
     ...engine,

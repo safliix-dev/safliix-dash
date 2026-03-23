@@ -44,3 +44,32 @@ export interface AdsListResponse {
   items: AdsItem[];
   pageInfo?: { page: number; pageSize: number; total: number };
 }
+
+// types/api/pub.ts
+
+export interface AdsFormData {
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  line: string;
+  status: string; // "Actif" | "Brouillon" | "Archivé"
+  mainImage?: File | null;
+  secondaryImage?: File | null;
+}
+
+export interface AdsMetadataPayload {
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  line: string;
+  status: string;
+}
+
+export interface AdsMetaOptions {
+  statusOptions: string[];
+  lineOptions: string[];
+}
+
+export type AdsSlot = 'mainImage' | 'secondaryImage';

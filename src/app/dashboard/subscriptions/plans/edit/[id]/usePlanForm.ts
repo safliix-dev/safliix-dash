@@ -62,7 +62,7 @@ export function usePlanForm(id:string) {
             description: "Impossible de charger le plan d'abonnement.",
           });
         });
-    }, [id]);
+    }, [id,accessToken,isEdit,reset,toast]);
 
   const openConfirm = handleSubmit((data) => {
     setPendingPlan(data);

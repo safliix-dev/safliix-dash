@@ -10,7 +10,7 @@ export interface PaginatedResponse<T> {
   pageInfo: PageInfo;
 }
 
-export interface TimeRangeParams {
+export interface TimeRangeParams extends Record<string,unknown> {
   from?: string;
   to?: string;
   range?: string;

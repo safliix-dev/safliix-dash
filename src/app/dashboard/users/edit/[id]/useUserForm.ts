@@ -103,7 +103,7 @@ export function useUserForm(id?: string) {
           description: "Impossible de charger l'utilisateur.",
         });
       });
-  }, [id]);
+  }, [id,accessToken,isEdit,reset,toast]);
 
   return {
     isEdit,

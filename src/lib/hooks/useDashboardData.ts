@@ -72,7 +72,7 @@ export function useDashboardData(): DashboardData {
       cancelled = true;
       controller.abort();
     };
-  }, [nonce, accessToken]);
+  }, [nonce, accessToken,toast]);
 
   return {
     metrics,

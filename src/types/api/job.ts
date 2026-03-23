@@ -7,7 +7,7 @@ export interface EncodingJob{
   status:string;
 }
 
-export interface JobParams {
+export interface JobParams extends Record<string,unknown> {
   status?: string;
   type: string;
   limit?: number;

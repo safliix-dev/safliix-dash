@@ -5,13 +5,16 @@ import { SeriesMetadataPayload, SeriesFormData } from "@/types/api/series";
 import { MediaFormEngineConfig } from "@/lib/hooks/form/useMediaFormEngine";
 import { 
   attachmentTypeMap, 
-  UploadFinalizePayload
+  UploadFinalizePayload,
+  AttachmentType
 } from "@/types/attachmentType";
+
+import { SeriesSlot } from "@/types/api/series";
 
 /**
  * 1. Typage STRICT des slots (comme FilmSlot)
  */
-export type SeriesSlot = "POSTER" | "TRAILER" | "THUMBNAIL";
+
 
 export interface SeriesPresignedSlot {
   key: SeriesSlot;
@@ -41,7 +44,7 @@ export const seriesAdapter: MediaFormEngineConfig<
     entertainmentMode: "SERIE",
     gender: data.genre,
     director: data.director,
-    actors: data.actors.map((name: string) => ({ name })),
+    actors: data.actors,
     isSafliixProd: data.isSafliixProd,
     haveSubtitles: data.haveSubtitles,
     subtitleLanguages: data.subtitleLanguages,
@@ -56,9 +59,9 @@ export const seriesAdapter: MediaFormEngineConfig<
    */
   collectFiles: (form) => {
     const slots = [
-      { key: attachmentTypeMap.posterFile as SeriesSlot, file: form.secondaryImage },
-      { key: attachmentTypeMap.thumbnailFile as SeriesSlot, file: form.mainImage },
-      { key: attachmentTypeMap.trailerFile as SeriesSlot, file: form.trailerFile },
+      { key: 'secondaryImage', file: form.secondaryImage },
+      { key: 'mainImage', file: form.mainImage },
+      { key: 'trailerFile', file: form.trailerFile },
     ];
 
     return slots.filter(
@@ -100,7 +103,7 @@ export const seriesAdapter: MediaFormEngineConfig<
       key: f.key,
       name: f.file.name,
       type: f.file.type || "application/octet-stream",
-      attachmentType: f.key
+      attachmentType:  attachmentTypeMap[f.key] as AttachmentType
     }));
 
     const slots = await uploadApi.presignUploads(id, "series", descriptors);
@@ -150,7 +153,8 @@ export const seriesAdapter: MediaFormEngineConfig<
   /**
    * 8. Rollback optionnel
    */
-  deleteEntity: async (id) => {
-    // await seriesApi.delete(id);
-  }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    deleteEntity: async (_id) => {
+      // await seriesApi.delete(id);
+    }
 };

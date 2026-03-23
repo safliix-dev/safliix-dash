@@ -1,25 +1,27 @@
-import { PageParamProps } from "@/types/utils";
+// app/dashboard/series/detail/[id]/seasons/add/page.tsx
+
 import Header from "@/ui/components/header";
 import Link from "next/link";
-import SeasonAddClient from "./client";
+import { SeasonFormClient } from "./client";
 
-export default async function Page({ params }: PageParamProps) {
-  const { id } = await params;
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+export default async function Page({ params }: Props) {
+  const { id: seriesId } = await params;
 
   return (
     <div className="space-y-4">
       <Header title="Ajouter une saison">
         <div className="flex gap-2">
-          <Link href={`/dashboard/series/detail/${id}`} className="btn btn-ghost btn-sm">
+          <Link href={`/dashboard/series/detail/${seriesId}`} className="btn btn-ghost btn-sm">
             Retour
           </Link>
-          <button type="submit" form="season-form" className="btn btn-primary btn-sm">
-            Publier saison
-          </button>
         </div>
       </Header>
 
-      <SeasonAddClient id={id} />
+      <SeasonFormClient seriesId={seriesId} />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { ImageDownIcon } from "lucide-react";
+import Image from "next/image";
 
 type UploadBoxProps = {
   id?: string;
@@ -45,7 +46,9 @@ export default function UploadBox({ id = "main-upload", label = "Image", classNa
 
       {preview ? (
         <div className="relative w-full h-24 rounded-md overflow-hidden">
-          <img
+          <Image
+            width={360}
+            height={360}
             src={preview}
             alt="Preview"
             className="w-full h-full object-cover"

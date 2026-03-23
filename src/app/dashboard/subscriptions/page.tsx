@@ -7,7 +7,7 @@ import { subscriptionsApi } from "@/lib/api/subscriptions";
 import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { formatApiError } from "@/lib/api/errors";
 import { useToast } from "@/ui/components/toast/ToastProvider";
-
+import Image from "next/image";
 const placeholderAvatar = "/gildas.png";
 
 type Transaction = {
@@ -105,7 +105,9 @@ export default function Page() {
                   <div className="flex items-center gap-3">
                     <div className="avatar">
                       <div className="mask mask-squircle h-12 w-12">
-                        <img
+                        <Image
+                          width={48}
+                          height={48}
                           src={placeholderAvatar}
                           alt={transaction.profile}
                         />

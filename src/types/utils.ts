@@ -1,3 +1,3 @@
-export interface PageParamProps {
-  params: { id: string };
+export type PageParamProps = {
+  params: Promise<{ id: string }>;
 }

@@ -106,7 +106,7 @@ export function useImageRightsForm(id?: string) {
           description: "Impossible de charger l'ayant droit.",
         });
       });
-  }, [id]);
+  }, [id,reset,isEdit,accessToken,toast]);
 
   return {
     isEdit,

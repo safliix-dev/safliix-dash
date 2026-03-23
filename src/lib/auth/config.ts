@@ -1,5 +1,5 @@
-import KeycloakProvider from "next-auth/providers/keycloak";
-import { type NextAuthConfig } from "next-auth";
+/* import KeycloakProvider from "next-auth/providers/keycloak";
+import NextAuthConfig  from "next-auth";
 
 const issuer = process.env.KEYCLOAK_ISSUER;
 const clientId = process.env.KEYCLOAK_CLIENT_ID;
@@ -102,3 +102,4 @@ const authConfig: NextAuthConfig = {
 };
 
 export default authConfig;
+ */
