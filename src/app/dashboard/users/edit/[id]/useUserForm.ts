@@ -88,8 +88,7 @@ export function useUserForm(id?: string) {
 
     usersApi.detail(id,accessToken)
       .then((data) => {
-        console.dir(data,{depth:2})
-        reset({
+          reset({
           email: data.email,
           firstName: data.firstName,
           lastName: data.lastName,

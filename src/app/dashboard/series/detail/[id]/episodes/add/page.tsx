@@ -6,6 +6,8 @@ import { EpisodeFormClient } from "./client";
 type Props = {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ season?: string }>;
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ season?: string }>;
 };
 
 export default async function Page({ params, searchParams }: Props) {
