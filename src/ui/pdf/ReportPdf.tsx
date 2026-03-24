@@ -103,7 +103,7 @@ export function ReportPdf({ rightsholder, periodStart, periodEnd, entries }: Pro
             <Text style={[styles.colRentals, styles.headerText]}>NOMBRE DE LOCATIONS</Text>
           </View>
           {rows.map((row, idx) => (
-            <View key={idx} style={[styles.row, idx === rows.length - 1 ? { borderBottomWidth: 0 } : null]}>
+            <View key={idx} style={[styles.row, idx === rows.length - 1 ? { borderBottomWidth: 0 } : {}]}>
               <Text style={styles.colOrder}>{row.order}</Text>
               <Text style={styles.colTitle}>{row.title}</Text>
               <Text style={styles.colCategory}>{row.category}</Text>

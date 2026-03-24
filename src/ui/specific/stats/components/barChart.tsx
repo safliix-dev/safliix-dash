@@ -50,8 +50,7 @@ const MonthlyStatsChart = ({
               stroke: "#792525",
               strokeDasharray: "4 4",
             },
-          },
-          textColor: "#fff",
+          }
         }}
         borderRadius={4}
         enableLabel={false}

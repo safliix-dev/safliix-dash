@@ -12,8 +12,8 @@ export interface StatsSeries {
 
 export interface BaseStatsResponse {
   series: StatsSeries[];
-  summary?: Record<string, number>;
-  totals?: Record<string, number>;
+  summary?: Record<string, number | undefined>;
+  totals?: Record<string, number |undefined>;
 }
 
 export interface StatsQueryParams extends TimeRangeParams {

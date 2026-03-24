@@ -19,6 +19,7 @@ export interface SeasonMetaOptions {
 }
 
 export interface SeasonSummary {
+  id:string;
   numero: number | null;
   title: string;
   description: string;

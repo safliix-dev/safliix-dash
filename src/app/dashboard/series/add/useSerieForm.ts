@@ -6,7 +6,6 @@ import { useMetaOptions } from "@/lib/hooks/form/useMetaOptions";
 import { seriesApi } from "@/lib/api/series";
 import { seriesAdapter } from "./serieAdapter";
 import { useSession } from "next-auth/react";
-import { type SeriesFormData } from "@/types/api/series";
 
 export function useSeriesForm(initialId?: string) {
   const { data: session } = useSession();

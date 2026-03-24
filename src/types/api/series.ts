@@ -1,5 +1,5 @@
 import { type PaginatedResponse } from "./common";
-
+import { SeasonSummary } from "./season";
 export type SeriesStatus = "publish" | "pause" | "draft" | string;
 
 

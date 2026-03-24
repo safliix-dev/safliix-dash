@@ -2,7 +2,7 @@
 
 'use client';
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "@/ui/components/header";
 import Link from "next/link";
 import { statsApi } from "@/lib/api/stats";
