@@ -11,7 +11,7 @@ export type PlanForm = {
   description: string;
 };
 
-export interface SubscriptionListParams {
+export interface SubscriptionListParams extends Record<string,unknown> {
   page: number;
   pageSize: number;
   filter?: string;
@@ -32,7 +32,7 @@ export interface SubscriptionItem {
 
 export type SubscriptionListResponse = PaginatedResponse<SubscriptionItem>;
 
-export interface PlanListParams {
+export interface PlanListParams extends Record<string,unknown> {
   page: number;
   pageSize: number;
 }
@@ -47,6 +47,8 @@ export interface PlanItem {
   currency: string;
   description:string;
   yearlyDiscount: number;
+  devices:number;
+  features: string[];
 }
 
 export type PlanListResponse = PaginatedResponse<PlanItem>;
@@ -91,7 +93,7 @@ export interface PromotionItem extends PromotionPayload {
 export type PromotionListResponse = PaginatedResponse<PromotionItem>;
 
 export type PromotionPayloadUpdate = Partial<PromotionPayload>;
-export interface PromoListParams {
+export interface PromoListParams extends Record<string,unknown> {
   page: number;
   pageSize: number;
 }

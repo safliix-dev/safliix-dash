@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Gauge, Play, Star, TrendingUp } from "lucide-react";
-
+import Image from "next/image";
 /* ============================================================
  * Type guards
  * ============================================================ */
@@ -95,7 +95,9 @@ export default function VideoCard({
       <div className="flex items-start gap-4">
         {/* === LEFT === */}
         <div className="flex flex-col items-center gap-2">
-          <img
+          <Image
+            width={360}
+            height={360}
             src={posterSrc}
             alt="Video Poster"
             className="w-40 h-28 object-cover rounded-md"
@@ -128,7 +130,9 @@ export default function VideoCard({
         {/* === HERO === */}
         <div className="flex items-start gap-4 flex-[1.2]">
           <div className="relative">
-            <img
+            <Image
+              width={360}
+              height={360}
               src={hero ?? posterSrc}
               alt="scene"
               className="w-60 h-48 object-cover rounded-md"

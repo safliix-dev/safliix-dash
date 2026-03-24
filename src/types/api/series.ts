@@ -1,5 +1,5 @@
 import { type PaginatedResponse } from "./common";
-
+import { SeasonSummary } from "./season";
 export type SeriesStatus = "publish" | "pause" | "draft" | string;
 
 
@@ -15,7 +15,7 @@ export type SeriesFormData = {
   category: string;
   seasonCount: number | null;
   genre: string;
-  actors: string[];
+  actors:  Array<{ actorId?: string; name: string }>;
   director: string;
   ageRating: string;
   isSafliixProd: boolean;
@@ -25,7 +25,20 @@ export type SeriesFormData = {
   mainImage: File | null;
   secondaryImage: File | null;
   trailerFile: File | null;
+  entertainmentMode: "SERIE";
 };
+
+export interface SeriesMetaOptions {
+  productionHouses: string[];
+  countries: string[];
+  categories: Array<{ category: string }>;
+  genres: Array<{ name: string }>;
+  actors: Array<{ id: string; name: string }>;
+  languages: string[];
+  rightHolders: Array<{ id: string; firstName: string; lastName: string }>;
+}
+
+export type SeriesSlot = 'mainImage' | 'secondaryImage' | 'trailerFile'; 
 
 
 export interface SerieStats {
@@ -37,7 +50,7 @@ export interface SerieStats {
   revenue: number;
 }
 
-export interface SeriesListParams {
+export interface SeriesListParams extends Record<string,unknown> {
   page: number;
   pageSize: number;
   search?: string;
@@ -95,13 +108,7 @@ export interface SeriesDetail {
   blockedCountries?: string[];
 }
 
-export interface SeasonSummary {
-  id: string;
-  number: number;
-  title?: string;
-  poster?: string;
-  episodesCount?: number;
-}
+
 
 export interface SeriesMetadataPayload {
   title: string;
@@ -141,32 +148,3 @@ export interface CreateSeasonPayload {
 
 
 // Episodes
-export interface EpisodeListParams { page?: number; pageSize?: number }
-export interface EpisodeItem {
-  id: string;
-  title: string;
-  releaseDate?: string;
-  publishDate?: string;
-  status?: string;
-  duration?: string;
-}
-
-export interface EpisodeDetail extends EpisodeItem {
-  director?: string;
-  synopsis?: string;
-  language?: string;
-  productionFlag?: string;
-}
-
-export interface EpisodeMetadataPayload {
-  title: string;
-  releaseDate: string;
-  publishDate: string;
-  director: string;
-  duration: string;
-  synopsis: string;
-  status: string;
-  language: string;
-  productionFlag: string;
-}
-

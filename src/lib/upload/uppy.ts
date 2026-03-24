@@ -1,4 +1,4 @@
-import Uppy from '@uppy/core';
+/* import Uppy from '@uppy/core';
 import AwsS3 from '@uppy/aws-s3';
 import axios from 'axios';
 
@@ -6,6 +6,8 @@ import axios from 'axios';
  * Upload un film/documentaire vers S3 via Multipart Upload.
  * Supporte des fichiers jusqu'à 50 Go avec reprise sur erreur.
  */
+
+/* 
 export async function uploadLargeVideo(
   file: File,
   movieId: string,
@@ -88,4 +90,4 @@ export async function uploadLargeVideo(
       }
     });
   });
-}
+}  */

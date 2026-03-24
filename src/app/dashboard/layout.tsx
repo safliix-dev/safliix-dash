@@ -4,6 +4,7 @@ import InputField from "@/ui/components/inputField";
 import Sidebar from "@/ui/layout/sidebar";
 import { BellDot, Lightbulb, Menu, SettingsIcon, X } from "lucide-react";
 import { useState } from "react";
+import Image from "next/image";
 
 export default function Layout({children}: Readonly<{ children: React.ReactNode }>) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -58,7 +59,7 @@ export default function Layout({children}: Readonly<{ children: React.ReactNode 
             </div>
             <div className="w-[1px] h-10 bg-base-300"/>
             <div className="flex items-center gap-3">
-              <img src="/gildas.png" alt="Avatar" className="w-12 h-12 rounded-full object-cover border border-base-300"/>
+              <Image width={48} height={48} src="/gildas.png" alt="Avatar" className="w-12 h-12 rounded-full object-cover border border-base-300"/>
               <span className="text-white font-semibold">Gildas</span>
             </div>
           </div>

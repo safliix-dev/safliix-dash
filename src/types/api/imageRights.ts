@@ -21,7 +21,7 @@ export type ImageRightsFormState = {
 
 export type ImageRightsFormStateUpdate = Partial<ImageRightsFormState>;
 
-export interface RightsHolderListParams {
+export interface RightsHolderListParams extends Record<string,unknown> {
   page: number;
   pageSize: number;
   search?: string;

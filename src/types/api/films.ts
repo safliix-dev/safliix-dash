@@ -2,7 +2,7 @@ import { type PaginatedResponse } from "./common";
 
 export type FilmStatus = "DRAFT" | "PROCESSING" | "PUBLISHED" | "ARCHIVED";
 
-export interface FilmListParams {
+export interface FilmListParams extends Record<string,unknown> {
   page?: number;
   pageSize?: number;
   search?: string;
@@ -108,6 +108,8 @@ export interface FilmDetail {
   subtitleLanguages?: string[];
 }
 
+export type FilmSlot = 'mainImage' | 'secondaryImage' | 'movieFile' | 'trailerFile';
+
 export interface FilmActionPayload {
   action: "publish" | "pause";
 }
@@ -149,8 +151,8 @@ export interface FilmMetaActor {
 
 export interface FilmMetaRightHolder {
   id: string;
-  firstName?: string;
-  lastName?: string;
+  firstName: string;
+  lastName: string;
   email?: string;
   sharePercentage?: number;
 }

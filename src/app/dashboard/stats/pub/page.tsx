@@ -10,6 +10,7 @@ import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { formatApiError } from "@/lib/api/errors";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { type PubStatsItem } from "@/types/api/stats";
+import Image from "next/image";
 
 export default function Page(){
   const [pubs, setPubs] = useState<PubStatsItem[]>([]);
@@ -87,8 +88,10 @@ function PubCard({ pub } : { pub: Pub}) {
         Voir les détails
       </Link>
       <div className="flex flex-col items-center">
-        <img
-          src={pub.poster}
+        <Image
+          src={pub.poster ?? ""}
+          width={48}
+          height={48}
           alt={pub.title}
           className="w-36 h-24 object-cover rounded-md"
         />

@@ -92,10 +92,10 @@ export function RightsHolderMoviesReport({ rightsholderName, periodStart, period
   return (
     <Document>
       <Page size="A4" orientation="landscape" style={styles.page}>
-        <View style={[styles.banner, !isLocation && styles.bannerAlt]}>
+        <View style={[styles.banner, !isLocation ? styles.bannerAlt : {}]}>
           <Text style={styles.bannerText}>{bannerTitle}</Text>
         </View>
-
+    
         <View style={styles.infoRow}>
           <Text style={styles.infoCell}>
             <Text style={styles.infoCellLabel}>NOM DE L&apos;AYANT DROIT :</Text> {rightsholderName}
@@ -120,7 +120,7 @@ export function RightsHolderMoviesReport({ rightsholderName, periodStart, period
             </Text>
           </View>
           {rows.map((row, idx) => (
-            <View key={idx} style={[styles.row, idx === rows.length - 1 ? { borderBottomWidth: 0 } : null]}>
+            <View key={idx} style={[styles.row, idx === rows.length - 1 ? { borderBottomWidth: 0 } : {}]}>
               <Text style={[styles.colOrder, styles.rowText]}>{formatValue(row.order)}</Text>
               <Text style={[styles.colTitle, styles.rowText]}>{formatValue(row.title)}</Text>
               <Text style={[styles.colShare, styles.rowText]}>{formatValue(row.share)}</Text>

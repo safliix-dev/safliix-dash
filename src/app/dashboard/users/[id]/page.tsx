@@ -3,6 +3,7 @@
 import Header from "@/ui/components/header";
 import Link from "next/link";
 import { useMemo } from "react";
+import Image from "next/image";
 
 type UserDetail = {
   id: string;
@@ -82,7 +83,7 @@ export default function Page() {
           <div className="flex items-center gap-3">
             <div className="avatar">
               <div className="mask mask-squircle w-16 h-16">
-                <img src={user.avatar} alt={user.name} />
+                <Image width={48} height={48} src={user.avatar} alt={user.name} />
               </div>
             </div>
             <div>

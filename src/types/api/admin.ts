@@ -3,7 +3,7 @@ import { type PaginatedResponse } from "./common";
 export type AdminStatus = "active" | "inactive" | "suspended" | string;
 export type AdminRole = "admin" | "editor" | "viewer" | string;
 
-export interface AdminListParams {
+export interface AdminListParams extends Record<string,unknown> {
   page: number;
   pageSize: number;
   search?: string;

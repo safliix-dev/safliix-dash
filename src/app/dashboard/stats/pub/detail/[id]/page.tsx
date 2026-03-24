@@ -1,6 +1,8 @@
+// app/dashboard/stats/pub/detail/[id]/page.tsx
+
 'use client';
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "@/ui/components/header";
 import Link from "next/link";
 import { statsApi } from "@/lib/api/stats";
@@ -8,16 +10,32 @@ import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { formatApiError } from "@/lib/api/errors";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { type PubStatsDetail } from "@/types/api/stats";
+import Image from "next/image";
 
-export default function Page({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+// 👈 Correction : params est une Promise en Next.js 15
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+export default function Page({ params }: Props) {
   const [pub, setPub] = useState<PubStatsDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const accessToken = useAccessToken();
   const toast = useToast();
 
+  // 👈 Résoudre la Promise params
+  const [id, setId] = useState<string | null>(null);
+
   useEffect(() => {
+    params.then((resolved) => {
+      setId(resolved.id);
+    });
+  }, [params]);
+
+  useEffect(() => {
+    if (!id) return;
+    
     let cancelled = false;
     const load = async () => {
       setLoading(true);
@@ -64,7 +82,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-4 bg-neutral rounded-2xl border border-base-300 p-4 space-y-4">
             <div className="flex flex-col items-center gap-3">
-              <img src={pub.poster || "/elegbara.png"} alt={pub.title} className="w-48 h-64 object-cover rounded-xl border border-base-300" />
+              <Image height={48} width={48} src={pub.poster || "/elegbara.png"} alt={pub.title} className="w-48 h-64 object-cover rounded-xl border border-base-300" />
               <div className="text-center space-y-1">
                 <h2 className="text-xl font-semibold text-white">{pub.title}</h2>
                 {pub.status && (

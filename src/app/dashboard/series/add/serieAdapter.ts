@@ -1,22 +1,37 @@
+import axios from "axios";
 import { seriesApi } from "@/lib/api/series";
-import { uploadToPresignedUrl } from "@/lib/api/uploads";
-import { SeriesMetadataPayload,SeriesFormData } from "@/types/api/series";
+import { uploadApi } from "@/lib/api/uploads";
+import { SeriesMetadataPayload, SeriesFormData } from "@/types/api/series";
 import { MediaFormEngineConfig } from "@/lib/hooks/form/useMediaFormEngine";
 import { 
   attachmentTypeMap, 
-  UploadFileDescriptor, 
-  UploadFinalizePayload, 
-  AttachmentType,  
-  UploadSlot 
+  UploadFinalizePayload,
+  AttachmentType
 } from "@/types/attachmentType";
+
+import { SeriesSlot } from "@/types/api/series";
+
+/**
+ * 1. Typage STRICT des slots (comme FilmSlot)
+ */
+
+
+export interface SeriesPresignedSlot {
+  key: SeriesSlot;
+  uploadUrl: string;
+  finalUrl: string;
+}
 
 export const seriesAdapter: MediaFormEngineConfig<
   SeriesFormData,
   SeriesMetadataPayload,
-  string, // TSlotKey
-  UploadSlot    // TSlot (Remplace par ton type de slot série si disponible)
+  SeriesSlot,
+  SeriesPresignedSlot
 > = {
-  // 1. Transformation des données pour l'API
+
+  /**
+   * 2. Metadata
+   */
   buildMetadata: (data) => ({
     title: data.title,
     description: data.description,
@@ -29,7 +44,7 @@ export const seriesAdapter: MediaFormEngineConfig<
     entertainmentMode: "SERIE",
     gender: data.genre,
     director: data.director,
-    actors: data.actors.map((name: string) => ({ name })),
+    actors: data.actors,
     isSafliixProd: data.isSafliixProd,
     haveSubtitles: data.haveSubtitles,
     subtitleLanguages: data.subtitleLanguages,
@@ -39,42 +54,87 @@ export const seriesAdapter: MediaFormEngineConfig<
     blockedCountries: data.blockCountries,
   }),
 
-  // 2. Collecte des fichiers spécifiques aux séries
+  /**
+   * 3. Collecte fichiers (typé strict)
+   */
   collectFiles: (form) => {
     const slots = [
-      { key: "posterFile", file: form.mainImage },
-      { key: "heroFile", file: form.secondaryImage },
-      { key: "trailerFile", file: form.trailerFile },
+      { key: 'secondaryImage', file: form.secondaryImage },
+      { key: 'mainImage', file: form.mainImage },
+      { key: 'trailerFile', file: form.trailerFile },
     ];
-    return slots.filter((s): s is { key: string; file: File } => s.file instanceof File);
+
+    return slots.filter(
+      (s): s is { key: SeriesSlot; file: File } => s.file instanceof File
+    );
   },
 
-  // 3. Persistance
+  /**
+   * 4. Submit metadata (avec logs comme filmAdapter)
+   */
   submitMetadata: async (payload, id) => {
-    const res = id 
-      ? await seriesApi.update(id, payload) 
-      : await seriesApi.create(payload);
-    return res.id;
+    console.log("1. Début appel API série...");
+    try {
+      const res = id
+        ? await seriesApi.update(id, payload)
+        : await seriesApi.create(payload);
+
+      console.log("2. Réponse serveur série:", res);
+
+      if (!res?.id) {
+        console.error("ERREUR: ID manquant côté serveur !");
+        throw new Error("Format de réponse invalide");
+      }
+
+      return res.id;
+    } catch (err) {
+      console.error("3. Erreur dans seriesAdapter:", err);
+      throw err;
+    }
   },
 
-  // 4. S3 Presign
-  presignUploads: async (id, files) => {
-    const descriptors: UploadFileDescriptor[] = files.map(f => ({
+  /**
+   * 5. Presign (AVEC transformation comme filmAdapter)
+   */
+  presignUploads: async (id, files): Promise<SeriesPresignedSlot[]> => {
+    if (files.length === 0) return [];
+
+    const descriptors = files.map(f => ({
       key: f.key,
       name: f.file.name,
       type: f.file.type || "application/octet-stream",
-      attachmentType: attachmentTypeMap[f.key as keyof typeof attachmentTypeMap] as AttachmentType
+      attachmentType:  attachmentTypeMap[f.key] as AttachmentType
     }));
 
-    return seriesApi.presignUploads(id, descriptors);
+    const slots = await uploadApi.presignUploads(id, "series", descriptors);
+
+    return slots.map(slot => ({
+      uploadUrl: slot.uploadUrl,
+      finalUrl: slot.finalUrl,
+      key: slot.key as SeriesSlot
+    }));
   },
 
-  // 5. Upload physique
-  uploadFile: async (url, file) => {
-    await uploadToPresignedUrl(url, file);
+  /**
+   * 6. Upload (aligné avec filmAdapter : progress + cancel)
+   */
+  uploadFile: async (url, file, onProgress, signal) => {
+    await axios.put(url, file, {
+      signal,
+      headers: {
+        "Content-Type": file.type || "application/octet-stream",
+      },
+      onUploadProgress: (progressEvent) => {
+        const total = progressEvent.total ?? 1;
+        const percent = Math.round((progressEvent.loaded * 100) / total);
+        onProgress?.(percent);
+      },
+    });
   },
 
-  // 6. Finalisation
+  /**
+   * 7. Finalisation (via uploadApi comme filmAdapter)
+   */
   finalizeUploads: async (id, slots) => {
     const payload: UploadFinalizePayload = {
       uploads: slots.map((s) => ({
@@ -82,7 +142,19 @@ export const seriesAdapter: MediaFormEngineConfig<
         finalUrl: s.finalUrl,
       })),
     };
-    const res = await seriesApi.finalizeUploads(id, payload);
-    if (!res.ok) throw new Error("La finalisation de l'upload série a échoué.");
-  }
+
+    const res = await uploadApi.finalizeUploads(id, payload);
+
+    if (!res || res.ok === false) {
+      throw new Error("La finalisation des uploads série a échoué.");
+    }
+  },
+
+  /**
+   * 8. Rollback optionnel
+   */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    deleteEntity: async (_id) => {
+      // await seriesApi.delete(id);
+    }
 };

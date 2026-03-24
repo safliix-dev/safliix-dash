@@ -71,8 +71,7 @@ export function useDashboardData(): DashboardData {
       cancelled = true;
       controller.abort();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nonce, accessToken]);
+  }, [nonce, accessToken,toast]);
 
   return {
     metrics,

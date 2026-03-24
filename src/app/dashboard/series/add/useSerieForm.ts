@@ -6,56 +6,65 @@ import { useMetaOptions } from "@/lib/hooks/form/useMetaOptions";
 import { seriesApi } from "@/lib/api/series";
 import { seriesAdapter } from "./serieAdapter";
 import { useSession } from "next-auth/react";
-import { type SeriesFormData } from "@/types/api/series";
 
 export function useSeriesForm(initialId?: string) {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
 
-  // 1. Chargement des options de métadonnées (catégories, genres, etc.)
+  /**
+   * 1. Chargement des options (aligné film)
+   */
   const loadMetaOptions = useCallback(() => {
+    // même logique que film (tu peux réactiver le guard si besoin)
+    // if (!accessToken) return Promise.reject("No access token");
     return seriesApi.metaOptions(accessToken);
   }, [accessToken]);
 
   const meta = useMetaOptions(loadMetaOptions);
 
-  // 2. Initialisation du moteur avec l'adapter et les valeurs par défaut
-  const defaultValues: SeriesFormData = {
-    title: "",
-    description: "",
-    language: "",
-    productionHouse: "",
-    country: "",
-    blockCountries: [],
-    releaseDate: "",
-    publishDate: "",
-    category: "",
-    seasonCount: null,
-    genre: "",
-    actors: [],
-    director: "",
-    ageRating: "",
-    isSafliixProd: true,
-    haveSubtitles: false,
-    subtitleLanguages: [],
-    rightHolderId: "",
-    mainImage: null,
-    secondaryImage: null,
-    trailerFile: null,
-  };
-
+  /**
+   * 2. Engine (corrigé + cohérent avec adapter)
+   */
   const engine = useMediaFormEngine(
     seriesAdapter,
-    defaultValues
+    {
+      title: "",
+      description: "",
+      productionHouse: "",
+      country: "",
+      releaseDate: "",
+      publishDate: "",
+      seasonCount: null,
+      category: "",
+      genre: "",
+      actors: [],
+      director: "",
+      blockCountries: [],
+      rightHolderId: "",
+      entertainmentMode: "SERIE",
+      isSafliixProd: false,
+      haveSubtitles: false,
+      subtitleLanguages: [],
+      language: "",
+      ageRating: "",
+
+      /**
+       * ⚠️ TRÈS IMPORTANT : correspondre à collectFiles()
+       */
+      secondaryImage: null,
+      mainImage: null,
+      trailerFile: null,
+    }
   );
 
-  // 3. Hydratation de l'ID pour le mode édition
+  /**
+   * 3. Hydratation ID (identique film)
+   */
   useEffect(() => {
     if (initialId && !engine.entityId) {
       engine.setEntityId(initialId);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialId, engine.entityId, engine.setEntityId]);
+  }, [initialId, engine.entityId, engine.setEntityId, engine]);
 
   return {
     ...engine,

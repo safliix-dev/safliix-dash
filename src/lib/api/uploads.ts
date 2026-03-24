@@ -3,33 +3,35 @@ import { type UploadFileDescriptor,
   type UploadFinalizePayload,
   type UploadSlot } from "@/types/attachmentType";  
 
-export async function uploadToPresignedUrl(url: string, file: File): Promise<void> {
-  const res = await fetch(url, {
-    method: "PUT",
-    body: file,
-    headers: { "Content-Type": file.type || "application/octet-stream" },
-  });
-  if (!res.ok) throw new Error(`Upload failed: ${res.status} ${res.statusText}`);
-}
 
 export const uploadApi = {
   
-  presignUploads: (entityId: string, entityType: string, files: UploadFileDescriptor[], accessToken?: string) =>
-    apiRequest<UploadSlot[]>(`/uploads/presign-uploads`, {
+  // 👈 Ajouter le générique TKey
+  presignUploads: <TKey extends string = string>(
+    entityId: string, 
+    entityType: string, 
+    files: UploadFileDescriptor<TKey>[],  // 👈 Utiliser le générique
+    accessToken?: string
+  ) =>
+    apiRequest<UploadSlot<TKey>[]>(`/uploads/presign-uploads`, {  // 👈 Retour avec le générique
       method: "POST",
       body: { 
         files,
         entityId,
-        entityType },
+        entityType 
+      },
       accessToken,
     }),
 
-  finalizeUploads: (id: string, payload: UploadFinalizePayload, accessToken?: string) =>
+  // 👈 Ajouter le générique TKey aussi pour finalizeUploads
+  finalizeUploads: <TKey extends string = string>(
+    id: string, 
+    payload: UploadFinalizePayload<TKey>,  // 👈 Utiliser le générique
+    accessToken?: string
+  ) =>
     apiRequest<{ ok: boolean }>(`/admin/movies/${id}/uploads/finalize`, {
       method: "POST",
       body: payload,
       accessToken,
     }),
-
-  
 };

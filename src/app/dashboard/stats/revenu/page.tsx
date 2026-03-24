@@ -7,6 +7,7 @@ import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { formatApiError } from "@/lib/api/errors";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { type RevenueStatsResponse } from "@/types/api/stats";
+import Image from "next/image";
 
 const formatNumber = (value?: number) =>
   value === undefined || value === null ? "-" : value.toLocaleString("fr-FR");
@@ -67,7 +68,7 @@ export default function Page() {
       <div className="flex-2 ">
         <div className="flex items-center gap-4 h-58  p-10 mb-4 shadow-md shadow-base-200 rounded-lg bg-neutral">
           <div className="flex-1">
-            <img src="/shape.png" alt="" />
+            <Image width={48} height={48} alt="" src = "/shape.png"/>
             <h4 className="font-bold">Total Revenu</h4>
           </div>
           <div className="flex-4 p-10">
@@ -145,7 +146,7 @@ const StatCard = ({title,value,stat} : {title:string; value:number;stat:number})
 const Card = ({title,desc,stat,iconPath,bgColor} : {title:string; desc:string;stat:number; iconPath:string;bgColor:string}) => (
   <div className="flex gap-4 items-start">
     <div className={`flex items-center justify-center h-10 w-10 p-2 rounded-md`} style={{background:`${bgColor}`}}>
-      <img src={iconPath} alt="icon" className="h-4 w-5"/>
+      <Image width={48} height={48} src={iconPath} alt="icon" className="h-4 w-5"/>
     </div>
     <div className="">
       <h3 className="font-bold text-xl">{title}</h3>

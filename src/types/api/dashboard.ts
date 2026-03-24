@@ -2,7 +2,7 @@ import { type TimeRangeParams } from "./common";
 
 export type DashboardMetricsParams = TimeRangeParams;
 
-export interface DashboardMetricsResponse {
+export interface DashboardMetricsResponse extends Record<string,unknown> {
   revenueTotal: number;
   newUsers: number;
   newProducts: number;

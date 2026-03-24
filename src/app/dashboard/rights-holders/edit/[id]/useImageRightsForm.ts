@@ -106,8 +106,7 @@ export function useImageRightsForm(id?: string) {
           description: "Impossible de charger l'ayant droit.",
         });
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id,reset,isEdit,accessToken,toast]);
 
   return {
     isEdit,

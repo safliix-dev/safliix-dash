@@ -2,7 +2,7 @@
 
 import EpisodeCard from "@/ui/components/episodeCard";
 import { useState } from "react";
-import { seriesApi } from "@/lib/api/series";
+import { episodeApi } from "@/lib/api/episode";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { formatApiError } from "@/lib/api/errors";
 import { useAccessToken } from "@/lib/auth/useAccessToken";
@@ -34,7 +34,7 @@ export default function SeriesDetailClient({ id, seasons, detail }: Props) {
 
     if (episodesBySeason[seasonId]) return;
     try {
-      const episodes = await seriesApi.listEpisodes(id, seasonId, undefined, accessToken);
+      const episodes = await episodeApi.list(id, seasonId, undefined, accessToken);
       const normalized = Array.isArray(episodes) ? episodes : [];
       setEpisodesBySeason((prev) => ({ ...prev, [seasonId]: normalized }));
     } catch (error) {

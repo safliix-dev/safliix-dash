@@ -102,8 +102,7 @@ export function useUserForm(id?: string) {
           description: "Impossible de charger l'utilisateur.",
         });
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id,accessToken,isEdit,reset,toast]);
 
   return {
     isEdit,

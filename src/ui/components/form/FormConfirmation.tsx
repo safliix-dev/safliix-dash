@@ -71,7 +71,7 @@ export function FormConfirmation<T extends BaseMetadata & MediaFileFields, TSlot
       onConfirm={finalOnConfirm}
       onCancel={onCancel}
       // On peut masquer le bouton annuler quand c'est déjà enregistré
-      showCancel={!isSuccessStep0}
+      //showCancel={!isSuccessStep0}
     >
       
       {/* --- SECTION A : ÉTAPE 0 RÉUSSIE (Feedback Visuel) --- */}
