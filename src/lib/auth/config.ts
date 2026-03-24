@@ -1,16 +1,51 @@
-/* import KeycloakProvider from "next-auth/providers/keycloak";
-import NextAuthConfig  from "next-auth";
+import { DefaultSession } from "next-auth";
+import KeycloakProvider from "next-auth/providers/keycloak";
+import { NextAuthOptions } from "next-auth";
+import { JWT } from "next-auth/jwt";
+
+
+declare module "next-auth" {
+  interface Session {
+    accessToken?: string;
+    idToken?: string;
+    error?: string;
+    user: {
+      name?: string;
+      email?: string;
+      roles?: string[];
+    } & DefaultSession["user"];
+  }
+
+  interface Profile {
+    preferred_username?: string;
+    realm_access?: { roles: string[] };
+    resource_access?: { [key: string]: { roles: string[] } };
+    // Tu peux ajouter d'autres champs Keycloak ici si besoin (ex: roles, groups)
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    accessToken?: string;
+    refreshToken?: string;
+    accessTokenExpires?: number;
+    idToken?: string;
+    error?: string;
+    user?: {
+      name?: string;
+      email?: string;
+    };
+  }
+}
+
+
+
 
 const issuer = process.env.KEYCLOAK_ISSUER;
 const clientId = process.env.KEYCLOAK_CLIENT_ID;
 const clientSecret = process.env.KEYCLOAK_CLIENT_SECRET;
 
-if (!issuer || !clientId || !clientSecret) {
-  console.warn("[auth] KEYCLOAK_ISSUER/CLIENT_ID/CLIENT_SECRET manquants. Configure .env.local.");
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function refreshAccessToken(token: any) {
+async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
     const tokenEndpoint = `${issuer}/protocol/openid-connect/token`;
     const form = new URLSearchParams();
@@ -31,21 +66,22 @@ async function refreshAccessToken(token: any) {
     return {
       ...token,
       accessToken: refreshedTokens.access_token,
-      accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
+      // On convertit expires_in (secondes) en timestamp (ms)
+      accessTokenExpires: Date.now() + (refreshedTokens.expires_in as number) * 1000,
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
     };
   } catch (error) {
     console.error("Erreur de refresh token", error);
-    return { ...token, error: "RefreshAccessTokenError" as const };
+    return { ...token, error: "RefreshAccessTokenError" };
   }
 }
 
-const authConfig: NextAuthConfig = {
+const authConfig: NextAuthOptions = {
   providers: [
     KeycloakProvider({
       clientId: clientId || "",
       clientSecret: clientSecret || "",
-      issuer,
+      issuer: issuer || "",
       authorization: { params: { scope: "openid profile email offline_access" } },
     }),
   ],
@@ -54,47 +90,56 @@ const authConfig: NextAuthConfig = {
   },
   callbacks: {
     async jwt({ token, account, profile }) {
-      // Initial sign-in
-      if (account) {
-        const expiresAtMs =
-          account.expires_at
-            ? account.expires_at * 1000
-            : account.expires_in
-              ? Date.now() + account.expires_in * 1000
-              : undefined;
+      // Connexion initiale : on stocke les tokens dans le JWT
+      if (account && profile) {
+        const expiresAtMs = account.expires_at 
+          ? account.expires_at * 1000 
+          : undefined;
+
+        token.roles = profile.realm_access?.roles || [];
+
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
         token.accessTokenExpires = expiresAtMs;
         token.idToken = account.id_token;
         token.user = {
-          name: profile?.name || profile?.preferred_username || token.name,
-          email: profile?.email || token.email,
+          name: profile.name ?? profile.preferred_username ?? token.name ?? undefined,
+          email: profile.email ?? token.email ?? undefined,
         };
-      }
-
-      // If the token is still valid, return it
-      if (token.accessToken && token.accessTokenExpires && Date.now() < token.accessTokenExpires - 30_000) {
         return token;
       }
 
-      // Refresh it
+      // Si le token est encore valide (avec une marge de 30s)
+      if (token.accessTokenExpires && Date.now() < token.accessTokenExpires - 30_000) {
+        return token;
+      }
+
+      // Sinon, on rafraîchit
       if (token.refreshToken) {
         return refreshAccessToken(token);
       }
 
       return token;
     },
-    async session({ session, token }) {
-      session.accessToken = token.accessToken as string | undefined;
-      session.idToken = token.idToken as string | undefined;
-      session.error = token.error as string | undefined;
-      session.user = {
-        ...session.user,
-        name: (token.user as { name?: string })?.name ?? session.user?.name ?? "",
-        email: (token.user as { email?: string })?.email ?? session.user?.email ?? "",
-      };
-      return session;
-    },
+
+   async session({ session, token }) {
+  // 1. Transférer les tokens techniques
+    session.accessToken = token.accessToken;
+    session.idToken = token.idToken;
+    session.error = token.error;
+    
+    // 2. Transférer les rôles du JWT vers la Session
+    // C'est cette ligne qui permet au middleware et à useSession() de voir les rôles
+    session.user.roles = token.roles as string[] || [];
+
+    // 3. Transférer les infos utilisateur
+    if (token.user) {
+      session.user.name = token.user.name;
+      session.user.email = token.user.email;
+    }
+    
+    return session;
+  },
   },
   pages: {
     signIn: "/auth/login",
@@ -102,4 +147,3 @@ const authConfig: NextAuthConfig = {
 };
 
 export default authConfig;
- */
