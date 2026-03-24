@@ -58,16 +58,16 @@ export function useEpisodeForm(seriesId?: string, seasonId?: string) {
     setFiles((prev) => ({ ...prev, [key]: file }));
   };
 
-  const buildMetadataPayload = () => ({
+  const buildMetadataPayload = (): EpisodeMetadataPayload => ({
     title: form.title,
-    description: form.description,
-    isCustomProduction: form.isCustomProduction,
+    synopsis: form.description,
     status: form.status,
-    duration: form.duration ?? 0,
+    duration: String(form.duration ?? 0),
     releaseDate: form.releaseDate,
-    plateformDate: form.plateformDate,
+    publishDate: form.plateformDate,
     director: form.director,
-    episodeNumber: form.episodeNumber ?? 0,
+    language: "fr",
+    productionFlag: form.isCustomProduction ? "SAFLIIX" : "EXTERNAL",
   });
 
   type UploadWithFile = EpisodeUploadDescriptor & { file: File };

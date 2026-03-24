@@ -30,8 +30,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files (secrets only — config .env files in infra/environments/ are versioned)
+.env
+.env.local
+.env.*.local
+.env.secrets
 
 # vercel
 .vercel
@@ -39,3 +42,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# deployment (generated on server, not versioned)
+infra/templates/generated/
+
+# IDE
+.vscode/
+.idea/
