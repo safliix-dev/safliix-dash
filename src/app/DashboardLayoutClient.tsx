@@ -1,31 +1,84 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Session } from "next-auth";
+//import { useRouter, usePathname } from "next/navigation";
+import { useSession, signIn } from "next-auth/react"; // 👈 Ajout de signIn
 import Sidebar from "@/ui/layout/sidebar";
 import { BellDot, Lightbulb, Menu, SettingsIcon, X } from "lucide-react";
 import Image from "next/image";
 
 interface DashboardLayoutClientProps {
   children: React.ReactNode;
-  session: Session | null;
 }
 
-export default function DashboardLayoutClient({ children, session }: DashboardLayoutClientProps) {
+export default function DashboardLayoutClient({ children }: DashboardLayoutClientProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const router = useRouter();
+  const [isRedirecting, setIsRedirecting] = useState(false);
+ 
+  const { data: session, status } = useSession();
 
-  // 🔐 Auto-redirect si non connecté
+  // Gestion de la redirection
   useEffect(() => {
-    if (!session) {
-      router.replace("/api/auth/signin/keycloak?callbackUrl=/");
+    // Éviter les redirections multiples
+    if (isRedirecting) return;
+    
+    // Si pas de session et pas en cours de chargement
+    if (status === "unauthenticated") {
+      console.log("🔴 Utilisateur non authentifié, redirection vers Keycloak");
+      setIsRedirecting(true);
+      
+      // Utiliser signIn au lieu de router.replace pour plus de fiabilité
+      signIn("keycloak", { 
+        callbackUrl: "/",
+        redirect: true 
+      }).catch(error => {
+        console.error("Erreur redirection Keycloak:", error);
+        setIsRedirecting(false);
+      });
     }
-  }, [session, router]);
+  }, [status, isRedirecting]);
 
-  // ⚠️ tant que la session n'est pas chargée, on peut afficher loader
-  if (!session) return <div>Chargement...</div>;
+  // État de chargement
+  if (status === "loading" || isRedirecting) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-gray-600">
+            {isRedirecting ? "Redirection vers Keycloak..." : "Chargement de votre session..."}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
+  // Si non authentifié et pas en redirection (cas d'erreur)
+  if (status === "unauthenticated") {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Erreur d&apos;authentification</p>
+          <button 
+            onClick={() => signIn("keycloak")}
+            className="px-4 py-2 bg-blue-600 text-white rounded"
+          >
+            Se connecter
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Vérifier que session existe bien
+  if (!session) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Session introuvable, veuillez patienter...</p>
+      </div>
+    );
+  }
+
+  // Dashboard rendu
   return (
     <div className={`min-h-screen bg-base-100 transition-all duration-200 ${sidebarOpen ? "pl-56" : "pl-4"}`}>
       {/* Sidebar */}
@@ -64,11 +117,13 @@ export default function DashboardLayoutClient({ children, session }: DashboardLa
               <Image
                 width={48}
                 height={48}
-                src="/gildas.png"
+                src={session?.user?.image || "/gildas.png"}
                 alt="Avatar"
                 className="w-12 h-12 rounded-full object-cover border border-base-300"
               />
-              <span className="text-white font-semibold">Gildas</span>
+              <span className="text-white font-semibold">
+                {session?.user?.name || "Utilisateur"}
+              </span>
             </div>
           </div>
         </div>

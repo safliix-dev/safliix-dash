@@ -1,4 +1,4 @@
-// middleware.ts
+/* // middleware.ts
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
@@ -28,4 +28,21 @@ export const config = {
     "/users/:path*",
     // "/" n'a pas besoin d'être dans le matcher maintenant
   ],
+}; */
+
+// middleware.ts - Version temporaire qui laisse tout passer
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+export function middleware(request: NextRequest) {
+  // Log toutes les requêtes pour debug
+  console.log("🔵 Middleware - Path:", request.nextUrl.pathname);
+  
+  // Laisse tout passer - PAS DE REDIRECTION
+  return NextResponse.next();
+}
+
+// Ne matcher aucune route spécifique
+export const config = {
+  matcher: [], // Matcher vide = désactivé
 };
