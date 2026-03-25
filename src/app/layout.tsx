@@ -23,7 +23,7 @@ export default async function RootLayout({
       <body className="antialiased">
         <Providers session={session}>
           {/* Pass session au composant client */}
-          <DashboardLayoutClient session={session}>
+          <DashboardLayoutClient>
             {children}
           </DashboardLayoutClient>
         </Providers>
