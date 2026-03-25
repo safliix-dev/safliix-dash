@@ -5,22 +5,27 @@ import { NextResponse } from "next/server";
 export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
-    const isSuperAdmin = (token?.roles as string[])?.includes("super_admin");
-    
-    // Si l'utilisateur essaie d'accéder à /admin mais n'est pas super_admin
-    if (req.nextUrl.pathname.startsWith("/users") && !isSuperAdmin) {
+    const roles = (token?.roles as string[]) || [];
+    const isSuperAdmin = roles.includes("super_admin");
+
+    // 🔒 Protection users (ex: admin ou super_admin)
+    if (req.nextUrl.pathname.startsWith("/users") && !roles.includes("admin") && !isSuperAdmin) {
       return NextResponse.rewrite(new URL("/unauthorized", req.url));
     }
+
+    // Pour le dashboard (/), plus besoin de rediriger car layout gère déjà la session
   },
   {
     callbacks: {
-      // Le middleware ne s'exécute que si l'utilisateur est authentifié
-      authorized: ({ token }) => !!token,
+      // On ne bloque jamais l'accès au middleware, redirection gérée côté layout
+      authorized: () => true,
     },
   }
 );
 
-// On définit sur quelles routes le middleware doit s'appliquer
 export const config = {
-  matcher: ["/admin/:path*", "/dashboard/:path*"],
+  matcher: [
+    "/users/:path*",
+    // "/" n'a pas besoin d'être dans le matcher maintenant
+  ],
 };

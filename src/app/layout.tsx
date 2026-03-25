@@ -1,29 +1,31 @@
+// app/layout.tsx
 import type { Metadata } from "next";
-import { getServerSession,Session } from "next-auth";
+import { getServerSession, Session } from "next-auth";
 import authConfig from "@/lib/auth/config";
-import "./globals.css";
 import { Providers } from "./providers";
+import DashboardLayoutClient from "./DashboardLayoutClient";
 
 export const metadata: Metadata = {
   title: "safliixboard",
   description: "Le dashboard de la plateforme de VOD SaFliix",
-  
 };
 
 export default async function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
+  // Server Component → récupération session côté serveur
   const session = await getServerSession(authConfig) as Session | null;
 
   return (
     <html lang="fr" data-theme="mytheme">
-      <body
-        className={`antialiased`}
-      > 
+      <body className="antialiased">
         <Providers session={session}>
-          {children}
+          {/* Pass session au composant client */}
+          <DashboardLayoutClient session={session}>
+            {children}
+          </DashboardLayoutClient>
         </Providers>
       </body>
     </html>
