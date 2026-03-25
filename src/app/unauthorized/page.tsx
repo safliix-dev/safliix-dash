@@ -1,12 +1,12 @@
-import Link from "next/link";
-export default function Unauthorized() {
+// app/unauthorized/page.tsx
+import { AuthStatusCard } from "@/ui/components/authStatusCard";
+
+export default function UnauthorizedPage() {
   return (
-    <div style={{ textAlign: 'center', marginTop: '50px' }}>
-      <h1>Accès Refusé 🛑</h1>
-      <p>Désolé, seul un <strong>super_admin</strong> peut accéder à cette section de SaFliix.</p>
-      <Link href="/" style={{ color: 'blue', textDecoration: 'underline' }}>
-        Retour à l&apos;accueil
-      </Link>
-    </div>
+    <AuthStatusCard 
+      type="unauthorized"
+      title="Accès non autorisé"
+      message="Vous n'avez pas les permissions nécessaires pour accéder à cette page. Veuillez contacter votre administrateur si vous pensez qu'il s'agit d'une erreur."
+    />
   );
 }

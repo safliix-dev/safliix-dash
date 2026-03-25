@@ -1,4 +1,4 @@
-/* // middleware.ts
+// middleware.ts
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
@@ -7,42 +7,70 @@ export default withAuth(
     const token = req.nextauth.token;
     const roles = (token?.roles as string[]) || [];
     const isSuperAdmin = roles.includes("super_admin");
+    const isAdmin = roles.includes("admin");
+    const pathname = req.nextUrl.pathname;
 
-    // 🔒 Protection users (ex: admin ou super_admin)
-    if (req.nextUrl.pathname.startsWith("/users") && !roles.includes("admin") && !isSuperAdmin) {
+    console.log(`🛡️ Middleware - Path: ${pathname}, Roles: ${roles.join(", ")}`);
+
+    // 🔒 Protection route /users (admin ou super_admin uniquement)
+    if (pathname.startsWith("/users") && !isAdmin && !isSuperAdmin) {
+      console.log(`⛔ Accès refusé à ${pathname} - Rôles insuffisants`);
       return NextResponse.rewrite(new URL("/unauthorized", req.url));
     }
 
-    // Pour le dashboard (/), plus besoin de rediriger car layout gère déjà la session
+    // 🔒 Protection route /admin (super_admin uniquement)
+    if (pathname.startsWith("/admin") && !isSuperAdmin) {
+      console.log(`⛔ Accès refusé à ${pathname} - Super Admin requis`);
+      return NextResponse.rewrite(new URL("/unauthorized", req.url));
+    }
+
+    // 🔒 Protection route /settings (admin ou super_admin uniquement - optionnel)
+    if (pathname.startsWith("/settings") && !isAdmin && !isSuperAdmin) {
+      console.log(`⛔ Accès refusé à ${pathname} - Admin requis`);
+      return NextResponse.rewrite(new URL("/unauthorized", req.url));
+    }
+
+    // ✅ Tout est ok, on laisse passer
+    return NextResponse.next();
   },
   {
     callbacks: {
-      // On ne bloque jamais l'accès au middleware, redirection gérée côté layout
-      authorized: () => true,
+      // On autorise l'accès au middleware même sans token
+      // La vérification se fait dans la fonction middleware ci-dessus
+      authorized: ({ token, req }) => {
+        const pathname = req.nextUrl.pathname;
+        
+        // Routes publiques toujours autorisées
+        const publicRoutes = ["/", "/debug", "/test", "/auth/error"];
+        if (publicRoutes.some(route => pathname.startsWith(route))) {
+          return true;
+        }
+        
+        // Pour les routes protégées, on vérifie le token
+        const isProtectedRoute = 
+          pathname.startsWith("/users") || 
+          pathname.startsWith("/admin") || 
+          pathname.startsWith("/settings");
+        
+        if (isProtectedRoute) {
+          return !!token;
+        }
+        
+        return true;
+      },
     },
   }
 );
 
+// Configuration des routes à intercepter
 export const config = {
   matcher: [
+    // Routes protégées
     "/users/:path*",
-    // "/" n'a pas besoin d'être dans le matcher maintenant
+    "/admin/:path*",
+    "/settings/:path*",
+    
+    // Exclure les routes suivantes
+    "/((?!_next/static|_next/image|favicon.ico|api/auth|debug|test).*)",
   ],
-}; */
-
-// middleware.ts - Version temporaire qui laisse tout passer
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-
-export function middleware(request: NextRequest) {
-  // Log toutes les requêtes pour debug
-  console.log("🔵 Middleware - Path:", request.nextUrl.pathname);
-  
-  // Laisse tout passer - PAS DE REDIRECTION
-  return NextResponse.next();
-}
-
-// Ne matcher aucune route spécifique
-export const config = {
-  matcher: [], // Matcher vide = désactivé
 };
