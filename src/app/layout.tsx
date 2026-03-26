@@ -4,6 +4,7 @@ import { getServerSession, Session } from "next-auth";
 import authConfig from "@/lib/auth/config";
 import { Providers } from "./providers";
 import DashboardLayoutClient from "./DashboardLayoutClient";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "safliixboard",
