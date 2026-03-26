@@ -30,27 +30,27 @@ type MenuItem = {
 };
 
 const items: MenuItem[] = [
-  { href: "/dashboard", label: "Sflixboard", imageSrc: "/ICONE_SFLIX.png" },
-  { href: "/dashboard/films", label: "Film", icon: Film },
-  { href: "/dashboard/series", label: "Série", icon: Clapperboard },
-  { href: "/dashboard/users", label: "Utilisateur", icon: Users },
-  { href: "/dashboard/admins",label: "Admin", icon: Users},
-  { href: "/dashboard/rights-holders", label: "Ayants droit", icon: UserCheck },
-  { href: "/dashboard/subscriptions", label: "Abonnement", icon: CreditCard },
+  { href: "/", label: "Sflixboard", imageSrc: "/ICONE_SFLIX.png" },
+  { href: "/films", label: "Film", icon: Film },
+  { href: "/series", label: "Série", icon: Clapperboard },
+  { href: "/users", label: "Utilisateur", icon: Users },
+  { href: "/admins",label: "Admin", icon: Users},
+  { href: "/rights-holders", label: "Ayants droit", icon: UserCheck },
+  { href: "/subscriptions", label: "Abonnement", icon: CreditCard },
   {
-    href: "/dashboard/stats",
+    href: "/stats",
     label: "Statistique",
     submenus: [
-      { href: "/dashboard/stats/films", label: "Films", icon: Film },
-      { href: "/dashboard/stats/revenu", label: "Revenu", icon: Clapperboard },
-      { href: "/dashboard/stats/users", label: "Utilisateurs", icon: Users },
-      { href: "/dashboard/stats/pub", label: "Pub", icon: Monitor }
+      { href: "/stats/films", label: "Films", icon: Film },
+      { href: "/stats/revenu", label: "Revenu", icon: Clapperboard },
+      { href: "/stats/users", label: "Utilisateurs", icon: Users },
+      { href: "/stats/pub", label: "Pub", icon: Monitor }
     ],
     icon: BarChart2
   },
-  { href: "/dashboard/pub", label: "Pub", icon: Megaphone },
-  { href: "/dashboard/security", label: "Sécurité", icon: Shield },
-  { href: "/dashboard/settings", label: "Paramètres", icon: Settings }
+  { href: "/pub", label: "Pub", icon: Megaphone },
+  { href: "/security", label: "Sécurité", icon: Shield },
+  { href: "  /settings", label: "Paramètres", icon: Settings }
 ];
 
 
