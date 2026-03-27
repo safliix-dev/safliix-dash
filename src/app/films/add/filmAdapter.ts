@@ -51,11 +51,13 @@ export const filmAdapter: MediaFormEngineConfig<
   },
 
   collectFiles: (form): { key: FilmSlot; file: File }[] => {
+    // CORRECTION : On utilise directement les valeurs attendues par le workflow (l'Enum)
+    // Cela permet au hook de faire le lien entre le retour du serveur et le fichier local
     const slots: { key: FilmSlot; file: File | null | undefined }[] = [
-      { key: 'mainImage', file: form.mainImage },
-      { key: 'secondaryImage', file: form.secondaryImage },
-      { key: 'movieFile', file: form.movieFile },
-      { key: 'trailerFile', file: form.trailerFile },
+      { key: 'POSTER' as FilmSlot, file: form.mainImage },
+      { key: 'THUMBNAIL' as FilmSlot, file: form.secondaryImage },
+      { key: 'MAIN' as FilmSlot, file: form.movieFile },
+      { key: 'TRAILER' as FilmSlot, file: form.trailerFile },
     ];
     
     return slots.filter((s): s is { key: FilmSlot; file: File } => s.file instanceof File);
