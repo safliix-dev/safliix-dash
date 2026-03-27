@@ -22,8 +22,9 @@ export interface RequestOptions<TBody = unknown> {
   signal?: AbortSignal;
 }
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "https://dashboard-api.safliix.com/api").replace(/\/+$/, "");
 const test = process.env.NEXTAUTH_URL;
+
 // 👈 Ajoutez ce log pour déboguer
 if (typeof window !== 'undefined') {
   console.log('🔍 API_BASE_URL:', API_BASE_URL);
