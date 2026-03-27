@@ -24,6 +24,12 @@ export interface RequestOptions<TBody = unknown> {
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
 
+// 👈 Ajoutez ce log pour déboguer
+if (typeof window !== 'undefined') {
+  console.log('🔍 API_BASE_URL:', API_BASE_URL);
+  console.log('🔍 Process env:', process.env.NEXT_PUBLIC_API_BASE_URL);
+}
+
 const buildUrl = (path: string, params?: RequestOptions["params"]) => {
   const isAbsolute = /^https?:\/\//i.test(path);
   const target = isAbsolute
