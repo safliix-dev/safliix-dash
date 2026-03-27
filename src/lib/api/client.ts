@@ -22,7 +22,7 @@ export interface RequestOptions<TBody = unknown> {
   signal?: AbortSignal;
 }
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
 
 const buildUrl = (path: string, params?: RequestOptions["params"]) => {
   const isAbsolute = /^https?:\/\//i.test(path);

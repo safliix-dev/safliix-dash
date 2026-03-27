@@ -246,7 +246,7 @@ const extractFilmStats = (
               <span>{isClient ? new Date().toLocaleString("fr-FR") : "--/--/---- --:--"}</span>
             </div>
           </div>
-          <Link className="btn btn-primary btn-sm rounded-lg" href="/dashboard/films/add">
+          <Link className="btn btn-primary btn-sm rounded-lg" href="/films/add">
             <Plus className="w-4 h-4 mr-1" /> Ajouter un film
           </Link>
         </div>
