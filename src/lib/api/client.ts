@@ -27,7 +27,7 @@ const test = process.env.NEXTAUTH_URL;
 
 // 👈 Ajoutez ce log pour déboguer
 if (typeof window !== 'undefined') {
-  console.log('🔍 API_BASE_URL:', API_BASE_URL);
+  //console.log('🔍 API_BASE_URL:', API_BASE_URL);
   console.log('🔍 Process env:', process.env.NEXT_PUBLIC_API_BASE_URL);
   console.log("test", test);
 }
