@@ -267,7 +267,11 @@ export function MediaPage<
         pendingData={pendingData}
         summary={currentStep === 0 ? 'metadata' : 'files'}
         currentStep={currentStep}
-        onNextStep={() => setCurrentStep(1)}
+        onNextStep={() => {
+    
+         resetEngine();
+          setCurrentStep(1);
+        }}
       />
     </FormStepLayout>
   );

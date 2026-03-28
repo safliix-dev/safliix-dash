@@ -1,7 +1,7 @@
 import { apiRequest } from "./client";
 import { type UploadFileDescriptor,
   type UploadFinalizePayload,
-  type UploadSlot } from "@/types/attachmentType";  
+  type UploadSlot } from "@/types/upload";  
 
 
 export const uploadApi = {
@@ -24,12 +24,12 @@ export const uploadApi = {
     }),
 
   // 👈 Ajouter le générique TKey aussi pour finalizeUploads
-  finalizeUploads: <TKey extends string = string>(
+  finalizeUploads:(
     id: string, 
-    payload: UploadFinalizePayload<TKey>,  // 👈 Utiliser le générique
+    payload: UploadFinalizePayload,
     accessToken?: string
   ) =>
-    apiRequest<{ ok: boolean }>(`/admin/movies/${id}/uploads/finalize`, {
+    apiRequest<{ ok: boolean }>(`/uploads/confirm-upload`, {
       method: "POST",
       body: payload,
       accessToken,

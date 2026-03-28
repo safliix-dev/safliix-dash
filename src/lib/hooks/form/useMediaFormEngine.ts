@@ -4,30 +4,29 @@ import { useState, useCallback } from "react";
 import { useForm, DefaultValues } from "react-hook-form";
 import { DialogStatus } from "@/ui/components/confirmationDialog";
 import { useUploadWorkflow } from "./useUploadWorkerflow";
+import { PresignedSlot } from "@/types/upload";
 
 export type MediaFormEngineConfig<
   TForm,
   TMetadataPayload,
   TFileSlot extends string,
-  TPresignedSlot
+  TPresignedSlot extends PresignedSlot<TFileSlot>
 > = {
   buildMetadata: (data: TForm) => TMetadataPayload;
   collectFiles: (data: TForm) => { key: TFileSlot; file: File }[];
   submitMetadata: (payload: TMetadataPayload, id?: string | null) => Promise<string>;
   presignUploads: (id: string, files: { key: TFileSlot; file: File }[]) => Promise<TPresignedSlot[]>;
-  // AJOUT DU SIGNAL ICI
   uploadFile: (uploadUrl: string, file: File, onProgress: (p: number) => void, signal: AbortSignal) => Promise<void>;
-  finalizeUploads: (id: string, slots: { key: TFileSlot; finalUrl: string }[]) => Promise<void>;
-  // OPTIONNEL : Route de suppression pour le rollback
+  finalizeUploads: (id: string, slots: TPresignedSlot[]) => Promise<void>;
   deleteEntity?: (id: string) => Promise<void>;
 };
 
 export function useMediaFormEngine<
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  TForm extends Record<string, any>,
+  TForm extends Record<string,unknown>,
   TMeta,
   TSlot extends string,
-  TPresigned extends { uploadUrl: string; finalUrl: string; key: TSlot }
+  // On force TPresigned à hériter de PresignedSlot pour inclure mediaFileId
+  TPresigned extends PresignedSlot<TSlot>
 >(
   cfg: MediaFormEngineConfig<TForm, TMeta, TSlot, TPresigned>,
   defaultValues: DefaultValues<TForm>
@@ -42,127 +41,104 @@ export function useMediaFormEngine<
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogStatus, setDialogStatus] = useState<DialogStatus>("idle");
 
-
-  
-  /* const confirmSubmit = async (retryKeys?: TSlot[]) => {
+  const resetEngine = useCallback(() => {
+    setEntityId(null);
+    setPending(null);
+    setDialogStatus("idle");
+    setDialogOpen(false);
+    upload.reset();
+    reset();
+  }, [reset, upload]);
+const confirmSubmit = async (step?: number, retryKeys?: TSlot[]) => {
     if (!pending) return;
+    
+    // On passe en chargement pour bloquer l'UI et ouvrir le mode "travail"
     setDialogStatus("loading");
 
     try {
       let currentId = entityId;
 
-      // 1. Sauvegarde Metadata (uniquement si ce n'est pas un retry partiel d'upload)
-      if (!retryKeys) {
-        currentId = await cfg.submitMetadata(cfg.buildMetadata(pending), entityId);
+      // --- CAS 1 : SAUVEGARDE INITIALE (STEP 0) ---
+      // On ne lance pas d'upload ici, on crée juste l'entité en base
+      if (step === 0 && !retryKeys) {
+        console.log("[Engine] Sauvegarde des métadonnées (Step 0)");
+        const payload = cfg.buildMetadata(pending);
+        
+        // Appel API pour créer/maj l'entité
+        currentId = await cfg.submitMetadata(payload, entityId);
         setEntityId(currentId);
+        
+        // On passe en 'success' : FormConfirmation affichera le bouton "Continuer"
+        setDialogStatus("success");
+        return; 
       }
 
-      if (!currentId) throw new Error("ID d'entité manquant");
+      // --- CAS 2 : UPLOAD DES FICHIERS (STEP 1 ou RETRY) ---
+      if (step === 1 || retryKeys) {
+        if (!currentId) {
+          throw new Error("ID d'entité manquant. Veuillez valider l'étape précédente.");
+        }
 
-      // 2. Collecte et Upload
-      const files = cfg.collectFiles(pending);
-      
-      if (files.length > 0) {
-        const result = await upload.runUpload(files, {
-          presign: (f) => cfg.presignUploads(currentId!, f),
-          // TRANSMISSION DU SIGNAL ET DU PROGRESS
-          uploadToUrl: (url, file, onProg, signal) => cfg.uploadFile(url, file, onProg, signal),
-          finalize: (u) => cfg.finalizeUploads(currentId!, u),
-        }, { 
-          parallel: true, 
-          retryKeys // Utilisation des clés de retry si fournies
-        });
-
-        // Si après l'upload il y a des erreurs, on ne ferme pas
-        if (result.failed.length > 0) {
-          setDialogStatus("error"); // Ou un état "partial_success" si tu l'as ajouté
+        console.log("[Engine] Lancement de l'upload (Step 1)");
+        
+        // On récupère les fichiers via la config
+        const allFiles = cfg.collectFiles(pending);
+        
+        // Sécurité : si aucun fichier n'est trouvé alors qu'on demande un upload
+        if (allFiles.length === 0) {
+          setDialogStatus("success");
+          setTimeout(() => resetEngine(), 1000);
           return;
         }
-      }
 
-      setDialogStatus("success");
-      
-      setTimeout(() => {
-        setDialogOpen(false);
-        reset(); 
-        setEntityId(null);
-        setPending(null);
-        upload.reset();
-      }, 1500);
-
-    } catch (error) {
-      setDialogStatus("error");
-      console.error("[MediaFormEngine] Submit error:", error);
-    }
-  }; */
-
-
- const confirmSubmit = async (step?: number, retryKeys?: TSlot[]) => {
-  if (!pending) return;
-  setDialogStatus("loading");
-
-  try {
-    let currentId = entityId;
-
-    // --- CAS 1 : SAUVEGARDE INITIALE (STEP 0) ---
-    if (step === 0 && !retryKeys) {
-      console.log("[Engine] Sauvegarde des métadonnées (Step 0)");
-      // Dans confirmSubmit, juste avant le Bloc A
-      console.log("Vérification du pending avant build:", pending);
-      const payload = cfg.buildMetadata(pending);
-      console.log("Payload construit avec succès:", payload);
-
-      currentId = await cfg.submitMetadata(payload, entityId);
-      setEntityId(currentId);
-      
-      setDialogStatus("success");
-      return; // ON S'ARRÊTE ICI. Pas d'upload au Step 0.
-    }
-
-    // --- CAS 2 : UPLOAD DES FICHIERS (STEP 1) ---
-    if (step === 1 || retryKeys) {
-      // Sécurité : On vérifie qu'on a bien l'ID avant de parler à S3
-      if (!currentId) {
-        throw new Error("ID manquant. Veuillez valider l'étape précédente.");
-      }
-
-      console.log("[Engine] Lancement de l'upload (Step 1)");
-      const files = cfg.collectFiles(pending);
-
-      if (files.length > 0) {
-        const result = await upload.runUpload(files, {
+        // Lancement du Workflow
+        // C'est ici que upload.step va passer par 'presign', 'upload', 'finalize'
+        const result = await upload.runUpload(allFiles, {
           presign: (f) => cfg.presignUploads(currentId!, f),
           uploadToUrl: cfg.uploadFile,
-          finalize: (u) => cfg.finalizeUploads(currentId!, u),
-        }, { parallel: true, retryKeys });
+          finalize: (u) => cfg.finalizeUploads(currentId!, u as TPresigned[]),
+        }, { 
+          parallel: true, 
+          retryKeys 
+        });
 
+        // --- GESTION DES RÉSULTATS DU WORKFLOW ---
+
+        // A. Si des fichiers ont échoué
         if (result.failed.length > 0) {
-          setDialogStatus("error");
+          setDialogStatus("error"); // L'UI affichera la liste des erreurs et le bouton Retry
           return;
         }
+
+        // B. Si l'utilisateur a annulé (via closeDialog/abort)
+        if (result.cancelled) {
+          setDialogStatus("idle");
+          return;
+        }
+
+        // C. Succès total
+        setDialogStatus("success");
+        
+        // On laisse 2 secondes pour que l'utilisateur voie le message de fin/100%
+        setTimeout(() => {
+          setDialogOpen(false);
+          resetEngine(); // Nettoyage complet (formulaire + états)
+        }, 2000);
       }
 
-      setDialogStatus("success");
-      setTimeout(() => {
-        setDialogOpen(false);
-        resetEngine(); // On nettoie tout, le film est complet.
-      }, 1500);
+    } catch (error) {
+      // Erreurs fatales (API metadata, crash presign, etc.)
+      setDialogStatus("error");
+      console.error("[MediaFormEngine] Erreur critique:", error);
     }
-
-  } catch (error) {
-    setDialogStatus("error");
-    console.error("[MediaFormEngine] Erreur:", error);
-  }
-};
-  // NOUVELLE FONCTION : Retry
-  const retryFailedUploads = () => {
-    const failedKeys = upload.errors.map(e => e.key);
-    confirmSubmit(undefined, failedKeys);
   };
 
-  // NOUVELLE LOGIQUE : Fermeture avec Rollback
+  const retryFailedUploads = () => {
+    const failedKeys = upload.errors.map(e => e.key);
+    confirmSubmit(1, failedKeys); // On force le step 1 pour le retry
+  };
+
   const closeDialog = useCallback(async () => {
-    // Si en chargement, on annule l'upload et on rollback en DB
     if (upload.step !== 'idle' && upload.step !== 'error') {
         const confirmCancel = window.confirm("Annuler l'envoi et supprimer le brouillon ?");
         if (!confirmCancel) return;
@@ -179,29 +155,18 @@ export function useMediaFormEngine<
     setDialogStatus("idle");
   }, [upload, entityId, cfg]);
 
-  const resetEngine = useCallback(() => {
-    setEntityId(null);
-    setPending(null);
-    setDialogStatus("idle");
-    setDialogOpen(false);
-    upload.reset(); // Nettoie les stats et erreurs d'upload
-    reset();        // Reset le formulaire React Hook Form
-  }, [reset, upload]);
-
   return {
     control, watch, handleSubmit, reset, formState, trigger, setValue,
     entityId, setEntityId, pendingData: pending,
     dialogOpen, dialogStatus, upload,
     setDialogOpen, setDialogStatus,
-    
     openConfirm: (data: TForm) => { 
-      
       setPending(data); 
       setDialogOpen(true); 
       setDialogStatus("idle");
     },
     confirmSubmit,
-    retryFailedUploads, // Exposer le retry
+    retryFailedUploads,
     closeDialog,
     resetEngine
   };

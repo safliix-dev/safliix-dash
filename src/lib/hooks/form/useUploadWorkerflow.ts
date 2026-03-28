@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useCallback, useRef } from "react";
 import { 
   UploadFileDescriptor, 
@@ -37,7 +39,6 @@ export function useUploadWorkflow<TSlot extends string>() {
     startTime: 0
   });
   
-  // Ref pour l'AbortController et les stats de vitesse
   const abortControllerRef = useRef<AbortController | null>(null);
   const speedTrackingRef = useRef<{
     lastBytes: number;
@@ -74,7 +75,6 @@ export function useUploadWorkflow<TSlot extends string>() {
     };
   }, []);
 
-  // Fonction d'annulation
   const cancel = useCallback(async (onRollback?: () => Promise<void>) => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -93,20 +93,15 @@ export function useUploadWorkflow<TSlot extends string>() {
     reset();
   }, [reset]);
 
-  // Fonction de mise à jour des statistiques de vitesse
   const updateSpeed = useCallback((uploadedBytes: number) => {
     const now = Date.now();
-    const timeDiff = (now - speedTrackingRef.current.lastTime) / 1000; // en secondes
+    const timeDiff = (now - speedTrackingRef.current.lastTime) / 1000;
     const bytesDiff = uploadedBytes - speedTrackingRef.current.lastBytes;
     
-    if (timeDiff > 0.5) { // Mise à jour toutes les 500ms
-      const currentSpeed = bytesDiff / timeDiff; // bytes/sec
-      
-      // Garder une moyenne glissante des 5 dernières mesures
+    if (timeDiff > 0.5) {
+      const currentSpeed = bytesDiff / timeDiff;
       speedTrackingRef.current.speeds.push(currentSpeed);
-      if (speedTrackingRef.current.speeds.length > 5) {
-        speedTrackingRef.current.speeds.shift();
-      }
+      if (speedTrackingRef.current.speeds.length > 5) speedTrackingRef.current.speeds.shift();
       
       const avgSpeed = speedTrackingRef.current.speeds.reduce((a, b) => a + b, 0) / 
                        speedTrackingRef.current.speeds.length;
@@ -126,7 +121,6 @@ export function useUploadWorkflow<TSlot extends string>() {
     }
   }, [stats.totalBytes]);
 
-  // Fonction de tentative avec retry
   const attemptWithRetry = async <T,>(
     key: TSlot,
     attemptFn: (signal: AbortSignal) => Promise<T>,
@@ -138,23 +132,13 @@ export function useUploadWorkflow<TSlot extends string>() {
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-        if (abortControllerRef.current?.signal.aborted) {
-          throw new Error("Opération annulée");
-        }
+        if (abortControllerRef.current?.signal.aborted) throw new Error("Opération annulée");
         return await attemptFn(abortControllerRef.current!.signal);
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        
-        // Vérifier si on doit réessayer
         if (attempt === maxRetries) break;
-        
-        const shouldRetry = retryConfig?.retryCondition 
-          ? retryConfig.retryCondition(lastError, key as string)
-          : true;
-        
+        const shouldRetry = retryConfig?.retryCondition ? retryConfig.retryCondition(lastError, key as string) : true;
         if (!shouldRetry) break;
-        
-        // Attendre avant de réessayer
         setDetail(`Nouvelle tentative pour ${String(key)} (${attempt + 1}/${maxRetries})...`);
         await new Promise(resolve => setTimeout(resolve, retryDelay));
       }
@@ -172,51 +156,27 @@ export function useUploadWorkflow<TSlot extends string>() {
     } = {}
   ): Promise<UploadResult<TSlot>> => {
     
-    // Vérification des clés uniques
     const uniqueKeys = new Set(files.map(f => f.key));
-    if (uniqueKeys.size !== files.length) {
-      throw new Error("Les clés des fichiers doivent être uniques");
-    }
+    if (uniqueKeys.size !== files.length) throw new Error("Les clés des fichiers doivent être uniques");
 
-    // Initialisation du contrôleur d'annulation
     abortControllerRef.current = new AbortController();
     const signal = abortControllerRef.current.signal;
 
-    // Calcul des stats initiales
     const totalBytes = files.reduce((acc, f) => acc + f.file.size, 0);
-    setStats({
-      totalFiles: files.length,
-      totalBytes,
-      uploadedBytes: 0,
-      speed: 0,
-      timeRemaining: 0,
-      startTime: Date.now()
-    });
-    speedTrackingRef.current = {
-      lastBytes: 0,
-      lastTime: Date.now(),
-      speeds: []
-    };
+    setStats(prev => ({ ...prev, totalFiles: files.length, totalBytes, startTime: Date.now() }));
 
-    // Filtrage pour le RETRY sélectif
     const filesToProcess = options.retryKeys 
       ? files.filter(f => options.retryKeys!.includes(f.key))
       : files;
 
     if (filesToProcess.length === 0) {
-      return { 
-        successful: [], 
-        failed: [], 
-        cancelled: false,
-        stats: { ...stats, endTime: Date.now() }
-      };
+      return { successful: [], failed: [], cancelled: false, stats: { ...stats, endTime: Date.now() } };
     }
 
     try {
-      // 1. PRESIGN (avec timeout optionnel)
+      // 1. PRESIGN
       setStep("presign");
       setDetail("Préparation des accès...");
-      
       setProgress(prev => ({
         ...prev,
         ...filesToProcess.reduce((acc, f) => ({ ...acc, [f.key]: 0 }), {})
@@ -224,60 +184,34 @@ export function useUploadWorkflow<TSlot extends string>() {
 
       let presignPromise = handlers.presign(filesToProcess);
       if (handlers.timeouts?.presign) {
-        presignPromise = withTimeout(
-          presignPromise,
-          handlers.timeouts.presign,
-          "Timeout lors de la préparation des signatures"
-        );
+        presignPromise = withTimeout(presignPromise, handlers.timeouts.presign, "Timeout Presign");
       }
       const slots = await presignPromise;
 
       // 2. UPLOAD
       setStep("upload");
       
-      const uploadTask = async (slot: PresignedSlot<TSlot>) => {
-        console.log("Fichiers disponibles au Front :", filesToProcess.map(f => f.key));
-        console.log("Slot reçu du Back :", slot.key);
+      const uploadTask = async (slot: PresignedSlot<TSlot>): Promise<PresignedSlot<TSlot> | { key: TSlot; error: Error }> => {
         const fileDesc = filesToProcess.find((f) => f.key === slot.key);
         if (!fileDesc) return { key: slot.key, error: new Error("Fichier introuvable") };
 
         try {
-          // Tentative avec retry si configuré
-          await attemptWithRetry(
-            slot.key,
-            async (signal) => {
+          await attemptWithRetry(slot.key, async (signal) => {
               let uploadPromise = handlers.uploadToUrl(slot.uploadUrl, fileDesc.file, (p) => {
                 setProgress(prev => ({ ...prev, [slot.key]: p }));
-                
-                // Mise à jour des stats (portion du fichier uploadé)
                 const fileBytes = (p / 100) * fileDesc.file.size;
-                const totalUploaded = Object.entries(progress).reduce((acc, [key, prog]) => {
-                  const file = files.find(f => f.key === key);
-                  return acc + (file ? (prog / 100) * file.file.size : 0);
-                }, fileBytes);
-                
-                updateSpeed(totalUploaded);
+                updateSpeed(fileBytes);
               }, signal);
 
               if (handlers.timeouts?.upload) {
-                uploadPromise = withTimeout(
-                  uploadPromise,
-                  handlers.timeouts.upload,
-                  `Timeout lors de l'upload de ${String(slot.key)}`
-                );
+                uploadPromise = withTimeout(uploadPromise, handlers.timeouts.upload, `Timeout upload ${String(slot.key)}`);
               }
-              
               await uploadPromise;
-            },
-            options.retryConfig
-          );
+            }, options.retryConfig);
 
-          return { key: slot.key, finalUrl: slot.finalUrl };
-        } catch {
-          if (signal.aborted) {
-            return { key: slot.key, error: new Error("Transfert annulé") };
-          }
-          return { key: slot.key, error: new Error("Erreur upload") };
+          return slot; // ✅ On retourne le slot original complet
+        } catch (err) {
+          return { key: slot.key, error: err instanceof Error ? err : new Error("Erreur upload") };
         }
       };
 
@@ -294,10 +228,10 @@ export function useUploadWorkflow<TSlot extends string>() {
             return res;
           })();
 
-      const successful = results.filter((r): r is { key: TSlot; finalUrl: string } => 'finalUrl' in r);
+      // Filtrage correct des résultats
+      const successful = results.filter((r): r is PresignedSlot<TSlot> => 'finalUrl' in r);
       const failed = results.filter((r): r is { key: TSlot; error: Error } => 'error' in r);
 
-      // Mise à jour des erreurs
       setErrors(prev => {
         const filteredPrev = prev.filter(p => !filesToProcess.some(f => f.key === p.key));
         return [...filteredPrev, ...failed];
@@ -307,89 +241,39 @@ export function useUploadWorkflow<TSlot extends string>() {
         throw new Error("Aucun fichier n'a pu être transféré.");
       }
 
-      // 3. FINALIZE (si on a des succès)
+      // 3. FINALIZE
       if (successful.length > 0 && !signal.aborted) {
         setStep("finalize");
         setDetail("Finalisation de l'enregistrement...");
         
-        try {
-          let finalizePromise = handlers.finalize(successful);
-          if (handlers.timeouts?.finalize) {
-            finalizePromise = withTimeout(
-              finalizePromise,
-              handlers.timeouts.finalize,
-              "Timeout lors de la finalisation"
-            );
-          }
-          await finalizePromise;
-        } catch {
-          throw new Error("Erreur lors de la validation finale en base de données.");
+        let finalizePromise = handlers.finalize(successful);
+        if (handlers.timeouts?.finalize) {
+          finalizePromise = withTimeout(finalizePromise, handlers.timeouts.finalize, "Timeout finalisation");
         }
+        await finalizePromise;
       }
 
-      // 4. CONCLUSION
       const endTime = Date.now();
-      setStats(prev => ({ ...prev, endTime }));
-
       if (signal.aborted) {
         setStep("idle");
-        setDetail("Opération annulée");
-        return { 
-          successful: [], 
-          failed: [], 
-          cancelled: true,
-          stats: { ...stats, endTime }
-        };
+        return { successful: [], failed: [], cancelled: true, stats: { ...stats, endTime } };
       }
 
-      if (failed.length > 0) {
-        setStep("partial_success");
-        setDetail(`${failed.length} échec(s) détecté(s).`);
-      } else {
-        setStep("idle");
-        setDetail(null);
-      }
-
-      return { 
-        successful, 
-        failed, 
-        cancelled: false,
-        stats: { ...stats, endTime }
-      };
+      setStep(failed.length > 0 ? "partial_success" : "idle");
+      return { successful, failed, cancelled: false, stats: { ...stats, endTime } };
 
     } catch (e) {
       const endTime = Date.now();
-      setStats(prev => ({ ...prev, endTime }));
-
-      if (signal.aborted) {
-        return { 
-          successful: [], 
-          failed: [], 
-          cancelled: true,
-          stats: { ...stats, endTime }
-        };
-      }
-      
       setStep("error");
       setDetail(e instanceof Error ? e.message : "Erreur fatale");
       return { 
         successful: [], 
-        failed: filesToProcess.map(f => ({ key: f.key, error: e as Error })),
-        cancelled: false,
-        stats: { ...stats, endTime }
+        failed: filesToProcess.map(f => ({ key: f.key, error: e as Error })), 
+        cancelled: false, 
+        stats: { ...stats, endTime } 
       };
     }
   };
 
-  return { 
-    step, 
-    detail, 
-    progress, 
-    globalProgress, 
-    errors,
-    stats,
-    runUpload, 
-    cancel, 
-    reset 
-  };
+  return { step, detail, progress, globalProgress, errors, stats, runUpload, cancel, reset };
 }

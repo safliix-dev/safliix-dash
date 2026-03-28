@@ -10,6 +10,7 @@ export type PresignedSlot<TSlot extends string> = {
   key: TSlot;
   uploadUrl: string;
   finalUrl: string;
+  mediaFileId:string;
 };
 
 export type UploadTimeouts = {
@@ -60,3 +61,28 @@ export interface UploadError<TSlot extends string> {
   key: TSlot;
   error: Error;
 }
+
+export type AttachmentType = 
+  | "MAIN" | "TRAILER" | "BONUS" | "MAKING_OF" | "CLIP" 
+  | "PREVIEW" | "ADVERTISEMENT" | "THUMBNAIL" | "POSTER" | "BANNER" | "VIDEO";
+
+
+export interface UploadSlot<TKey extends string = string> {
+  key: TKey;
+  uploadUrl: string;
+  finalUrl: string;
+  mediaFileId: string;
+}
+
+export interface UploadFinalizePayload {
+  entityId: string;  
+  mediaFileIds: string[]; // La liste des IDs S3/DB
+}
+
+export const attachmentTypeMap: Record<string, AttachmentType> = {
+ mainImage: "POSTER",
+  movieFile: "MAIN",        // Corrigé : "VIDEO" n'existe pas dans ton enum Prisma
+  trailerFile: "TRAILER",
+  secondaryImage: "THUMBNAIL",
+  episodeFile: "MAIN",
+} as const;

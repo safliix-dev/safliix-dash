@@ -88,35 +88,77 @@ export function FormConfirmation<T extends BaseMetadata & MediaFileFields, TSlot
       )}
 
       {/* --- SECTION B : PROGRESSION (Upload en cours) --- */}
-      {isUploading && upload && (
-        <div className="mt-4 p-4 bg-slate-900/40 rounded-xl border border-white/5 space-y-4 shadow-inner">
-          <div className="flex items-center gap-3">
-            <span className="loading loading-spinner loading-sm text-primary" />
-            <div className="flex flex-col">
-              <span className="font-bold text-white text-xs uppercase tracking-wider">
-                {upload.step === "presign" && "Initialisation..."}
-                {upload.step === "upload" && `Transfert en cours`}
-                {upload.step === "finalize" && "Enregistrement final..."}
-              </span>
-              {upload.detail && <span className="text-[10px] text-white/40 italic">{upload.detail}</span>}
+        {/* --- SECTION B : PROGRESSION (Exploitation complète de UploadState) --- */}
+{isUploading && upload && (
+  <div className="mt-4 p-5 bg-slate-900/60 rounded-2xl border border-white/10 space-y-5 shadow-2xl backdrop-blur-sm">
+    
+    {/* 1. En-tête d'état avec Spinner dynamique */}
+    <div className="flex items-start gap-4">
+      <div className="relative flex items-center justify-center">
+        <span className="loading loading-spinner loading-md text-primary" />
+        {/* On peut même afficher le % au centre du spinner si on veut, mais restons propre */}
+      </div>
+      
+      <div className="flex flex-col flex-1 min-w-0">
+        <span className="font-black text-white text-xs uppercase tracking-widest flex items-center gap-2">
+          {upload.step === "presign" && "🔑 Initialisation sécurisée"}
+          {upload.step === "upload" && "🚀 Transfert des médias"}
+          {upload.step === "finalize" && "💾 Enregistrement final"}
+        </span>
+        
+        {/* Exploitation de upload.detail : affiche le nom du fichier en cours ou l'action */}
+        {upload.detail && (
+          <span className="text-[11px] text-primary/80 font-medium truncate animate-pulse mt-0.5">
+            {upload.detail}
+          </span>
+        )}
+      </div>
+      
+      {/* Affichage du pourcentage global en gros badge */}
+      <div className="bg-primary/10 px-2 py-1 rounded-md border border-primary/20">
+        <span className="text-primary font-mono font-bold text-xs">
+          {upload.globalProgress}%
+        </span>
+      </div>
+    </div>
+
+    {/* 2. Barre de progression globale (Visible durant tout le process) */}
+    <div className="space-y-2">
+      <progress 
+        className="progress progress-primary w-full h-2.5 shadow-[0_0_10px_rgba(var(--p),0.2)] transition-all duration-300" 
+        value={upload.globalProgress} 
+        max="100" 
+      />
+      
+      {/* 3. Feedback granulaire via upload.progress (Détail par slot) */}
+      <div className="grid grid-cols-2 gap-2 pt-1">
+        {Object.entries(upload.progress).map(([slot, value]) => (
+          <div key={slot} className="flex flex-col gap-1">
+            <div className="flex justify-between items-center text-[9px] uppercase tracking-tighter text-white/30">
+              <span className="truncate max-w-[60px]">{slot}</span>
+              <span>{value}%</span>
+            </div>
+            <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+              <div 
+                className="bg-primary/40 h-full transition-all duration-500" 
+                style={{ width: `${value}%` }}
+              />
             </div>
           </div>
+        ))}
+      </div>
+    </div>
 
-          {upload.step === 'upload' && (
-            <div className="space-y-1">
-               <div className="flex justify-between text-[10px] text-white/40">
-                 <span>Progression totale</span>
-                 <span>{upload.globalProgress}%</span>
-               </div>
-               <progress 
-                 className="progress progress-primary w-full h-1.5" 
-                 value={upload.globalProgress} 
-                 max="100" 
-               />
-            </div>
-          )}
-        </div>
-      )}
+    {/* 4. Statut de finalisation (Petit indicateur discret) */}
+    {upload.step === "finalize" && (
+      <div className="text-center py-1 bg-white/5 rounded-lg border border-white/5 animate-bounce">
+        <span className="text-[10px] text-white/60 font-bold uppercase tracking-widest">
+          Traitement serveur en cours...
+        </span>
+      </div>
+    )}
+  </div>
+)}
 
       {/* --- SECTION C : ERREURS --- */}
       {!isUploading && (status === "error" || upload?.step === 'error') && (
