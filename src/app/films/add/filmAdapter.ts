@@ -6,10 +6,8 @@ import { filmsApi } from "@/lib/api/films";
 import { FilmFormData, FilmMetadataPayload, FilmSlot } from "@/types/api/films"; 
 import { MediaFormEngineConfig } from "@/lib/hooks/form/useMediaFormEngine";
 import { 
-  attachmentTypeMap, 
   UploadFinalizePayload, 
   UploadFileDescriptor,
-  AttachmentType,
 } from "@/types/attachmentType";
 
 export interface FilmPresignedSlot {
@@ -54,10 +52,10 @@ export const filmAdapter: MediaFormEngineConfig<
     // CORRECTION : On utilise directement les valeurs attendues par le workflow (l'Enum)
     // Cela permet au hook de faire le lien entre le retour du serveur et le fichier local
     const slots: { key: FilmSlot; file: File | null | undefined }[] = [
-      { key: 'POSTER' as FilmSlot, file: form.mainImage },
-      { key: 'THUMBNAIL' as FilmSlot, file: form.secondaryImage },
-      { key: 'MAIN' as FilmSlot, file: form.movieFile },
-      { key: 'TRAILER' as FilmSlot, file: form.trailerFile },
+      { key: 'POSTER', file: form.mainImage },
+      { key: 'THUMBNAIL', file: form.secondaryImage },
+      { key: 'MAIN', file: form.movieFile },
+      { key: 'TRAILER', file: form.trailerFile },
     ];
     
     return slots.filter((s): s is { key: FilmSlot; file: File } => s.file instanceof File);
@@ -92,8 +90,8 @@ export const filmAdapter: MediaFormEngineConfig<
       key: f.key,
       name: f.file.name,
       type: f.file.type || "application/octet-stream",
-      attachmentType: attachmentTypeMap[f.key] as AttachmentType // Utiliser le mapping
-    }));
+      attachmentType: f.key
+    }))
 
     // Appeler l'API avec le bon type
     const slots = await uploadApi.presignUploads(id, "movie", descriptors);
