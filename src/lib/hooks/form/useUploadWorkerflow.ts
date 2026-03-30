@@ -217,16 +217,29 @@ export function useUploadWorkflow<TSlot extends string>() {
 
       setDetail(options.parallel ? "Transfert simultané..." : "Transfert un par un...");
       
-      const results = options.parallel 
-        ? await Promise.all(slots.map(uploadTask))
-        : await (async () => {
-            const res = [];
-            for (const slot of slots) {
-              if (signal.aborted) break;
-              res.push(await uploadTask(slot));
-            }
-            return res;
-          })();
+      const LARGE_FILE_THRESHOLD = 50 * 1024 * 1024; // 50MB
+
+      const smallSlots = slots.filter(s => {
+        const f = filesToProcess.find(f => f.key === s.key);
+        return f && f.file.size < LARGE_FILE_THRESHOLD;
+      });
+
+      const largeSlots = slots.filter(s => {
+        const f = filesToProcess.find(f => f.key === s.key);
+        return f && f.file.size >= LARGE_FILE_THRESHOLD;
+      });
+
+      // petits fichiers en parallèle
+      const smallResults = await Promise.all(smallSlots.map(uploadTask));
+
+      // gros fichiers en séquentiel
+      const largeResults = [];
+      for (const slot of largeSlots) {
+        if (signal.aborted) break;
+        largeResults.push(await uploadTask(slot));
+      }
+
+      const results = [...smallResults, ...largeResults];
 
       // Filtrage correct des résultats
       const successful = results.filter((r): r is PresignedSlot<TSlot> => 'finalUrl' in r);
@@ -259,7 +272,7 @@ export function useUploadWorkflow<TSlot extends string>() {
         return { successful: [], failed: [], cancelled: true, stats: { ...stats, endTime } };
       }
 
-      setStep(failed.length > 0 ? "partial_success" : "idle");
+      setStep(failed.length > 0 ? "partial_success" : "done");
       return { successful, failed, cancelled: false, stats: { ...stats, endTime } };
 
     } catch (e) {

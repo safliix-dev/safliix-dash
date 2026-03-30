@@ -1,4 +1,4 @@
-export type UploadStep = "idle" | "presign" | "upload" | "finalize" | "error" | "partial_success";
+export type UploadStep = "idle" | "presign" | "upload" | "finalize" | "error" | "partial_success" | "done";
 export type UploadProgress = Record<string, number>;
 
 export type UploadFileDescriptor<TSlot extends string> = {

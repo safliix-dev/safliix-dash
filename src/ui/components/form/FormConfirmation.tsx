@@ -52,7 +52,9 @@ export function FormConfirmation<T extends BaseMetadata & MediaFileFields, TSlot
 }: FormConfirmationProps<T, TSlot>) {
   
   // 1. Détection des états
-  const isUploading = status === "loading" || (!!upload && upload.step !== 'idle' && upload.step !== 'error');
+  const isUploading =
+  !!upload &&
+  ["presign", "upload", "finalize", "done", "partial_success"].includes(upload.step);
   const isSuccessStep0 = currentStep === 0 && status === "success";
   const hasErrors = !!upload && upload.errors.length > 0;
 
@@ -60,6 +62,12 @@ export function FormConfirmation<T extends BaseMetadata & MediaFileFields, TSlot
   // Si succès à l'étape 0, on transforme le bouton en "Passer à la suite"
   const finalConfirmLabel = isSuccessStep0 ? "Continuer vers les fichiers" : confirmLabel;
   const finalOnConfirm = isSuccessStep0 && onNextStep ? onNextStep : onConfirm;
+  console.log("UPLOAD UI", {
+    step: upload?.step,
+    progress: upload?.globalProgress,
+    status
+  });
+ 
 
   return (
     <ConfirmationDialog
@@ -100,11 +108,16 @@ export function FormConfirmation<T extends BaseMetadata & MediaFileFields, TSlot
       </div>
       
       <div className="flex flex-col flex-1 min-w-0">
-        <span className="font-black text-white text-xs uppercase tracking-widest flex items-center gap-2">
+        <div className="font-black text-white text-xs uppercase tracking-widest flex items-center gap-2">
           {upload.step === "presign" && "🔑 Initialisation sécurisée"}
           {upload.step === "upload" && "🚀 Transfert des médias"}
           {upload.step === "finalize" && "💾 Enregistrement final"}
-        </span>
+          {upload.step === "done" && (
+            <div className="text-green-400 text-xs font-bold text-center">
+              Upload terminé ✔
+            </div>
+          )}
+        </div>
         
         {/* Exploitation de upload.detail : affiche le nom du fichier en cours ou l'action */}
         {upload.detail && (
@@ -129,6 +142,7 @@ export function FormConfirmation<T extends BaseMetadata & MediaFileFields, TSlot
         value={upload.globalProgress} 
         max="100" 
       />
+      
       
       {/* 3. Feedback granulaire via upload.progress (Détail par slot) */}
       <div className="grid grid-cols-2 gap-2 pt-1">
