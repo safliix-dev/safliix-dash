@@ -30,7 +30,6 @@ interface FormConfirmationProps<T, TSlot extends string> {
   upload?: UploadState<TSlot>;
   pendingData?: T | null;
   summary?: 'metadata' | 'files' | 'none';
-  // Nouvelles props pour la gestion du flux entre étapes
   currentStep?: number;
   onNextStep?: () => void; 
 }
@@ -52,37 +51,60 @@ export function FormConfirmation<T extends BaseMetadata & MediaFileFields, TSlot
 }: FormConfirmationProps<T, TSlot>) {
   
   // 1. Détection des états
-  const isUploading =
-  !!upload &&
-  ["presign", "upload", "finalize", "done", "partial_success"].includes(upload.step);
+  const isUploading = !!upload && 
+    ["presign", "upload", "finalize", "done", "partial_success"].includes(upload.step);
+  
+  const isUploadInProgress = isUploading && 
+    upload?.step !== 'done' && 
+    upload?.step !== 'partial_success';
+  
+  const isUploadComplete = upload?.step === 'done' || upload?.step === 'partial_success';
   const isSuccessStep0 = currentStep === 0 && status === "success";
-  const hasErrors = !!upload && upload.errors.length > 0;
+  const hasErrors = !!upload?.errors && upload.errors.length > 0;
+  const shouldShowSummary = !isUploading && !isSuccessStep0 && pendingData && (!upload || upload.step === 'idle');
 
   // 2. Logique de mutation du bouton principal
-  // Si succès à l'étape 0, on transforme le bouton en "Passer à la suite"
   const finalConfirmLabel = isSuccessStep0 ? "Continuer vers les fichiers" : confirmLabel;
   const finalOnConfirm = isSuccessStep0 && onNextStep ? onNextStep : onConfirm;
-  console.log("UPLOAD UI", {
+  
+  // 3. Titre et message dynamiques
+  let dialogTitle = title;
+  let dialogMessage = message;
+  
+  if (isSuccessStep0) {
+    dialogTitle = "Succès !";
+    dialogMessage = "Les informations ont été enregistrées avec succès.";
+  } else if (isUploadInProgress) {
+    dialogTitle = "Upload en cours";
+    dialogMessage = "Veuillez patienter pendant le transfert des fichiers...";
+  } else if (isUploadComplete) {
+    dialogTitle = "Upload terminé !";
+    dialogMessage = "Tous les fichiers ont été transférés avec succès.";
+  }
+
+  // Debug log
+  console.log("FormConfirmation render:", {
     step: upload?.step,
     progress: upload?.globalProgress,
-    status
+    status,
+    isUploading,
+    isUploadInProgress,
+    isUploadComplete,
+    hasErrors,
+    open
   });
- 
 
   return (
     <ConfirmationDialog
       open={open}
-      title={isSuccessStep0 ? "Succès !" : title}
-      message={isSuccessStep0 ? "Les informations ont été enregistrées avec succès." : message}
+      title={dialogTitle}
+      message={dialogMessage}
       status={status}
       confirmLabel={finalConfirmLabel}
       onConfirm={finalOnConfirm}
       onCancel={onCancel}
-      // On peut masquer le bouton annuler quand c'est déjà enregistré
-      //showCancel={!isSuccessStep0}
     >
-      
-      {/* --- SECTION A : ÉTAPE 0 RÉUSSIE (Feedback Visuel) --- */}
+      {/* SECTION : ÉTAPE 0 RÉUSSIE */}
       {isSuccessStep0 && (
         <div className="mt-4 p-6 bg-green-500/10 border border-green-500/20 rounded-2xl flex flex-col items-center text-center animate-in fade-in zoom-in duration-300">
           <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center text-2xl mb-3">
@@ -95,99 +117,112 @@ export function FormConfirmation<T extends BaseMetadata & MediaFileFields, TSlot
         </div>
       )}
 
-      {/* --- SECTION B : PROGRESSION (Upload en cours) --- */}
-        {/* --- SECTION B : PROGRESSION (Exploitation complète de UploadState) --- */}
-{isUploading && upload && (
-  <div className="mt-4 p-5 bg-slate-900/60 rounded-2xl border border-white/10 space-y-5 shadow-2xl backdrop-blur-sm">
-    
-    {/* 1. En-tête d'état avec Spinner dynamique */}
-    <div className="flex items-start gap-4">
-      <div className="relative flex items-center justify-center">
-        <span className="loading loading-spinner loading-md text-primary" />
-        {/* On peut même afficher le % au centre du spinner si on veut, mais restons propre */}
-      </div>
-      
-      <div className="flex flex-col flex-1 min-w-0">
-        <div className="font-black text-white text-xs uppercase tracking-widest flex items-center gap-2">
-          {upload.step === "presign" && "🔑 Initialisation sécurisée"}
-          {upload.step === "upload" && "🚀 Transfert des médias"}
-          {upload.step === "finalize" && "💾 Enregistrement final"}
-          {upload.step === "done" && (
-            <div className="text-green-400 text-xs font-bold text-center">
-              Upload terminé ✔
+      {/* SECTION : UPLOAD EN COURS */}
+      {isUploadInProgress && upload && (
+        <div className="mt-4 p-5 bg-slate-900/60 rounded-2xl border border-white/10 space-y-5 shadow-2xl backdrop-blur-sm">
+          
+          {/* En-tête avec spinner et progression */}
+          <div className="flex items-start gap-4">
+            <div className="relative flex items-center justify-center">
+              <span className="loading loading-spinner loading-md text-primary" />
+            </div>
+            
+            <div className="flex flex-col flex-1 min-w-0">
+              <div className="font-black text-white text-xs uppercase tracking-widest">
+                {upload.step === "presign" && "🔑 Initialisation sécurisée"}
+                {upload.step === "upload" && "🚀 Transfert des médias"}
+                {upload.step === "finalize" && "💾 Enregistrement final"}
+              </div>
+              
+              {upload.detail && (
+                <span className="text-[11px] text-primary/80 font-medium truncate mt-0.5">
+                  {upload.detail}
+                </span>
+              )}
+            </div>
+            
+            <div className="bg-primary/10 px-2 py-1 rounded-md border border-primary/20">
+              <span className="text-primary font-mono font-bold text-xs">
+                {upload.globalProgress || 0}%
+              </span>
+            </div>
+          </div>
+
+          {/* Barre de progression globale */}
+          <div className="space-y-2">
+            <progress 
+              className="progress progress-primary w-full h-2.5 shadow-[0_0_10px_rgba(var(--p),0.2)] transition-all duration-300" 
+              value={upload.globalProgress || 0} 
+              max="100" 
+            />
+            
+            {/* Progression détaillée par slot */}
+            {upload.progress && Object.keys(upload.progress).length > 0 && (
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                {Object.entries(upload.progress).map(([slot, value]) => (
+                  <div key={slot} className="flex flex-col gap-1">
+                    <div className="flex justify-between items-center text-[9px] uppercase tracking-tighter text-white/30">
+                      <span className="truncate max-w-[60px]">{slot}</span>
+                      <span>{value}%</span>
+                    </div>
+                    <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-primary/40 h-full transition-all duration-500" 
+                        style={{ width: `${value}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Indicateur de finalisation */}
+          {upload.step === "finalize" && (
+            <div className="text-center py-1 bg-white/5 rounded-lg border border-white/5">
+              <span className="text-[10px] text-white/60 font-bold uppercase tracking-widest animate-pulse">
+                Traitement serveur en cours...
+              </span>
             </div>
           )}
         </div>
-        
-        {/* Exploitation de upload.detail : affiche le nom du fichier en cours ou l'action */}
-        {upload.detail && (
-          <span className="text-[11px] text-primary/80 font-medium truncate animate-pulse mt-0.5">
-            {upload.detail}
-          </span>
-        )}
-      </div>
-      
-      {/* Affichage du pourcentage global en gros badge */}
-      <div className="bg-primary/10 px-2 py-1 rounded-md border border-primary/20">
-        <span className="text-primary font-mono font-bold text-xs">
-          {upload.globalProgress}%
-        </span>
-      </div>
-    </div>
+      )}
 
-    {/* 2. Barre de progression globale (Visible durant tout le process) */}
-    <div className="space-y-2">
-      <progress 
-        className="progress progress-primary w-full h-2.5 shadow-[0_0_10px_rgba(var(--p),0.2)] transition-all duration-300" 
-        value={upload.globalProgress} 
-        max="100" 
-      />
-      
-      
-      {/* 3. Feedback granulaire via upload.progress (Détail par slot) */}
-      <div className="grid grid-cols-2 gap-2 pt-1">
-        {Object.entries(upload.progress).map(([slot, value]) => (
-          <div key={slot} className="flex flex-col gap-1">
-            <div className="flex justify-between items-center text-[9px] uppercase tracking-tighter text-white/30">
-              <span className="truncate max-w-[60px]">{slot}</span>
-              <span>{value}%</span>
-            </div>
-            <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
-              <div 
-                className="bg-primary/40 h-full transition-all duration-500" 
-                style={{ width: `${value}%` }}
-              />
+      {/* SECTION : UPLOAD TERMINÉ */}
+      {isUploadComplete && upload && (
+        <div className="mt-4 p-4 bg-green-500/10 border border-green-500/20 rounded-2xl">
+          <div className="flex items-center gap-3">
+            <div className="text-2xl">✅</div>
+            <div>
+              <div className="font-bold text-green-400">
+                {upload.globalProgress === 100 ? 'Upload réussi !' : 'Transfert partiel effectué'}
+              </div>
+              <div className="text-xs text-green-400/60">
+                {upload.globalProgress === 100 
+                  ? '100% des fichiers transférés avec succès'
+                  : `${upload.globalProgress || 0}% des fichiers transférés`}
+              </div>
             </div>
           </div>
-        ))}
-      </div>
-    </div>
+        </div>
+      )}
 
-    {/* 4. Statut de finalisation (Petit indicateur discret) */}
-    {upload.step === "finalize" && (
-      <div className="text-center py-1 bg-white/5 rounded-lg border border-white/5 animate-bounce">
-        <span className="text-[10px] text-white/60 font-bold uppercase tracking-widest">
-          Traitement serveur en cours...
-        </span>
-      </div>
-    )}
-  </div>
-)}
-
-      {/* --- SECTION C : ERREURS --- */}
-      {!isUploading && (status === "error" || upload?.step === 'error') && (
+      {/* SECTION : ERREURS */}
+      {(status === "error" || hasErrors) && !isUploadInProgress && !isUploadComplete && (
         <div className="mt-4 space-y-3">
           <div className="text-sm rounded-lg border border-red-600/40 bg-red-950/20 text-red-200 px-3 py-3 flex flex-col gap-2">
             <div className="flex items-center gap-2 font-medium">
               <span>⚠️</span>
               <span>L&apos;opération a échoué.</span>
             </div>
-            {hasErrors && (
-                <ul className="text-[11px] text-red-300/70 list-disc list-inside ml-5">
-                  {upload.errors.map((err: UploadError<TSlot>, idx: number) => (
-                    <li key={idx}>{err.key}: {err.error.message}</li>
-                  ))}
-                </ul>
+            {hasErrors && upload?.errors && (
+              <ul className="text-[11px] text-red-300/70 list-disc list-inside ml-5 space-y-1">
+                {upload.errors.map((err: UploadError<TSlot>, idx: number) => (
+                  <li key={idx}>
+                    <span className="font-mono">{err.key}</span>: {err.error.message}
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
           
@@ -197,14 +232,14 @@ export function FormConfirmation<T extends BaseMetadata & MediaFileFields, TSlot
               onClick={onRetry}
               className="btn btn-sm btn-outline btn-error w-full normal-case font-bold"
             >
-              Réessayer les {upload.errors.length} échec(s)
+              Réessayer ({upload.errors.length} échec{upload.errors.length > 1 ? 's' : ''})
             </button>
           )}
         </div>
       )}
 
-      {/* --- SECTION D : RÉSUMÉ (Avant action) --- */}
-      {!isUploading && !isSuccessStep0 && pendingData && (!upload || upload.step === 'idle') && (
+      {/* SECTION : RÉSUMÉ */}
+      {shouldShowSummary && (
         <div className="mt-4 bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white/80">
           {summary === 'metadata' && <MetadataSummary data={pendingData} />}
           {summary === 'files' && <FilesSummary data={pendingData} />}
@@ -240,23 +275,32 @@ function FilesSummary<T extends MediaFileFields>({ data }: { data: T }) {
     { label: 'Sous-titres', icon: '📝', file: data.subtitleFile },
   ].filter((f): f is { label: string; icon: string; file: File } => f.file instanceof File);
 
+  if (files.length === 0) {
+    return (
+      <div className="text-center py-4">
+        <p className="text-xs text-white/30 italic">Aucun fichier sélectionné</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
       <p className="font-bold border-b border-white/5 pb-1 text-[11px] uppercase tracking-widest text-white/40">
-        Fichiers à envoyer
+        Fichiers à envoyer ({files.length})
       </p>
-      {files.length > 0 ? (
-        <ul className="space-y-2 mt-2">
-          {files.map((f, i) => (
-            <li key={i} className="flex items-center justify-between text-xs p-2 bg-black/20 rounded-lg border border-white/5">
-              <span className="flex items-center gap-2"><span>{f.icon}</span> {f.label}</span>
-              <span className="text-white/30 truncate max-w-[150px] italic">{f.file.name}</span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-xs text-white/30 italic text-center py-2">Aucun fichier sélectionné</p>
-      )}
+      <ul className="space-y-2 mt-2">
+        {files.map((f, i) => (
+          <li key={i} className="flex items-center justify-between text-xs p-2 bg-black/20 rounded-lg border border-white/5">
+            <span className="flex items-center gap-2">
+              <span>{f.icon}</span>
+              <span className="text-white/80">{f.label}</span>
+            </span>
+            <span className="text-white/30 truncate max-w-[150px] font-mono text-[10px]">
+              {f.file.name}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

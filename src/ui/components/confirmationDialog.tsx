@@ -38,6 +38,7 @@ export default function ConfirmationDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
       <div className="w-full max-w-lg rounded-2xl border border-base-300 bg-neutral shadow-2xl p-6 space-y-4">
+        {/* En-tête */}
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold text-white">{title}</h3>
@@ -55,15 +56,24 @@ export default function ConfirmationDialog({
           )}
         </div>
 
-        {isLoading ? (
+        {/* Contenu personnalisé - TOUJOURS affiché */}
+        {children && (
+          <div className={isLoading ? "opacity-100" : ""}>
+            {children}
+          </div>
+        )}
+
+        {/* Zone de chargement */}
+        {isLoading && (
           <div className="flex items-center gap-3 text-sm text-white/80 py-2">
             <span className="loading loading-spinner loading-sm" />
             <span>Envoi en cours...</span>
           </div>
-        ) : (
-          <>
-            {children}
+        )}
 
+        {/* Messages de résultat et boutons (uniquement si pas en chargement) */}
+        {!isLoading && (
+          <>
             {status === "success" && resultMessage && (
               <div className="text-sm rounded-lg border border-green-600/60 bg-green-900/40 text-green-200 px-3 py-2">
                 {resultMessage}
