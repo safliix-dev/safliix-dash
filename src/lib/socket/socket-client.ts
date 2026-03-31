@@ -7,7 +7,9 @@ const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL || "https://dashboard-api.saf
  * Instance unique du socket pour le namespace video-progress.
  * autoConnect est à false car nous gérons la connexion manuellement après l'authentification.
  */
-export const videoSocket: Socket = io(`${SOCKET_URL}/admin`, {
+
+console.log(SOCKET_URL);
+export const videoSocket: Socket = io(`${SOCKET_URL}/processing`, {
   autoConnect: false,
   transports: ["websocket"],
   withCredentials: true,
