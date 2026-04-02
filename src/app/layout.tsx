@@ -9,6 +9,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "safliixboard",
   description: "Le dashboard de la plateforme de VOD SaFliix",
+  icons: {
+    icon: '/ICONE_SFLIX.png',
+    apple: '/ICONE_SFLIX.png',
+  },
 };
 
 export default async function RootLayout({

@@ -1,4 +1,5 @@
 'use client';
+
 import BackgroundImg from "@/ui/components/backgroundImg";
 import MonthlyStatsChart from "@/ui/specific/stats/components/barChart";
 import { Banknote, Clock, Download, Flag, Lightbulb, Package, Play, PlayCircle, Users } from "lucide-react";

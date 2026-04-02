@@ -10,9 +10,6 @@ import {
   type FilmMetaOptions,
 } from "@/types/api/films";
 
-import { type UploadFileDescriptor,
-  type UploadFinalizePayload,
-  type UploadSlot } from "@/types/attachmentType";  
 
 export const filmsApi = {
   list: (params: FilmListParams, accessToken?: string) =>
@@ -45,19 +42,7 @@ export const filmsApi = {
       accessToken,
     }),
 
-  presignUploads: (id: string, files: UploadFileDescriptor[], accessToken?: string) =>
-    apiRequest<UploadSlot[]>(`/admin/movies/${id}/uploads/presign`, {
-      method: "POST",
-      body: { files },
-      accessToken,
-    }),
-
-  finalizeUploads: (id: string, payload: UploadFinalizePayload, accessToken?: string) =>
-    apiRequest<{ ok: boolean }>(`/admin/movies/${id}/uploads/finalize`, {
-      method: "POST",
-      body: payload,
-      accessToken,
-    }),
+  
 
   metaOptions: (accessToken?: string) =>
     apiRequest<FilmMetaOptions>("/admin/movies/meta/options", { accessToken }),

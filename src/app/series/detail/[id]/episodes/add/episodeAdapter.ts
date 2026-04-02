@@ -5,17 +5,17 @@ import { uploadApi } from "@/lib/api/uploads";
 import { episodeApi } from "@/lib/api/episode";
 import { EpisodeFormData, EpisodeMetadataPayload, EpisodeSlot } from "@/types/api/episode";
 import { MediaFormEngineConfig } from "@/lib/hooks/form/useMediaFormEngine";
-import { 
-  attachmentTypeMap, 
+import {  
   UploadFinalizePayload, 
   UploadFileDescriptor,
-  AttachmentType 
-} from "@/types/attachmentType";
+   
+} from "@/types/upload";
 
 export interface EpisodePresignedSlot {
   key: EpisodeSlot;
   uploadUrl: string;
   finalUrl: string;
+  mediaFileId:string;
 }
 
 export const episodeAdapter: MediaFormEngineConfig<
@@ -71,7 +71,9 @@ export const episodeAdapter: MediaFormEngineConfig<
       key: f.key,
       name: f.file.name,
       type: f.file.type || "application/octet-stream",
-      attachmentType: attachmentTypeMap[f.key] as AttachmentType
+      attachmentType: f.key,
+      file:f.file
+
     }));
 
     const slots = await uploadApi.presignUploads<EpisodeSlot>(id, "episode", descriptors);
@@ -79,7 +81,8 @@ export const episodeAdapter: MediaFormEngineConfig<
     return slots.map(slot => ({
       uploadUrl: slot.uploadUrl,
       finalUrl: slot.finalUrl,
-      key: slot.key
+      key: slot.key,
+      mediaFileId:slot.mediaFileId
     }));
   },
 
@@ -98,14 +101,12 @@ export const episodeAdapter: MediaFormEngineConfig<
   },
 
   finalizeUploads: async (id, slots) => {
-    const payload: UploadFinalizePayload<EpisodeSlot> = {
-      uploads: slots.map((s) => ({
-        key: s.key,
-        finalUrl: s.finalUrl,
-      })),
+    const payload: UploadFinalizePayload = {
+      entityId:id,
+      mediaFileIds:slots.map(s => s.mediaFileId)
     };
 
-    const res = await uploadApi.finalizeUploads<EpisodeSlot>(id, payload);
+    const res = await uploadApi.finalizeUploads(id, payload);
     
     if (!res || (res.ok === false)) {
       throw new Error("La finalisation de l'upload a échoué côté serveur.");

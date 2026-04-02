@@ -3,11 +3,9 @@ import { seriesApi } from "@/lib/api/series";
 import { uploadApi } from "@/lib/api/uploads";
 import { SeriesMetadataPayload, SeriesFormData } from "@/types/api/series";
 import { MediaFormEngineConfig } from "@/lib/hooks/form/useMediaFormEngine";
-import { 
-  attachmentTypeMap, 
+import {  
   UploadFinalizePayload,
-  AttachmentType
-} from "@/types/attachmentType";
+} from "@/types/upload";
 
 import { SeriesSlot } from "@/types/api/series";
 
@@ -20,6 +18,7 @@ export interface SeriesPresignedSlot {
   key: SeriesSlot;
   uploadUrl: string;
   finalUrl: string;
+  mediaFileId:string;
 }
 
 export const seriesAdapter: MediaFormEngineConfig<
@@ -103,7 +102,8 @@ export const seriesAdapter: MediaFormEngineConfig<
       key: f.key,
       name: f.file.name,
       type: f.file.type || "application/octet-stream",
-      attachmentType:  attachmentTypeMap[f.key] as AttachmentType
+      attachmentType:  f.key,
+      file:f.file
     }));
 
     const slots = await uploadApi.presignUploads(id, "series", descriptors);
@@ -111,7 +111,8 @@ export const seriesAdapter: MediaFormEngineConfig<
     return slots.map(slot => ({
       uploadUrl: slot.uploadUrl,
       finalUrl: slot.finalUrl,
-      key: slot.key as SeriesSlot
+      key: slot.key as SeriesSlot,
+      mediaFileId:slot.mediaFileId
     }));
   },
 
@@ -137,10 +138,8 @@ export const seriesAdapter: MediaFormEngineConfig<
    */
   finalizeUploads: async (id, slots) => {
     const payload: UploadFinalizePayload = {
-      uploads: slots.map((s) => ({
-        key: s.key,
-        finalUrl: s.finalUrl,
-      })),
+      entityId:id,
+      mediaFileIds:slots.map(s => s.mediaFileId)
     };
 
     const res = await uploadApi.finalizeUploads(id, payload);

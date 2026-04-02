@@ -6,16 +6,15 @@ import { filmsApi } from "@/lib/api/films";
 import { FilmFormData, FilmMetadataPayload, FilmSlot } from "@/types/api/films"; 
 import { MediaFormEngineConfig } from "@/lib/hooks/form/useMediaFormEngine";
 import { 
-  attachmentTypeMap, 
   UploadFinalizePayload, 
   UploadFileDescriptor,
-  AttachmentType,
-} from "@/types/attachmentType";
+} from "@/types/upload";
 
 export interface FilmPresignedSlot {
   key: FilmSlot;
   uploadUrl: string;
   finalUrl: string;
+  mediaFileId: string;
 }
 
 export const filmAdapter: MediaFormEngineConfig<
@@ -51,11 +50,13 @@ export const filmAdapter: MediaFormEngineConfig<
   },
 
   collectFiles: (form): { key: FilmSlot; file: File }[] => {
+    // CORRECTION : On utilise directement les valeurs attendues par le workflow (l'Enum)
+    // Cela permet au hook de faire le lien entre le retour du serveur et le fichier local
     const slots: { key: FilmSlot; file: File | null | undefined }[] = [
-      { key: 'mainImage', file: form.mainImage },
-      { key: 'secondaryImage', file: form.secondaryImage },
-      { key: 'movieFile', file: form.movieFile },
-      { key: 'trailerFile', file: form.trailerFile },
+      { key: 'POSTER', file: form.mainImage },
+      { key: 'THUMBNAIL', file: form.secondaryImage },
+      { key: 'MAIN', file: form.movieFile },
+      { key: 'TRAILER', file: form.trailerFile },
     ];
     
     return slots.filter((s): s is { key: FilmSlot; file: File } => s.file instanceof File);
@@ -90,8 +91,9 @@ export const filmAdapter: MediaFormEngineConfig<
       key: f.key,
       name: f.file.name,
       type: f.file.type || "application/octet-stream",
-      attachmentType: attachmentTypeMap[f.key] as AttachmentType // Utiliser le mapping
-    }));
+      attachmentType: f.key,
+      file:f.file
+    }))
 
     // Appeler l'API avec le bon type
     const slots = await uploadApi.presignUploads(id, "movie", descriptors);
@@ -100,7 +102,8 @@ export const filmAdapter: MediaFormEngineConfig<
     return slots.map(slot => ({
       uploadUrl: slot.uploadUrl,
       finalUrl: slot.finalUrl,
-      key: slot.key as FilmSlot
+      key: slot.key as FilmSlot,
+      mediaFileId: slot.mediaFileId
     }));
   },
 
@@ -118,14 +121,11 @@ export const filmAdapter: MediaFormEngineConfig<
     });
   },
 
-  finalizeUploads: async (id, slots) => {
-    const payload: UploadFinalizePayload<FilmSlot> = {
-      uploads: slots.map((s) => ({
-        key: s.key,
-        finalUrl: s.finalUrl,
-      })),
+  finalizeUploads: async (id, slots:FilmPresignedSlot[]) => {
+    const payload: UploadFinalizePayload = {
+      entityId: id,
+      mediaFileIds: slots.map((s) => s.mediaFileId),
     };
-
     const res = await uploadApi.finalizeUploads(id, payload);
     
     if (!res || (res.ok === false)) {

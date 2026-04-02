@@ -1,6 +1,6 @@
 // types/api/seasons.ts
 
-export interface SeasonFormData {
+export type SeasonFormData = {
   numero: number | null;
   title: string;
   description: string;

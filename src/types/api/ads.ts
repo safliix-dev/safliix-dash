@@ -47,7 +47,7 @@ export interface AdsListResponse {
 
 // types/api/pub.ts
 
-export interface AdsFormData {
+export type AdsFormData = {
   title: string;
   description: string;
   startDate: string;

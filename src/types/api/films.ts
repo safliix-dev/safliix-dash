@@ -108,7 +108,8 @@ export interface FilmDetail {
   subtitleLanguages?: string[];
 }
 
-export type FilmSlot = 'mainImage' | 'secondaryImage' | 'movieFile' | 'trailerFile';
+
+export type FilmSlot = 'POSTER' | 'MAIN' | 'TRAILER' | 'THUMBNAIL';
 
 export interface FilmActionPayload {
   action: "publish" | "pause";

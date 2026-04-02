@@ -47,6 +47,7 @@ export interface MediaFormEngineReturn<
   upload: UploadState<TSlot>;
   pendingData: TFormData | null;
   resetEngine: () => void;
+  prepareForNextStep: () => void;
 
   entityId: string | null;
   setEntityId: (id: string) => void;
@@ -136,6 +137,7 @@ export function MediaPage<
     dialogStatus,
     upload,
     pendingData,
+    prepareForNextStep,
     resetEngine,
     meta,
   } = useFormHook();
@@ -267,7 +269,11 @@ export function MediaPage<
         pendingData={pendingData}
         summary={currentStep === 0 ? 'metadata' : 'files'}
         currentStep={currentStep}
-        onNextStep={() => setCurrentStep(1)}
+        onNextStep={() => {
+    
+         prepareForNextStep();
+          setCurrentStep(1);
+        }}
       />
     </FormStepLayout>
   );

@@ -15,8 +15,8 @@ import { RightsHolderMoviesReport, type MovieReportEntry } from "@/ui/pdf/Rights
 import type { RightsHolderContentResponse } from "@/types/api/imageRights";
 import type { FilmListItem } from "@/types/api/films";
 import { jobApi } from "@/lib/api/job";
-
-import { EncodingJob } from "@/types/api/job";
+import { useJobSocket } from "@/lib/hooks/useVideoSocket"; // 👈 Importer le hook
+import type { EncodingJob } from "@/types/api/job";
 import { NormalizedStats } from "@/ui/specific/films/components/videoCard";
 
 type DistributionMode = "location" | "abonnement";
@@ -33,23 +33,95 @@ export default function Page() {
   const [sortFilter, setSortFilter] = useState<SortOption>("none");
   const [reportPeriod, setReportPeriod] = useState({ start: "", end: "" });
 
-	const [showEncoding, setShowEncoding] = useState(true); 
-	const [encodingJobs, setEncodingJobs] = useState<EncodingJob[]>([ { id: "encode-1", title: "Au fil du temps", progress: 42, status: "processing" as "processing" | "paused" | "failed" | "completed", startedAt: "Il y a 2 min", }, ]);
-
-	const updateJob = (id: string, updates: Partial<(typeof encodingJobs)[number]>) => { setEncodingJobs((prev) => prev.map((job) => (job.id === id ? { ...job, ...updates } : job))); };
-
-	const handlePause = (id: string) => updateJob(id, { status: "paused" }); const handleResume = (id: string) => updateJob(id, { status: "processing" }); const handleFail = (id: string) => updateJob(id, { status: "failed" });
+  const [showEncoding, setShowEncoding] = useState(true); 
+  const [encodingJobs, setEncodingJobs] = useState<EncodingJob[]>([]);
 
   const accessToken = useAccessToken();
   const toast = useToast();
 
-const extractFilmStats = (
-  film: FilmListItem
-): NormalizedStats => {
-  const stats = film.stats;
+  // ✅ Intégration du hook WebSocket pour les jobs
+  const { isConnected: socketConnected } = useJobSocket("movies", (data) => {
+    console.log("📡 Mise à jour socket reçue:", data);
+    
+    // Mettre à jour le job correspondant
+    if (data.jobId) {
+      setEncodingJobs(prev => prev.map(job => {
+        if (job.id === data.jobId) {
+          return {
+            ...job,
+            progress: data.progress || job.progress,
+            status: mapSocketStatusToJobStatus(data.status),
+            message: data.message,
+          };
+        }
+        return job;
+      }));
+    }
+  });
 
-  // Sécurité : film sans stats
-  if (!stats) {
+  // Helper pour mapper le statut socket vers le statut du job
+  const mapSocketStatusToJobStatus = (status: string): "processing" | "paused" | "failed" | "completed" => {
+    switch (status?.toLowerCase()) {
+      case 'running':
+      case 'processing':
+        return 'processing';
+      case 'paused':
+        return 'paused';
+      case 'failed':
+        return 'failed';
+      case 'completed':
+        return 'completed';
+      default:
+        return 'processing';
+    }
+  };
+
+  const updateJob = (id: string, updates: Partial<EncodingJob>) => { 
+    setEncodingJobs((prev) => prev.map((job) => (job.id === id ? { ...job, ...updates } : job))); 
+  };
+
+  const handlePause = (id: string) => updateJob(id, { status: "paused" }); 
+  const handleResume = (id: string) => updateJob(id, { status: "processing" }); 
+  const handleFail = (id: string) => updateJob(id, { status: "failed" });
+
+  const extractFilmStats = (film: FilmListItem): NormalizedStats => {
+    const stats = film.stats;
+
+    if (!stats) {
+      return {
+        locationsCount: 0,
+        revenue: 0,
+        donutViewed: 0,
+        donutCatalog: 0,
+        donutRevenue: 0,
+        geo: [],
+      };
+    }
+
+    if (stats.type === "abonnement") {
+      const s = stats.stats;
+      return {
+        locationsCount: 0,
+        revenue: s.revenue,
+        donutViewed: s.subscriberViewPercentage,
+        donutCatalog: s.catalogTotalMinutes,
+        donutRevenue: s.revenue,
+        geo: [],
+      };
+    }
+
+    if (stats.type === "location") {
+      const s = stats.stats;
+      return {
+        locationsCount: s.totalRentals,
+        revenue: s.revenue,
+        donutViewed: s.totalRentals,
+        donutCatalog: 0,
+        donutRevenue: s.revenue,
+        geo: s.topCountries,
+      };
+    }
+
     return {
       locationsCount: 0,
       revenue: 0,
@@ -58,61 +130,7 @@ const extractFilmStats = (
       donutRevenue: 0,
       geo: [],
     };
-  }
-
-  // 🎬 FILM EN ABONNEMENT
-  if (stats.type === "abonnement") {
-    const s = stats.stats;
-
-    return {
-      // ❌ pas de location
-      locationsCount: 0,
-
-      // 💰 revenu abonnement
-      revenue: s.revenue,
-
-      // 🍩 donuts abonnement
-      donutViewed: s.subscriberViewPercentage,
-      donutCatalog: s.catalogTotalMinutes,
-      donutRevenue: s.revenue,
-
-      // ❌ pas de géo en abonnement
-      geo: [],
-    };
-  }
-
-  // 🎬 FILM EN LOCATION
-  if (stats.type === "location") {
-    const s = stats.stats;
-
-    return {
-      // 📦 nombre de locations
-      locationsCount: s.totalRentals,
-
-      // 💰 revenu location
-      revenue: s.revenue,
-
-      // 🍩 donuts location
-      donutViewed: s.totalRentals,
-      donutCatalog: 0,
-      donutRevenue: s.revenue,
-
-      // 🌍 stats géographiques
-      geo: s.topCountries,
-    };
-  }
-
-  // fallback (ne devrait jamais arriver)
-  return {
-    locationsCount: 0,
-    revenue: 0,
-    donutViewed: 0,
-    donutCatalog: 0,
-    donutRevenue: 0,
-    geo: [],
   };
-};
-
 
   useEffect(() => {
     setIsClient(true);
@@ -132,31 +150,23 @@ const extractFilmStats = (
     });
 
   const getRevenue = (film: FilmListItem): number => {
-		if (!film.stats) return 0;
+    if (!film.stats) return 0;
+    switch (film.stats.type) {
+      case "abonnement":
+      case "location":
+        return film.stats.stats.revenue;
+      default:
+        return 0;
+    }
+  };
 
-		switch (film.stats.type) {
-			case "abonnement":
-				return film.stats.stats.revenue;
-
-			case "location":
-				return film.stats.stats.revenue;
-
-			default:
-				return 0;
-		}
-	};
-
-	const getViews = (film: FilmListItem): number => {
-		if (!film.stats) return 0;
-
-		if (film.stats.type === "abonnement") {
-			return film.stats.stats.totalViews;
-		}
-
-		return 0; 
-	};
-
-
+  const getViews = (film: FilmListItem): number => {
+    if (!film.stats) return 0;
+    if (film.stats.type === "abonnement") {
+      return film.stats.stats.totalViews;
+    }
+    return 0; 
+  };
 
   const buildReportEntries = (items: FilmListItem[]): MovieReportEntry[] =>
     items.map((film, idx) => ({
@@ -167,19 +177,17 @@ const extractFilmStats = (
       revenue: getRevenue(film),
     }));
 
-	useEffect(() => {
+  // ✅ Chargement initial des jobs
+  useEffect(() => {
     const controller = new AbortController();
     const load = async () => {
       setLoading(true);
       try {
-        const res = await jobApi.list({type:"MOVIE"},accessToken);
-				if(Array.isArray(res))
-        {
+        const res = await jobApi.list({type:"MOVIE"}, accessToken);
+        if (Array.isArray(res)) {
           setEncodingJobs(res);
-				  console.dir(res, {depth:2});
+          console.dir(res, {depth:2});
         }  
-
-
       } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') return;
         const friendly = formatApiError(err);
@@ -192,6 +200,7 @@ const extractFilmStats = (
     return () => controller.abort();
   }, [accessToken, toast]);
 
+  // ✅ Chargement des films par ayant-droit
   useEffect(() => {
     const controller = new AbortController();
     const load = async () => {
@@ -201,8 +210,7 @@ const extractFilmStats = (
           accessToken, 
           signal: controller.signal 
         });
-
-				console.dir(res, {depth:2});
+        console.dir(res, {depth:2});
         setRawFilmsByRightsholder(res.filter((g) => Array.isArray(g.movies) && g.movies.length > 0));
       } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') return;
@@ -246,57 +254,104 @@ const extractFilmStats = (
               <span>{isClient ? new Date().toLocaleString("fr-FR") : "--/--/---- --:--"}</span>
             </div>
           </div>
-          <Link className="btn btn-primary btn-sm rounded-lg" href="/dashboard/films/add">
+          {/* ✅ Indicateur de connexion socket */}
+          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${socketConnected ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+            <span className={`w-2 h-2 rounded-full ${socketConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></span>
+            <span>{socketConnected ? 'Temps réel actif' : 'Connexion socket...'}</span>
+          </div>
+          <Link className="btn btn-primary btn-sm rounded-lg" href="/films/add">
             <Plus className="w-4 h-4 mr-1" /> Ajouter un film
           </Link>
         </div>
       </Header>
 
-			{encodingJobs.length > 0 && ( 
-				<div className="bg-neutral rounded-2xl border border-base-300 p-4 shadow-sm"> 
-					<div className="flex items-center justify-between gap-3"> 
-						<div> 
-							<p className="text-xs uppercase text-white/50">Encodage</p> 
-							<div className="flex items-center gap-2"> 
-								<h3 className="text-lg font-semibold text-white">Tâches</h3> 
-								<span className="badge badge-sm badge-outline border-primary/40 text-primary"> {encodingJobs.length} en cours </span> 
-							</div> 
-						</div> 
-						<div className="flex items-center gap-3 text-xs text-white/60"> 
-							<span>Source: socket.io (à connecter)</span> 
-							<label className="flex items-center gap-2 cursor-pointer text-white/70"> 
-							<span>{showEncoding ? "Masquer" : "Afficher"}</span> 
-							<input type="checkbox" className="toggle toggle-primary toggle-sm" checked={showEncoding} onChange={() => setShowEncoding((prev) => !prev)} /> 
-							</label> 
-						</div> 
-					</div> 
-					{showEncoding && ( 
-						<div className="mt-3 space-y-3"> 
-							{encodingJobs.map((job) => ( 
-								<div key={job.id} className="rounded-xl border border-base-300/60 bg-base-200/40 p-3 space-y-2"> 
-									<div className="flex items-center justify-between"> 
-										<div> 
-											<p className="text-sm text-white/70">{job.title}</p> 
-											<p className="text-sm font-semibold text-white">{job.status == "PROCESSING" ? "Encodage en cours" : "Encodage terminé"}</p> 
-										</div> <span className="text-xs text-white/50">{job.startedAt}</span> 
-									</div> <div className="flex items-center gap-3"> 
-									<div className="flex-1"> 
-										<div className="flex items-center justify-between text-xs text-white/60 mb-1"> 
-											<span>Progression</span> <span>{job.progress}%</span> 
-										</div> 
-										<progress className="progress progress-primary w-full" value={job.progress} max="100"></progress> 
-									</div> 
-									<div className="flex items-center gap-2"> 
-										<button className="btn btn-xs btn-ghost text-white/80" onClick={() => handleFail(job.id)} > Marquer échoué </button> 
-										{job.status === "processing" ? ( 
-											<button className="btn btn-xs btn-error text-white" onClick={() => handlePause(job.id)} > Stopper </button> ) 
-											: ( <button className="btn btn-xs btn-primary" onClick={() => handleResume(job.id)} > Relancer </button> )} 
-									</div> 
-								</div> 
-							</div> ))} 
-						</div> )} 
-					</div> )}
+      {/* ✅ Section des jobs d'encodage */}
+      {encodingJobs.length > 0 && ( 
+        <div className="bg-neutral rounded-2xl border border-base-300 p-4 shadow-sm"> 
+          <div className="flex items-center justify-between gap-3"> 
+            <div> 
+              <p className="text-xs uppercase text-white/50">Encodage</p> 
+              <div className="flex items-center gap-2"> 
+                <h3 className="text-lg font-semibold text-white">Tâches</h3> 
+                <span className="badge badge-sm badge-outline border-primary/40 text-primary">
+                  {encodingJobs.filter(j => j.status === 'processing').length} en cours
+                </span>
+                {socketConnected && (
+                  <span className="badge badge-xs badge-success">Live</span>
+                )}
+              </div> 
+            </div> 
+            <div className="flex items-center gap-3 text-xs text-white/60"> 
+              <span>Source: {socketConnected ? 'socket.io (temps réel)' : 'API'}</span> 
+              <label className="flex items-center gap-2 cursor-pointer text-white/70"> 
+                <span>{showEncoding ? "Masquer" : "Afficher"}</span> 
+                <input type="checkbox" className="toggle toggle-primary toggle-sm" checked={showEncoding} onChange={() => setShowEncoding((prev) => !prev)} /> 
+              </label> 
+            </div> 
+          </div> 
+          {showEncoding && ( 
+            <div className="mt-3 space-y-3"> 
+              {encodingJobs.map((job) => ( 
+                <div key={job.id} className="rounded-xl border border-base-300/60 bg-base-200/40 p-3 space-y-2"> 
+                  <div className="flex items-center justify-between"> 
+                    <div> 
+                      <p className="text-sm text-white/70">{job.title}</p> 
+                      <p className="text-sm font-semibold text-white">
+                        {job.status === "processing" ? "Encodage en cours" : 
+                         job.status === "completed" ? "Encodage terminé" :
+                         job.status === "failed" ? "Échec d'encodage" : "En pause"}
+                      </p>
+                    </div> 
+                    <span className="text-xs text-white/50">{job.startedAt}</span> 
+                  </div> 
+                  <div className="flex items-center gap-3"> 
+                    <div className="flex-1"> 
+                      <div className="flex items-center justify-between text-xs text-white/60 mb-1"> 
+                        <span>Progression</span> 
+                        <span>{job.progress}%</span> 
+                      </div> 
+                      <progress 
+                        className={`progress w-full ${job.status === 'failed' ? 'progress-error' : 'progress-primary'}`} 
+                        value={job.progress} 
+                        max="100"
+                      ></progress> 
+                    </div> 
+                    <div className="flex items-center gap-2"> 
+                      {job.status !== "completed" && (
+                        <>
+                          <button 
+                            className="btn btn-xs btn-ghost text-white/80" 
+                            onClick={() => handleFail(job.id)} 
+                          > 
+                            Marquer échoué 
+                          </button> 
+                          {job.status === "processing" ? ( 
+                            <button 
+                              className="btn btn-xs btn-error text-white" 
+                              onClick={() => handlePause(job.id)} 
+                            > 
+                              Stopper 
+                            </button>
+                          ) : job.status === "paused" ? (
+                            <button 
+                              className="btn btn-xs btn-primary" 
+                              onClick={() => handleResume(job.id)} 
+                            > 
+                              Relancer 
+                            </button>
+                          ) : null}
+                        </>
+                      )}
+                    </div> 
+                  </div> 
+                </div> 
+              ))} 
+            </div>
+          )} 
+        </div>
+      )}
 
+      {/* Reste du code inchangé pour les filtres et l'affichage des films */}
       <div className="flex flex-col gap-3">
         <div className="tabs tabs-boxed bg-base-200/40 border border-base-300 rounded-xl w-fit">
           {(["location", "abonnement"] as const).map((m) => (
@@ -311,22 +366,22 @@ const extractFilmStats = (
         </div>
         
         <div className="flex flex-wrap gap-2">
-           <FilterBtn 
-             title="Statut" 
-             selected={statusFilter} 
-             onSelect={setStatusFilter} 
-             options={[{label: "Tous", value: "all"}]} 
-           />
-           <FilterBtn 
-             title="Tri" 
-             selected={sortFilter} 
-             onSelect={(val) => setSortFilter(val as SortOption)} 
-             options={[
-               {label: "Par défaut", value: "none"}, 
-               {label: "Meilleures ventes", value: "best"},
-               {label: "Dernier ajout", value: "latest"}
-             ]} 
-           />
+          <FilterBtn 
+            title="Statut" 
+            selected={statusFilter} 
+            onSelect={setStatusFilter} 
+            options={[{label: "Tous", value: "all"}]} 
+          />
+          <FilterBtn 
+            title="Tri" 
+            selected={sortFilter} 
+            onSelect={(val) => setSortFilter(val as SortOption)} 
+            options={[
+              {label: "Par défaut", value: "none"}, 
+              {label: "Meilleures ventes", value: "best"},
+              {label: "Dernier ajout", value: "latest"}
+            ]} 
+          />
         </div>
       </div>
 
@@ -369,22 +424,21 @@ const extractFilmStats = (
                 <div className="grid gap-3">
                   {group.movies.map((film) => {
                     const stats = extractFilmStats(film);
-
                     return (
                       <VideoCard 
-                      key={film.id} 
-                      title={film.title}
-                      director={film.director}
-                      poster=""
-                      dp=""
-                      hero=""
-                      category=""
-                      stats={stats}
-                      status=""
-                      mode={mode} 
-                      detailHref={`/dashboard/films/detail/${film.id}`} 
-                    />
-                    )
+                        key={film.id} 
+                        title={film.title}
+                        director={film.director}
+                        poster=""
+                        dp=""
+                        hero=""
+                        category=""
+                        stats={stats}
+                        status=""
+                        mode={mode} 
+                        detailHref={`/dashboard/films/detail/${film.id}`} 
+                      />
+                    );
                   })}
                 </div>
               )}

@@ -2,7 +2,7 @@
 
 // types/api/episode.ts
 
-export interface EpisodeFormData {
+export type EpisodeFormData = {
   title: string;
   description: string;
   isCustomProduction: boolean;
