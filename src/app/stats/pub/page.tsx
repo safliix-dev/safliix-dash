@@ -83,7 +83,7 @@ function PubCard({ pub } : { pub: Pub}) {
       {/* Poster + Modifier */}
       <Link
         className="absolute top-2 right-2 btn btn-ghost btn-xs text-primary border-primary/50 rounded-full"
-        href={`/dashboard/stats/pub/detail/${pub.id}`}
+        href={`/stats/pub/detail/${pub.id}`}
       >
         Voir les détails
       </Link>

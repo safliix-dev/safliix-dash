@@ -50,7 +50,7 @@ export default function SeriesDetailClient({ id, seasons, detail }: Props) {
           <h2 className="text-xl font-semibold text-white">{detail.title}</h2>
           <div className="flex items-center gap-2">
             <span className="badge badge-outline border-primary/40 text-primary">{detail.category || "—"}</span>
-            <Link href={`/dashboard/series/addSeason/${id}`} className="btn btn-primary btn-sm">
+            <Link href={`/series/addSeason/${id}`} className="btn btn-primary btn-sm">
               Ajouter une saison
             </Link>
           </div>
@@ -80,7 +80,7 @@ export default function SeriesDetailClient({ id, seasons, detail }: Props) {
               </div>
             </div>
             <Link
-              href={`/dashboard/series/detail/${id}/episodes/add?season=${season.id}`}
+              href={`/series/detail/${id}/episodes/add?season=${season.id}`}
               className="btn btn-sm btn-outline btn-primary"
             >
               Ajouter un épisode

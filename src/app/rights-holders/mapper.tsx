@@ -15,7 +15,7 @@ export const rightsHolderColumns: ColumnConfig<ImageRightsHolder>[] = [
     key: "fullName",
   header: "AYANT DROIT",
   render: (holder) => (
-      <Link href={`/dashboard/rights-holders/${holder.id}`} className="flex items-center gap-3 hover:text-primary">
+      <Link href={`/rights-holders/${holder.id}`} className="flex items-center gap-3 hover:text-primary">
         <div className="avatar placeholder">
           <div className="mask mask-squircle h-12 w-12 bg-primary/20 text-primary font-bold flex items-center justify-center uppercase text-xl text-center">
             {(holder.firstName || holder.lastName || "?").charAt(0)}

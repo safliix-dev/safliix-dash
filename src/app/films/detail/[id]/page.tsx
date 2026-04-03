@@ -103,7 +103,7 @@ export default function Page() {
           <div className="bg-neutral rounded-2xl border border-base-300 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">Synopsis</h3>
-              <Link href="/dashboard/films" className="btn btn-ghost btn-xs text-primary border-primary/50 rounded-full">
+              <Link href="/films" className="btn btn-ghost btn-xs text-primary border-primary/50 rounded-full">
                 Retour liste
               </Link>
             </div>

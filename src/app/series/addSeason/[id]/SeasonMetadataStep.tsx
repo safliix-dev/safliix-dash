@@ -1,4 +1,4 @@
-// app/dashboard/series/detail/[id]/seasons/add/components/SeasonMetadataStep.tsx
+// app/series/detail/[id]/seasons/add/components/SeasonMetadataStep.tsx
 
 'use client';
 

@@ -72,10 +72,10 @@ export default function Page() {
       <Header title="Abonnements" className="rounded-2xl border border-base-300 px-5 py-3">
         
         <div className="mb-3 flex items-center gap-2">
-        <Link href="/dashboard/subscriptions/plans" className="btn btn-ghost btn-sm border-base-300 rounded-full">
+        <Link href="/subscriptions/plans" className="btn btn-ghost btn-sm border-base-300 rounded-full">
           Voir les plans
         </Link>
-        <Link href="/dashboard/subscriptions/promos" className="btn btn-secondary btn-sm rounded-full ml-2">
+        <Link href="/subscriptions/promos" className="btn btn-secondary btn-sm rounded-full ml-2">
           Voir les promos
         </Link>
       </div>

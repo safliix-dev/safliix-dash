@@ -182,7 +182,7 @@ export default function Page() {
                 </h3>
               </div>
               <Link
-                href="/dashboard/users"
+                href="/users"
                 className="btn btn-ghost btn-xs text-primary border-primary/50 rounded-full"
               >
                 Retour liste

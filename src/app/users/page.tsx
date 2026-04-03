@@ -77,7 +77,7 @@ export default function Page() {
   return (
     <div className="">
       <Header title="Utilisateurs">
-        <Link href={"/dashboard/users/edit/new"} className="btn btn-primary">Ajouter un utilisateur</Link>
+        <Link href={"/users/edit/new"} className="btn btn-primary">Ajouter un utilisateur</Link>
       </Header>
       {loading && <div className="alert alert-info text-sm mt-3">Chargement des utilisateurs...</div>}
       {error && <div className="alert alert-error text-sm mt-3">{error}</div>}
@@ -87,13 +87,13 @@ export default function Page() {
               label: "Voir",
               className: "btn-info",
               onClick: (row) =>
-                router.push(`/dashboard/users/${row.id}`),
+                router.push(`/users/${row.id}`),
             },
             {
               label: "Modifier",
               className: "btn-warning",
               onClick: (row) =>
-                router.push(`/dashboard/users/edit/${row.id}`),
+                router.push(`/users/edit/${row.id}`),
             },
             {
               label: "Supprimer",

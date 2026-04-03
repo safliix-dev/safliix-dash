@@ -206,7 +206,7 @@ export default function Page() {
             </button>
 
             <a
-              href="/dashboard/subscriptions"
+              href="/subscriptions"
               className="btn btn-ghost rounded-full border-base-300"
             >
               Annuler

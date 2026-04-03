@@ -31,7 +31,7 @@ export default function Page() {
   return (
     <div className="space-y-4">
       <Header title={isEdit ? "Modifier un ayant droit" : "Ajouter un ayant droit"}>
-        <Link href="/dashboard/rights-holders" className="btn btn-ghost btn-xs rounded-full">
+        <Link href="/rights-holders" className="btn btn-ghost btn-xs rounded-full">
           Retour liste
         </Link>
       </Header>

@@ -72,7 +72,7 @@ export default function Page() {
     <div className="space-y-5">
       <Header title="Promotions" className="rounded-2xl border border-base-300 px-5 py-3">
         <div className="flex items-center gap-2">
-          <Link href="/dashboard/subscriptions/promos/edit/new" className="btn btn-primary btn-sm rounded-full">
+          <Link href="/subscriptions/promos/edit/new" className="btn btn-primary btn-sm rounded-full">
             Créer une promo
           </Link>
           
@@ -91,7 +91,7 @@ export default function Page() {
               label: "Modifier",
               className: "btn-warning",
               onClick: (row) =>
-                router.push(`/dashboard/subscriptions/promos/edit/${row.id}`),
+                router.push(`/subscriptions/promos/edit/${row.id}`),
             },
             {
               label: "Supprimer",

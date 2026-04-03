@@ -15,7 +15,7 @@ import { RightsHolderMoviesReport, type MovieReportEntry } from "@/ui/pdf/Rights
 import type { RightsHolderContentResponse } from "@/types/api/imageRights";
 import type { FilmListItem } from "@/types/api/films";
 import { jobApi } from "@/lib/api/job";
-import { useJobSocket } from "@/lib/hooks/useVideoSocket"; // 👈 Importer le hook
+import { useJobSocket } from "@/lib/hooks/useVideoSocket"; 
 import type { EncodingJob } from "@/types/api/job";
 import { NormalizedStats } from "@/ui/specific/films/components/videoCard";
 
@@ -35,27 +35,54 @@ export default function Page() {
 
   const [showEncoding, setShowEncoding] = useState(true); 
   const [encodingJobs, setEncodingJobs] = useState<EncodingJob[]>([]);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   const accessToken = useAccessToken();
   const toast = useToast();
 
   // ✅ Intégration du hook WebSocket pour les jobs
-  const { isConnected: socketConnected } = useJobSocket("movies", (data) => {
-    console.log("📡 Mise à jour socket reçue:", data);
-    
-    // Mettre à jour le job correspondant
-    if (data.jobId) {
-      setEncodingJobs(prev => prev.map(job => {
-        if (job.id === data.jobId) {
-          return {
-            ...job,
-            progress: data.progress || job.progress,
-            status: mapSocketStatusToJobStatus(data.status),
-            message: data.message,
-          };
-        }
-        return job;
-      }));
+  const { isConnected: socketConnected, isAuthenticated } = useJobSocket({
+    room: "movies",
+    accessToken,
+    onJobUpdate: (data) => {
+      console.log("📡 Mise à jour socket reçue:", data);
+      setLastUpdate(new Date());
+      
+      // Mettre à jour le job correspondant
+      if (data.jobId) {
+        setEncodingJobs(prev => prev.map(job => {
+          if (job.id === data.jobId) {
+            const updatedJob = {
+              ...job,
+              progress: data.progress ?? job.progress,
+              status: mapSocketStatusToJobStatus(data.status ?? job.status),
+            };
+            
+            // Afficher une notification pour les événements importants
+            if (updatedJob.status === 'completed' && job.status !== 'completed') {
+              toast.success({ 
+                title: "Encodage terminé", 
+                description: `${job.title} est maintenant disponible` 
+              });
+            } else if (updatedJob.status === 'failed' && job.status !== 'failed') {
+              toast.error({ 
+                title: "Erreur d'encodage", 
+                description: `${job.title} - ${data.message || 'Une erreur est survenue'}` 
+              });
+            }
+            
+            return updatedJob;
+          }
+          return job;
+        }));
+      }
+    },
+    onError: (error) => {
+      console.error("❌ Erreur WebSocket:", error);
+      toast.warning({ 
+        title: "Connexion temps réel", 
+        description: "Mise à jour des tâches en différé" 
+      });
     }
   });
 
@@ -80,9 +107,20 @@ export default function Page() {
     setEncodingJobs((prev) => prev.map((job) => (job.id === id ? { ...job, ...updates } : job))); 
   };
 
-  const handlePause = (id: string) => updateJob(id, { status: "paused" }); 
-  const handleResume = (id: string) => updateJob(id, { status: "processing" }); 
-  const handleFail = (id: string) => updateJob(id, { status: "failed" });
+  const handlePause = (id: string) => {
+    updateJob(id, { status: "paused" });
+    // TODO: Appeler l'API pour mettre en pause sur le serveur
+  };
+  
+  const handleResume = (id: string) => {
+    updateJob(id, { status: "processing" });
+    // TODO: Appeler l'API pour reprendre sur le serveur
+  };
+  
+  const handleFail = (id: string) => {
+    updateJob(id, { status: "failed" });
+    // TODO: Appeler l'API pour marquer l'échec sur le serveur
+  };
 
   const extractFilmStats = (film: FilmListItem): NormalizedStats => {
     const stats = film.stats;
@@ -186,7 +224,7 @@ export default function Page() {
         const res = await jobApi.list({type:"MOVIE"}, accessToken);
         if (Array.isArray(res)) {
           setEncodingJobs(res);
-          console.dir(res, {depth:2});
+          console.log(`📊 ${res.length} jobs d'encodage chargés`);
         }  
       } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') return;
@@ -210,7 +248,6 @@ export default function Page() {
           accessToken, 
           signal: controller.signal 
         });
-        console.dir(res, {depth:2});
         setRawFilmsByRightsholder(res.filter((g) => Array.isArray(g.movies) && g.movies.length > 0));
       } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') return;
@@ -244,6 +281,10 @@ export default function Page() {
       });
   }, [rawFilmsByRightsholder, mode, statusFilter, sortFilter]);
 
+  // Calcul des stats pour l'affichage
+  const activeJobsCount = encodingJobs.filter(j => j.status === 'processing').length;
+  const completedJobsCount = encodingJobs.filter(j => j.status === 'completed').length;
+
   return (
     <div className="space-y-5">
       <Header title="Nos films" className="rounded-2xl border border-base-300 shadow-sm px-5">
@@ -254,90 +295,148 @@ export default function Page() {
               <span>{isClient ? new Date().toLocaleString("fr-FR") : "--/--/---- --:--"}</span>
             </div>
           </div>
-          {/* ✅ Indicateur de connexion socket */}
-          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${socketConnected ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-            <span className={`w-2 h-2 rounded-full ${socketConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></span>
-            <span>{socketConnected ? 'Temps réel actif' : 'Connexion socket...'}</span>
+          
+          {/* ✅ Indicateur de connexion socket amélioré */}
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs ${
+            socketConnected && isAuthenticated 
+              ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+              : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+          }`}>
+            <span className={`w-2 h-2 rounded-full ${
+              socketConnected && isAuthenticated ? 'bg-green-400 animate-pulse' : 'bg-yellow-400'
+            }`}></span>
+            <span>
+              {socketConnected && isAuthenticated 
+                ? 'Temps réel actif' 
+                : socketConnected 
+                  ? 'Authentification...' 
+                  : 'Connexion...'}
+            </span>
+            {lastUpdate && socketConnected && (
+              <span className="text-white/40 text-[10px]">
+                {lastUpdate.toLocaleTimeString()}
+              </span>
+            )}
           </div>
+          
           <Link className="btn btn-primary btn-sm rounded-lg" href="/films/add">
             <Plus className="w-4 h-4 mr-1" /> Ajouter un film
           </Link>
         </div>
       </Header>
 
-      {/* ✅ Section des jobs d'encodage */}
+      {/* ✅ Section des jobs d'encodage améliorée */}
       {encodingJobs.length > 0 && ( 
         <div className="bg-neutral rounded-2xl border border-base-300 p-4 shadow-sm"> 
           <div className="flex items-center justify-between gap-3"> 
             <div> 
               <p className="text-xs uppercase text-white/50">Encodage</p> 
               <div className="flex items-center gap-2"> 
-                <h3 className="text-lg font-semibold text-white">Tâches</h3> 
-                <span className="badge badge-sm badge-outline border-primary/40 text-primary">
-                  {encodingJobs.filter(j => j.status === 'processing').length} en cours
-                </span>
-                {socketConnected && (
-                  <span className="badge badge-xs badge-success">Live</span>
+                <h3 className="text-lg font-semibold text-white">Tâches d&apos;encodage</h3> 
+                {activeJobsCount > 0 && (
+                  <span className="badge badge-sm badge-warning animate-pulse">
+                    {activeJobsCount} en cours
+                  </span>
+                )}
+                {completedJobsCount > 0 && (
+                  <span className="badge badge-sm badge-success">
+                    {completedJobsCount} terminés
+                  </span>
+                )}
+                {socketConnected && isAuthenticated && activeJobsCount > 0 && (
+                  <span className="badge badge-xs badge-success gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                    Live
+                  </span>
                 )}
               </div> 
             </div> 
             <div className="flex items-center gap-3 text-xs text-white/60"> 
-              <span>Source: {socketConnected ? 'socket.io (temps réel)' : 'API'}</span> 
+              <span>Source: {socketConnected && isAuthenticated ? 'WebSocket (temps réel)' : 'API (polling)'}</span> 
               <label className="flex items-center gap-2 cursor-pointer text-white/70"> 
                 <span>{showEncoding ? "Masquer" : "Afficher"}</span> 
-                <input type="checkbox" className="toggle toggle-primary toggle-sm" checked={showEncoding} onChange={() => setShowEncoding((prev) => !prev)} /> 
+                <input 
+                  type="checkbox" 
+                  className="toggle toggle-primary toggle-sm" 
+                  checked={showEncoding} 
+                  onChange={() => setShowEncoding((prev) => !prev)} 
+                /> 
               </label> 
             </div> 
           </div> 
+          
           {showEncoding && ( 
-            <div className="mt-3 space-y-3"> 
-              {encodingJobs.map((job) => ( 
-                <div key={job.id} className="rounded-xl border border-base-300/60 bg-base-200/40 p-3 space-y-2"> 
+            <div className="mt-3 space-y-3 max-h-96 overflow-y-auto custom-scrollbar"> 
+              {encodingJobs.map((job) => (
+                <div 
+                  key={job.id} 
+                  className={`rounded-xl border p-3 space-y-2 transition-all ${
+                    job.status === 'processing' 
+                      ? 'border-primary/30 bg-primary/5' 
+                      : job.status === 'completed'
+                        ? 'border-success/30 bg-success/5'
+                        : job.status === 'failed'
+                          ? 'border-error/30 bg-error/5'
+                          : 'border-base-300/60 bg-base-200/40'
+                  }`}
+                > 
                   <div className="flex items-center justify-between"> 
-                    <div> 
+                    <div className="flex-1"> 
                       <p className="text-sm text-white/70">{job.title}</p> 
-                      <p className="text-sm font-semibold text-white">
-                        {job.status === "processing" ? "Encodage en cours" : 
-                         job.status === "completed" ? "Encodage terminé" :
-                         job.status === "failed" ? "Échec d'encodage" : "En pause"}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-white">
+                          {job.status === "processing" && "🎬 Encodage en cours"}
+                          {job.status === "completed" && "✅ Encodage terminé"}
+                          {job.status === "failed" && "❌ Échec d'encodage"}
+                          {job.status === "paused" && "⏸️ En pause"}
+                        </p>
+                      
+                      </div>
                     </div> 
                     <span className="text-xs text-white/50">{job.startedAt}</span> 
                   </div> 
+                  
                   <div className="flex items-center gap-3"> 
                     <div className="flex-1"> 
                       <div className="flex items-center justify-between text-xs text-white/60 mb-1"> 
                         <span>Progression</span> 
-                        <span>{job.progress}%</span> 
+                        <span className="font-mono">{job.progress}%</span> 
                       </div> 
                       <progress 
-                        className={`progress w-full ${job.status === 'failed' ? 'progress-error' : 'progress-primary'}`} 
+                        className={`progress w-full ${
+                          job.status === 'failed' 
+                            ? 'progress-error' 
+                            : job.status === 'completed'
+                              ? 'progress-success'
+                              : 'progress-primary'
+                        }`} 
                         value={job.progress} 
                         max="100"
                       ></progress> 
                     </div> 
+                    
                     <div className="flex items-center gap-2"> 
                       {job.status !== "completed" && (
                         <>
                           <button 
-                            className="btn btn-xs btn-ghost text-white/80" 
+                            className="btn btn-xs btn-ghost text-white/60 hover:text-white/80" 
                             onClick={() => handleFail(job.id)} 
                           > 
-                            Marquer échoué 
+                            Échouer 
                           </button> 
                           {job.status === "processing" ? ( 
                             <button 
                               className="btn btn-xs btn-error text-white" 
                               onClick={() => handlePause(job.id)} 
                             > 
-                              Stopper 
+                              Pause 
                             </button>
                           ) : job.status === "paused" ? (
                             <button 
                               className="btn btn-xs btn-primary" 
                               onClick={() => handleResume(job.id)} 
                             > 
-                              Relancer 
+                              Reprendre 
                             </button>
                           ) : null}
                         </>
@@ -351,7 +450,7 @@ export default function Page() {
         </div>
       )}
 
-      {/* Reste du code inchangé pour les filtres et l'affichage des films */}
+      {/* Filtres et affichage des films - inchangé */}
       <div className="flex flex-col gap-3">
         <div className="tabs tabs-boxed bg-base-200/40 border border-base-300 rounded-xl w-fit">
           {(["location", "abonnement"] as const).map((m) => (
@@ -436,7 +535,7 @@ export default function Page() {
                         stats={stats}
                         status=""
                         mode={mode} 
-                        detailHref={`/dashboard/films/detail/${film.id}`} 
+                        detailHref={`/films/detail/${film.id}`} 
                       />
                     );
                   })}

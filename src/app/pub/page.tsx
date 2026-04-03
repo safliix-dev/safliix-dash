@@ -272,7 +272,7 @@ export default function Page() {
         </div>
         <div className="flex flex-wrap gap-2">
           <button className="btn btn-outline btn-primary border-primary/60 text-white">Exporter les rapports</button>
-          <Link href="/dashboard/pub/new" className="btn btn-primary font-semibold">
+          <Link href="/pub/new" className="btn btn-primary font-semibold">
             Créer un pub
           </Link>
         </div>

@@ -1,4 +1,4 @@
-// app/dashboard/stats/pub/detail/[id]/page.tsx
+// app/stats/pub/detail/[id]/page.tsx
 
 'use client';
 
@@ -112,7 +112,7 @@ export default function Page({ params }: Props) {
             <div className="bg-neutral rounded-2xl border border-base-300 p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-white">Répartition géographique</h3>
-                <Link href="/dashboard/stats/pub" className="btn btn-ghost btn-xs text-primary border-primary/50 rounded-full">
+                <Link href="/stats/pub" className="btn btn-ghost btn-xs text-primary border-primary/50 rounded-full">
                   Retour liste
                 </Link>
               </div>

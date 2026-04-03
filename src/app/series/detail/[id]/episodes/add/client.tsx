@@ -1,4 +1,4 @@
-// app/dashboard/series/[id]/episodes/add/client.tsx
+// app/series/[id]/episodes/add/client.tsx
 
 'use client';
 

@@ -1,4 +1,4 @@
-// app/dashboard/series/detail/[id]/seasons/add/useSeasonForm.ts
+// app/series/detail/[id]/seasons/add/useSeasonForm.ts
 
 'use client';
 

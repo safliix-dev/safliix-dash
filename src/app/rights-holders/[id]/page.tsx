@@ -75,7 +75,7 @@ export default function Page() {
       <div className="space-y-3">
         <Header title="Ayant droit introuvable" />
         <p className="text-white/70 text-sm">Aucun ayant droit avec cet identifiant.</p>
-        <Link href="/dashboard/rights-holders" className="btn btn-primary btn-sm rounded-full w-fit">
+        <Link href="/rights-holders" className="btn btn-primary btn-sm rounded-full w-fit">
           Retour à la liste
         </Link>
       </div>
@@ -85,7 +85,7 @@ export default function Page() {
   const hasExpired = holder.status === "expiré";
 
   const renderContentCard = (content: LinkedContent) => {
-    const href = content.type === "film" ? `/dashboard/films/detail/${content.id}` : `/dashboard/series/detail/${content.id}`;
+    const href = content.type === "film" ? `/films/detail/${content.id}` : `/series/detail/${content.id}`;
     const tone =
       content.status === "Publié"
         ? "badge-success"
@@ -134,10 +134,10 @@ export default function Page() {
             <span className="badge badge-outline border-primary/60 text-primary">
               Partage {holder.sharePercentage}%
             </span>
-            <Link href="/dashboard/rights-holders" className="btn btn-ghost btn-xs border-base-300 text-white rounded-full">
+            <Link href="/rights-holders" className="btn btn-ghost btn-xs border-base-300 text-white rounded-full">
               Retour liste
             </Link>
-            <Link href="/dashboard/rights-holders/add" className="btn btn-primary btn-xs rounded-full">
+            <Link href="/rights-holders/add" className="btn btn-primary btn-xs rounded-full">
               Ajouter un droit
             </Link>
           </div>
@@ -263,7 +263,7 @@ export default function Page() {
               </button>
             </div>
           </div>
-          <Link href="/dashboard/films/add" className="btn btn-primary btn-sm rounded-full">
+          <Link href="/films/add" className="btn btn-primary btn-sm rounded-full">
             Associer un contenu
           </Link>
         </div>

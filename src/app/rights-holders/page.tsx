@@ -86,7 +86,7 @@ export default function Page() {
             <span className="font-semibold text-white">{stats.total}</span>{" "}
             ayants droit référencés
           </div>
-          <Link href="/dashboard/rights-holders/edit/new" className="btn btn-primary btn-sm rounded-full">
+          <Link href="/rights-holders/edit/new" className="btn btn-primary btn-sm rounded-full">
             Nouvel ayant droit
           </Link>
         </div>
@@ -133,13 +133,13 @@ export default function Page() {
               label: "Voir",
               className: "btn-info",
               onClick: (row) =>
-                router.push(`/dashboard/rights-holders/${row.id}`),
+                router.push(`/rights-holders/${row.id}`),
             },
             {
               label: "Modifier",
               className: "btn-warning",
               onClick: (row) =>
-                router.push(`/dashboard/rights-holders/edit/${row.id}`),
+                router.push(`/rights-holders/edit/${row.id}`),
             },
             {
               label: "Supprimer",

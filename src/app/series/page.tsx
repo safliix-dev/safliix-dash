@@ -187,7 +187,7 @@ const categoryOptions = useMemo(
                 <Download className="w-4 h-4" />
                 <span className="ml-1">Exporter les rapports</span>	
               </button>
-              <Link className="btn btn-primary btn-sm rounded-lg" href={"/dashboard/series/add"}>
+              <Link className="btn btn-primary btn-sm rounded-lg" href={"/series/add"}>
                 Ajouter une série
               </Link>
             </div>
@@ -280,7 +280,7 @@ const categoryOptions = useMemo(
                       status={serie.status}
                       stats={stats}
                       mode={mode}
-                      detailHref={`/dashboard/series/detail/${serie.id}`}
+                      detailHref={`/series/detail/${serie.id}`}
                     />)
                   })}
                 </div>

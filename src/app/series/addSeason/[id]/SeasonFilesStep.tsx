@@ -1,4 +1,4 @@
-// app/dashboard/series/detail/[id]/seasons/add/components/SeasonFilesStep.tsx
+// app/series/detail/[id]/seasons/add/components/SeasonFilesStep.tsx
 
 'use client';
 

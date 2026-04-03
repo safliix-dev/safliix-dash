@@ -138,7 +138,7 @@ export default function Page() {
                 <p className="text-xs uppercase text-white/50">Activité récente</p>
                 <h3 className="text-lg font-semibold text-white">Actions</h3>
               </div>
-              <Link href="/dashboard/users" className="btn btn-ghost btn-xs text-primary border-primary/50 rounded-full">
+              <Link href="/users" className="btn btn-ghost btn-xs text-primary border-primary/50 rounded-full">
                 Retour liste
               </Link>
             </div>

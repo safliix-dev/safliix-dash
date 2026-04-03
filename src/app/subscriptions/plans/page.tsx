@@ -68,7 +68,7 @@ export default function Page() {
     <div className="space-y-5">
       <Header title="Plans d'abonnement" className="rounded-2xl border border-base-300 px-5 py-3">
         <div className="flex items-center gap-2">
-          <Link href="/dashboard/subscriptions/plans/edit" className="btn btn-primary btn-sm rounded-full">
+          <Link href="/subscriptions/plans/edit" className="btn btn-primary btn-sm rounded-full">
             Créer un plan
           </Link>
           
@@ -87,13 +87,13 @@ export default function Page() {
               label: "Voir",
               className: "btn-info",
               onClick: (row) =>
-                router.push(`/dashboard/subscriptions/plans/${row.id}`),
+                router.push(`/subscriptions/plans/${row.id}`),
             },
             {
               label: "Modifier",
               className: "btn-warning",
               onClick: (row) =>
-                router.push(`/dashboard/subscriptions/plans/edit/${row.id}`),
+                router.push(`/subscriptions/plans/edit/${row.id}`),
             },
             {
               label: "Supprimer",

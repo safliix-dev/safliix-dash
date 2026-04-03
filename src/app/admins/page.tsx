@@ -73,7 +73,7 @@ export default function Page() {
   return (
     <div>
       <Header title="Utilisateurs">
-        <Link href="/dashboard/admins/add/new" className="btn btn-sm btn-primary">
+        <Link href="/admins/add/new" className="btn btn-sm btn-primary">
           Ajouter un admin
         </Link>
       </Header>
@@ -97,13 +97,13 @@ export default function Page() {
               label: "Voir",
               className: "btn-info",
               onClick: (row) =>
-                router.push(`/dashboard/admins/${row.id}`),
+                router.push(`/admins/${row.id}`),
             },
             {
               label: "Modifier",
               className: "btn-warning",
               onClick: (row) =>
-                router.push(`/dashboard/admins/add/${row.id}`),
+                router.push(`/admins/add/${row.id}`),
             },
             {
               label: "Supprimer",

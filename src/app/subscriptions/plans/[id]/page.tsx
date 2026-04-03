@@ -120,7 +120,7 @@ export default function Page({ params }: Props) {
           <div className="bg-neutral rounded-2xl border border-base-300 p-4 space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">Activité</h3>
-              <Link href="/dashboard/subscriptions/plans" className="btn btn-ghost btn-xs text-primary border-primary/50 rounded-full">
+              <Link href="/subscriptions/plans" className="btn btn-ghost btn-xs text-primary border-primary/50 rounded-full">
                 Retour liste
               </Link>
             </div>

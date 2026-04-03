@@ -1,4 +1,4 @@
-// app/dashboard/series/detail/[id]/seasons/add/seasonAdapter.ts
+// app/series/detail/[id]/seasons/add/seasonAdapter.ts
 
 import axios from "axios";
 import { uploadApi } from "@/lib/api/uploads";
