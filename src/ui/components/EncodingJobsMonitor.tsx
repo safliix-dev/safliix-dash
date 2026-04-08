@@ -1,7 +1,7 @@
 // ui/components/EncodingJobsMonitor.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useEncodingJobs } from '@/lib/hooks/useEncodingJobs';
 import { EncodingJob } from '@/types/api/job';
 
@@ -13,6 +13,7 @@ interface EncodingJobsMonitorProps {
   maxHeight?: string;
   className?: string;
   onJobClick?: (job: EncodingJob) => void;
+  onConnectionChange?: (connected: boolean, authenticated: boolean) => void;
 }
 
 export const EncodingJobsMonitor = ({
@@ -22,7 +23,8 @@ export const EncodingJobsMonitor = ({
   showHeader = true,
   maxHeight = "max-h-96",
   className = "",
-  onJobClick
+  onJobClick,
+  onConnectionChange
 }: EncodingJobsMonitorProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
   
@@ -40,6 +42,11 @@ export const EncodingJobsMonitor = ({
     failJob,
     retryJob,
   } = useEncodingJobs({ room, jobType });
+
+  // Notifier les changements de connexion
+  useEffect(() => {
+    onConnectionChange?.(socketConnected, isAuthenticated);
+  }, [socketConnected, isAuthenticated, onConnectionChange]);
 
   // Ne pas afficher s'il n'y a pas de jobs
   if (jobs.length === 0 && !isLoading) {
@@ -159,7 +166,7 @@ export const EncodingJobsMonitor = ({
                       <p className="text-sm font-semibold text-white">
                         {getStatusIcon(job.status)} {getStatusText(job.status)}
                       </p>
-                      
+                     
                     </div>
                   </div>
                   <span className="text-xs text-white/50">{job.startedAt}</span>

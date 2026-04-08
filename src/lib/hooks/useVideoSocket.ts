@@ -1,4 +1,4 @@
-// hooks/useJobSocket.ts
+// lib/hooks/useJobSocket.ts
 import { useEffect, useRef, useState, useCallback } from "react";
 import { videoSocket } from "@/lib/socket/socket-client";
 import { websocketAuth } from "@/services/websocket-auth.service";
@@ -94,14 +94,14 @@ export const useJobSocket = ({
 
   // Effet pour la gestion du token d'accès
   useEffect(() => {
-    if (accessToken) {
+    if (accessToken && autoConnect) {
       console.log(`🔐 [${room}] Token disponible, connexion...`);
       connect();
-    } else {
+    } else if (!accessToken) {
       console.log(`🔓 [${room}] Plus de token, déconnexion...`);
       disconnect();
     }
-  }, [accessToken, room, connect, disconnect]);
+  }, [accessToken, room, connect, disconnect, autoConnect]);
 
   // Effet pour la gestion du socket
   useEffect(() => {

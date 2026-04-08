@@ -1,4 +1,4 @@
-// pages/films/page.tsx (version simplifiée)
+// app/films/page.tsx
 'use client';
 
 import FilterBtn from "@/ui/components/filterBtn";
@@ -17,11 +17,12 @@ import { RightsHolderMoviesReport, type MovieReportEntry } from "@/ui/pdf/Rights
 import type { RightsHolderContentResponse } from "@/types/api/imageRights";
 import type { FilmListItem } from "@/types/api/films";
 import { NormalizedStats } from "@/ui/specific/films/components/videoCard";
+import { useSocketStatus,SocketIndicator } from "@/lib/hooks/useSocketStatus";
 
 type DistributionMode = "location" | "abonnement";
 type SortOption = "none" | "best" | "latest";
 
-export default function Page() {
+export default function FilmsPage() {
   const [isClient, setIsClient] = useState(false);
   const [mode, setMode] = useState<DistributionMode>("location");
   const [rawFilmsByRightsholder, setRawFilmsByRightsholder] = useState<RightsHolderContentResponse[]>([]);
@@ -34,9 +35,13 @@ export default function Page() {
 
   const accessToken = useAccessToken();
   const toast = useToast();
+  
+  // ✅ Hook pour le statut de connexion socket
+  const { onConnectionChange, ...socketProps } = useSocketStatus();
 
   const extractFilmStats = (film: FilmListItem): NormalizedStats => {
     const stats = film.stats;
+
     if (!stats) {
       return {
         locationsCount: 0,
@@ -47,7 +52,31 @@ export default function Page() {
         geo: [],
       };
     }
-    // ... reste de ta logique inchangée
+
+    if (stats.type === "abonnement") {
+      const s = stats.stats;
+      return {
+        locationsCount: 0,
+        revenue: s.revenue,
+        donutViewed: s.subscriberViewPercentage,
+        donutCatalog: s.catalogTotalMinutes,
+        donutRevenue: s.revenue,
+        geo: [],
+      };
+    }
+
+    if (stats.type === "location") {
+      const s = stats.stats;
+      return {
+        locationsCount: s.totalRentals,
+        revenue: s.revenue,
+        donutViewed: s.totalRentals,
+        donutCatalog: 0,
+        donutRevenue: s.revenue,
+        geo: s.topCountries,
+      };
+    }
+
     return {
       locationsCount: 0,
       revenue: 0,
@@ -131,7 +160,7 @@ export default function Page() {
       .map(group => ({
         ...group,
         movies: [...group.movies].filter(f => {
-          const typeMatch = mode === f.type.toLowerCase();
+          const typeMatch = mode === f.type?.toLowerCase();
           const statusMatch = statusFilter === "all" || f.status?.toLowerCase() === statusFilter.toLowerCase();
           return typeMatch && statusMatch;
         })
@@ -157,20 +186,24 @@ export default function Page() {
             </div>
           </div>
           
+          {/* ✅ Indicateur de connexion socket */}
+          <SocketIndicator {...socketProps} />
+          
           <Link className="btn btn-primary btn-sm rounded-lg" href="/films/add">
             <Plus className="w-4 h-4 mr-1" /> Ajouter un film
           </Link>
         </div>
       </Header>
 
-      {/* ✅ Composant réutilisable pour les jobs d'encodage */}
+      {/* ✅ Monitoring des jobs d'encodage */}
       <EncodingJobsMonitor 
         room="movies"
         jobType="MOVIE"
         title="Encodage des films"
+        onConnectionChange={onConnectionChange}
       />
 
-      {/* Filtres et affichage des films */}
+      {/* Filtres */}
       <div className="flex flex-col gap-3">
         <div className="tabs tabs-boxed bg-base-200/40 border border-base-300 rounded-xl w-fit">
           {(["location", "abonnement"] as const).map((m) => (
@@ -204,6 +237,7 @@ export default function Page() {
         </div>
       </div>
 
+      {/* Liste des films */}
       {loading ? (
         <div className="flex justify-center py-10">
           <span className="loading loading-dots loading-md"></span>

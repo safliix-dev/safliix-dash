@@ -17,8 +17,9 @@ import { PDFDownloadLink } from "@react-pdf/renderer";
 import { RightsHolderMoviesReport, type MovieReportEntry } from "@/ui/pdf/RightsHolderMoviesReport";
 import { SeriesListItem } from "@/types/api/series";
 import { NormalizedStats } from "@/ui/specific/films/components/videoCard";
+import { useSocketStatus,SocketIndicator } from "@/lib/hooks/useSocketStatus";
 
-export default function Page() {
+export default function SeriesPage() {
   const mode: "location" | "abonnement" = "abonnement";
   
   const dedupeOptions = (values: Array<string | number>) => {
@@ -51,11 +52,13 @@ export default function Page() {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   
   const toast = useToast();
+  
+  // ✅ Hook pour le statut de connexion socket
+  const { onConnectionChange, ...socketProps} = useSocketStatus();
 
   const extractSerieStats = (serie: SeriesListItem): NormalizedStats => {
     const stats = serie.stats;
     
-    // Vérifier si stats existe
     if (!stats) {
       return {
         locationsCount: 0,
@@ -135,23 +138,20 @@ export default function Page() {
     () => (groups: RightsHolderContentResponse[]) =>
       groups
         .map((group) => {
-          let items = [...group.series]; // Copie pour ne pas muter l'original
+          let items = [...(group.series || [])];
           
-          // Filtre par statut
           if (statusFilter !== "all") {
             items = items.filter(
               (s) => (s.status || "").toLowerCase() === statusFilter.toLowerCase()
             );
           }
           
-          // Filtre par catégorie
           if (categoryFilter !== "all") {
             items = items.filter(
               (s) => (s.category || "").toLowerCase() === categoryFilter.toLowerCase()
             );
           }
           
-          // Tri
           if (sortFilter === "best") {
             items = [...items].sort((a, b) => (b.stats?.revenue || 0) - (a.stats?.revenue || 0));
           } else if (sortFilter === "latest") {
@@ -189,7 +189,6 @@ export default function Page() {
     return dedupeOptions(["all", ...categories]);
   }, [allSeriesFlat]);
 
-  // Formatage de la date pour l'affichage
   const formattedDate = lastRefresh.toLocaleString("fr-FR", {
     day: "numeric",
     month: "long",
@@ -208,6 +207,10 @@ export default function Page() {
               <span>{formattedDate}</span>
             </div>
           </div>
+          
+          {/* ✅ Indicateur de connexion socket */}
+          <SocketIndicator {...socketProps} />
+          
           <div className="flex items-center gap-2">
             <button className="btn btn-primary btn-sm rounded-lg">
               <Download className="w-4 h-4" />
@@ -220,14 +223,15 @@ export default function Page() {
         </div>
       </Header>
 
-      {/* ✅ Composant réutilisable pour les jobs d'encodage des séries */}
+      {/* ✅ Monitoring des jobs d'encodage */}
       <EncodingJobsMonitor 
-        room="series" // Utilise "episodes" car les séries ont des épisodes
-        jobType="SERIE"
+        room="episodes"
+        jobType="EPISODE"
         title="Encodage des épisodes"
+        onConnectionChange={onConnectionChange}
         onJobClick={(job) => {
-          // Optionnel: navigation vers le détail du job ou série concernée
           console.log("Job cliqué:", job);
+          // Tu peux ajouter une navigation vers le détail du job ici
         }}
       />
 
@@ -351,7 +355,6 @@ export default function Page() {
         )}
       </div>
       
-      {/* Pagination - à connecter avec ta logique de pagination réelle */}
       {seriesByRightsholder.length > 0 && (
         <div className="flex items-center gap-2 text-sm text-white/70 justify-center pt-4">
           <button className="btn btn-ghost btn-xs">◀</button>

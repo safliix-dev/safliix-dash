@@ -25,7 +25,7 @@ export const columns : ColumnConfig<Admin>[] = [
   {
     header: '',
     render: (admin : Admin) => (
-      <Link href={`/dashboard/admins/${admin.id}`} className="flex items-center gap-3 hover:text-primary">
+      <Link href={`/admins/${admin.id}`} className="flex items-center gap-3 hover:text-primary">
         <div className="avatar">
           <div className="mask mask-squircle h-12 w-12">
             <Image width={48} height={48} src={admin.imgProfileUrl} alt={admin.nom} />

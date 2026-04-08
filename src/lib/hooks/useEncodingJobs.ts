@@ -1,4 +1,4 @@
-// hooks/useEncodingJobs.ts
+// lib/hooks/useEncodingJobs.ts
 import { useEffect, useState, useCallback } from "react";
 import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { jobApi } from "@/lib/api/job";
@@ -8,8 +8,8 @@ import type { EncodingJob } from "@/types/api/job";
 import type { JobProgressPayload } from "@/types/socket";
 
 interface UseEncodingJobsOptions {
-  room: "movies" | "episodes" | "series"; // Selon tes besoins
-  jobType: "MOVIE" | "SERIE" | "EPISODE";
+  room: "movies" | "episodes" | "series";
+  jobType: "MOVIE" | "EPISODE" | "SERIE";
   autoLoad?: boolean;
 }
 
@@ -62,6 +62,7 @@ export const useEncodingJobs = ({
   const { 
     isConnected: socketConnected, 
     isAuthenticated,
+
   } = useJobSocket({
     room,
     accessToken,
@@ -102,7 +103,7 @@ export const useEncodingJobs = ({
       console.error(`❌ Erreur WebSocket pour ${room}:`, error);
       toast.warning({ 
         title: "Connexion temps réel", 
-        description: "Mise à jour des tâches en différé" 
+        description: "Mise à jour des tâches en différé"+error 
       });
     }
   });
