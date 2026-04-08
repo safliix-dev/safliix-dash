@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useEncodingJobs } from '@/lib/hooks/useEncodingJobs';
-import { EncodingJob } from '@/types/api/job';
+import type { EncodingJob } from '@/types/api/job';
 
 interface EncodingJobsMonitorProps {
   room: "movies" | "episodes" | "series";
@@ -48,10 +48,7 @@ export const EncodingJobsMonitor = ({
     onConnectionChange?.(socketConnected, isAuthenticated);
   }, [socketConnected, isAuthenticated, onConnectionChange]);
 
-  // Ne pas afficher s'il n'y a pas de jobs
-  if (jobs.length === 0 && !isLoading) {
-    return null;
-  }
+  const hasNoJobs = jobs.length === 0 && !isLoading;
 
   const getJobStatusColor = (status: string) => {
     switch (status) {
@@ -121,6 +118,12 @@ export const EncodingJobsMonitor = ({
                   Live
                 </span>
               )}
+              {hasNoJobs && socketConnected && isAuthenticated && (
+                <span className="badge badge-xs badge-info gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+                  Connecté
+                </span>
+              )}
             </div>
           </div>
           
@@ -151,6 +154,11 @@ export const EncodingJobsMonitor = ({
           {isLoading && jobs.length === 0 ? (
             <div className="flex justify-center py-4">
               <span className="loading loading-spinner loading-sm"></span>
+              <span className="ml-2 text-xs text-white/50">Chargement des tâches...</span>
+            </div>
+          ) : hasNoJobs ? (
+            <div className="text-center py-4 text-white/40 text-sm">
+              Aucune tâche d&apos;encodage en cours
             </div>
           ) : (
             jobs.map((job) => (
@@ -166,7 +174,6 @@ export const EncodingJobsMonitor = ({
                       <p className="text-sm font-semibold text-white">
                         {getStatusIcon(job.status)} {getStatusText(job.status)}
                       </p>
-                     
                     </div>
                   </div>
                   <span className="text-xs text-white/50">{job.startedAt}</span>
@@ -185,8 +192,9 @@ export const EncodingJobsMonitor = ({
                     ></progress>
                   </div>
                   
+                  {/* ✅ Actions temporairement désactivées si non implémentées */}
                   <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                    {job.status === 'failed' && (
+                    {job.status === 'failed' && retryJob && (
                       <button 
                         className="btn btn-xs btn-primary" 
                         onClick={() => retryJob(job.id)}
@@ -199,7 +207,7 @@ export const EncodingJobsMonitor = ({
                       <>
                         <button 
                           className="btn btn-xs btn-ghost text-white/60 hover:text-white/80" 
-                          onClick={() => failJob(job.id)}
+                          onClick={() => failJob?.(job.id)}
                         >
                           Échouer
                         </button>
@@ -207,14 +215,14 @@ export const EncodingJobsMonitor = ({
                         {job.status === 'processing' ? (
                           <button 
                             className="btn btn-xs btn-warning text-white" 
-                            onClick={() => pauseJob(job.id)}
+                            onClick={() => pauseJob?.(job.id)}
                           >
                             Pause
                           </button>
                         ) : job.status === 'paused' ? (
                           <button 
                             className="btn btn-xs btn-primary" 
-                            onClick={() => resumeJob(job.id)}
+                            onClick={() => resumeJob?.(job.id)}
                           >
                             Reprendre
                           </button>
