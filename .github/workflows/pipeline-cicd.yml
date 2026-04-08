@@ -147,9 +147,11 @@ jobs:
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
             echo "NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL_PROD }}" >> $GITHUB_OUTPUT
             echo "NEXT_PUBLIC_SOCKET_URL=${{ env.NEXT_PUBLIC_SOCKET_URL_PROD }}" >> $GITHUB_OUTPUT
+            echo "NEXT_PUBLIC_PROCESSOR_SOCKET_URL=${{ env.NEXT_PUBLIC_PROCESSOR_SOCKET_URL_PROD }}" >> $GITHUB_OUTPUT
           else
             echo "NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL_DEV }}" >> $GITHUB_OUTPUT
             echo "NEXT_PUBLIC_SOCKET_URL=${{ env.NEXT_PUBLIC_SOCKET_URL_DEV }}" >> $GITHUB_OUTPUT
+            echo "NEXT_PUBLIC_PROCESSOR_SOCKET_URL=${{ env.NEXT_PUBLIC_PROCESSOR_SOCKET_URL_DEV }}" >> $GITHUB_OUTPUT
           fi
 
       - name: Build and Push to Harbor
@@ -167,6 +169,7 @@ jobs:
             NODE_ENV=production
             NEXT_PUBLIC_API_URL=${{ steps.next-config.outputs.NEXT_PUBLIC_API_URL }}
             NEXT_PUBLIC_SOCKET_URL=${{ steps.next-config.outputs.NEXT_PUBLIC_SOCKET_URL }}
+            NEXT_PUBLIC_PROCESSOR_SOCKET_URL=${{ steps.next-config.outputs.NEXT_PUBLIC_PROCESSOR_SOCKET_URL }}
             NEXT_PUBLIC_KEYCLOAK_URL=${{ env.NEXT_PUBLIC_KEYCLOAK_URL }}
             NEXT_PUBLIC_KEYCLOAK_REALM=${{ env.NEXT_PUBLIC_KEYCLOAK_REALM }}
             NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=${{ env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID }}

@@ -48,6 +48,8 @@ NEXT_PUBLIC_API_URL_PROD: https://dashboard-api.safliix.com/api
 NEXT_PUBLIC_API_URL_DEV: https://dashboard-api.dev.safliix.com/api
 NEXT_PUBLIC_SOCKET_URL_PROD: https://dashboard-api.safliix.com
 NEXT_PUBLIC_SOCKET_URL_DEV: https://dashboard-api.dev.safliix.com
+NEXT_PUBLIC_PROCESSOR_SOCKET_URL_PROD: https://processor-api.safliix.com
+NEXT_PUBLIC_PROCESSOR_SOCKET_URL_DEV: https://processor-api.dev.safliix.com
 NEXT_PUBLIC_KEYCLOAK_URL: https://auth.safliix.com
 NEXT_PUBLIC_KEYCLOAK_REALM: safliix-admin
 NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: safliix-dashboard
