@@ -93,7 +93,7 @@ export const useJobSocket = ({
   }, [room, connect, disconnect]);
 
   // Effet pour la gestion du token d'accès
-  useEffect(() => {
+  /* useEffect(() => {
     if (accessToken && autoConnect) {
       console.log(`🔐 [${room}] Token disponible, connexion...`);
       connect();
@@ -101,7 +101,7 @@ export const useJobSocket = ({
       console.log(`🔓 [${room}] Plus de token, déconnexion...`);
       disconnect();
     }
-  }, [accessToken, room, connect, disconnect, autoConnect]);
+  }, [accessToken, room, connect, disconnect, autoConnect]); */
 
   // Effet pour la gestion du socket
   useEffect(() => {
