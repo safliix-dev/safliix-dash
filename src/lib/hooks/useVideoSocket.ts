@@ -32,16 +32,16 @@ export const useJobSocket = ({
    * Connexion au WebSocket
    */
   const connect = useCallback(async () => {
-    if (!accessToken) {
+   /*  if (!accessToken) {
       console.log(`⏳ [${room}] En attente du token...`);
       return;
-    }
+    } */
 
     setIsLoading(true);
     
     try {
       // 1. Mettre à jour l'accessToken dans le service
-      websocketAuth.setAccessToken(accessToken);
+     // websocketAuth.setAccessToken(accessToken);
       
       // 2. Récupérer le token WebSocket
       const wsToken = await websocketAuth.getValidToken();
@@ -69,7 +69,7 @@ export const useJobSocket = ({
     } finally {
       setIsLoading(false);
     }
-  }, [accessToken, room, isAuthenticated, onError]);
+  }, [room, isAuthenticated, onError]);
 
   /**
    * Déconnexion
