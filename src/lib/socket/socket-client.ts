@@ -1,8 +1,10 @@
 import { io, Socket } from "socket.io-client";
 
 // L'URL de votre backend NestJS
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "https://svr-processor.safliix.com";
+//const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "https://svr-processor.safliix.com";
 
+
+const SOCKET_URL =  "https://processor-api.safliix.com";
 console.log("socket url:"+SOCKET_URL)
 console.log("env url:"+process.env.NEXT_PUBLIC_SOCKET_URL);
 
