@@ -1,10 +1,7 @@
 import { io, Socket } from "socket.io-client";
 
-// URL racine de l'adminApp (sans /api) — pour les sockets admin
-// socket.io monte sur ws://host/socket.io/, pas sur ws://host/api/socket.io/
-const ADMIN_SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL;
-
 // URL racine du video-processor — namespace /processing
+// NEXT_PUBLIC_SOCKET_URL est reservee pour les futures connexions socket admin (adminApp)
 const PROCESSOR_SOCKET_URL = process.env.NEXT_PUBLIC_PROCESSOR_SOCKET_URL;
 
 /**
