@@ -4,6 +4,7 @@ import { io, Socket } from "socket.io-client";
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "https://svr-processor.safliix.com";
 
 console.log("socket url:"+SOCKET_URL)
+console.log("env url:"+process.env.NEXT_PUBLIC_SOCKET_URL);
 
 /**
  * Instance unique du socket pour le namespace /processing.
