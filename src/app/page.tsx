@@ -148,7 +148,7 @@ export default function Home(){
 						</button>
 					</div>
 					<div className="flex items-center gap-3">
-						<button className="btn btn-primary rounded-lg" onClick={() => router.push("/dashboard/intro")}>
+						<button className="btn btn-primary rounded-lg" onClick={() => router.push("/intro")}>
 							<Download className="w-5 h-5"/>
 							<span>SaFLIX INTRO</span>
 						</button>
@@ -156,7 +156,7 @@ export default function Home(){
 							<Download className="w-5 h-5 text-primary"/>
 							<span>Filter by Date Range</span>
 						</button>
-						<button className="btn btn-primary rounded-lg" onClick={() => router.push("/dashboard/report")}>
+						<button className="btn btn-primary rounded-lg" onClick={() => router.push("/report")}>
 							<Download className="w-5 h-5"/>
 							<span>Export Report</span>
 						</button>

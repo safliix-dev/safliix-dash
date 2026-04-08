@@ -18,7 +18,7 @@ export const columns : ColumnConfig<Person>[] = [
     key: 'nom',
     header: 'NOM',
     render: (person : Person) => (
-      <Link href={`/dashboard/users/${person.numero}`} className="flex items-center gap-3 hover:text-primary">
+      <Link href={`/users/${person.numero}`} className="flex items-center gap-3 hover:text-primary">
         <div className="avatar">
           <div className="mask mask-squircle h-12 w-12">
             <Image width={48} height={48} src={person.imgProfileUrl} alt={person.nom} />
