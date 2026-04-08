@@ -11,7 +11,7 @@ export const tokenApi = {
    * Récupère un token WebSocket depuis le backend
    * @param accessToken - Token d'authentification du dashboard user
    */
-  getToken: async (accessToken: string): Promise<TokenResponse | null> => {
+  getToken: async (accessToken?: string): Promise<TokenResponse | null> => {
     try {
       const response = await apiRequest<TokenResponse>("/secret/token", {
         method: 'POST',

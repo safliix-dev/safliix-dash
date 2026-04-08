@@ -19,9 +19,11 @@ class WebSocketAuthService {
   }
 
   private async fetchNewToken(): Promise<string | null> {
-    if (!this.currentAccessToken) return null;
+    //if (!this.currentAccessToken) return null;
     
-    const response = await tokenApi.getToken(this.currentAccessToken);
+    //const response = await tokenApi.getToken(this.currentAccessToken);
+    const response = await tokenApi.getToken();
+
     if (response) {
       this.wsToken = response.token;
       this.wsTokenExpiry = new Date(Date.now() + response.expiresIn * 1000);
