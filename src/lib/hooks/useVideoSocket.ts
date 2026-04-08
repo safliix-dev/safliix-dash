@@ -1,10 +1,8 @@
-// lib/hooks/useJobSocket.ts
+// lib/hooks/useJobSocket.ts - Version stable sans compteur
 import { useEffect, useRef, useState, useCallback } from "react";
 import { videoSocket } from "@/lib/socket/socket-client";
 import { websocketAuth } from "@/services/websocket-auth.service";
 import type { JobProgressPayload, JobRoom } from "@/types/socket";
-
-const roomRefCounter = new Map<string, number>();
 
 interface UseJobSocketProps {
   room: JobRoom;
@@ -16,7 +14,6 @@ interface UseJobSocketProps {
 
 export const useJobSocket = ({ 
   room, 
-  accessToken,
   onJobUpdate, 
   onError,
   autoConnect = true 
@@ -28,36 +25,25 @@ export const useJobSocket = ({
   const onJobUpdateRef = useRef(onJobUpdate);
   onJobUpdateRef.current = onJobUpdate;
 
-  /**
-   * Connexion au WebSocket
-   */
   const connect = useCallback(async () => {
-   /*  if (!accessToken) {
-      console.log(`⏳ [${room}] En attente du token...`);
-      return;
-    } */
-
+    if (isLoading) return;
+    
     setIsLoading(true);
     
     try {
-      // 1. Mettre à jour l'accessToken dans le service
-     // websocketAuth.setAccessToken(accessToken);
-      
-      // 2. Récupérer le token WebSocket
       const wsToken = await websocketAuth.getValidToken();
       
       if (!wsToken) {
         throw new Error('Impossible d\'obtenir le token WebSocket');
       }
       
-      // 3. Configurer et connecter le socket
       videoSocket.auth = { token: wsToken };
       
       if (!videoSocket.connected) {
         videoSocket.connect();
       } else if (videoSocket.connected && !isAuthenticated) {
-        videoSocket.disconnect();
-        videoSocket.connect();
+        // Déjà connecté mais pas authentifié
+        videoSocket.emit("authenticate", { token: wsToken });
       }
       
     } catch (error) {
@@ -69,11 +55,8 @@ export const useJobSocket = ({
     } finally {
       setIsLoading(false);
     }
-  }, [room, isAuthenticated, onError]);
+  }, [room, isAuthenticated, isLoading, onError]);
 
-  /**
-   * Déconnexion
-   */
   const disconnect = useCallback(() => {
     if (videoSocket.connected) {
       videoSocket.disconnect();
@@ -82,9 +65,6 @@ export const useJobSocket = ({
     setIsAuthenticated(false);
   }, []);
 
-  /**
-   * Reconnexion forcée
-   */
   const reconnect = useCallback(async () => {
     console.log(`🔄 [${room}] Reconnexion...`);
     websocketAuth.invalidateToken();
@@ -92,27 +72,12 @@ export const useJobSocket = ({
     await connect();
   }, [room, connect, disconnect]);
 
-  // Effet pour la gestion du token d'accès
-  /* useEffect(() => {
-    if (accessToken && autoConnect) {
-      console.log(`🔐 [${room}] Token disponible, connexion...`);
-      connect();
-    } else if (!accessToken) {
-      console.log(`🔓 [${room}] Plus de token, déconnexion...`);
-      disconnect();
-    }
-  }, [accessToken, room, connect, disconnect, autoConnect]); */
-
-  // Effet pour la gestion du socket
+  // Effet principal - sans compteur
   useEffect(() => {
     const roomName = room;
     
-    // Incrémenter le compteur de références
-    const count = (roomRefCounter.get(roomName) || 0) + 1;
-    roomRefCounter.set(roomName, count);
-    console.log(`📊 [${roomName}] Références: ${count}`);
+    console.log(`📡 [${roomName}] Initialisation du hook`);
 
-    // Handlers
     const onConnect = () => {
       console.log(`✅ [${roomName}] Socket connecté`);
       setIsConnected(true);
@@ -128,11 +93,6 @@ export const useJobSocket = ({
       console.log(`❌ [${roomName}] Déconnecté: ${reason}`);
       setIsConnected(false);
       setIsAuthenticated(false);
-      
-      // Reconnexion auto si nécessaire
-      if (reason === 'io server disconnect' && autoConnect && accessToken) {
-        setTimeout(connect, 2000);
-      }
     };
 
     const onJobProgress = (data: JobProgressPayload) => {
@@ -143,48 +103,32 @@ export const useJobSocket = ({
       console.error(`🚨 [${roomName}] Erreur:`, error);
       onError?.(error);
       
-      // Gestion des erreurs d'auth
       if (error.code === 'TOKEN_EXPIRED' || error.code === 'INVALID_TOKEN') {
         reconnect();
       }
     };
 
-    // Subscribe aux événements
     videoSocket.on("connect", onConnect);
     videoSocket.on("authenticated", onAuthenticated);
     videoSocket.on("disconnect", onDisconnect);
     videoSocket.on("job_progress", onJobProgress);
     videoSocket.on("error", onSocketError);
 
-    // Cleanup
+    if (autoConnect && !videoSocket.connected) {
+      console.log(`🚀 [${roomName}] Connexion auto`);
+      connect();
+    }
+
     return () => {
-      console.log(`🧹 [${roomName}] Nettoyage`);
-      
+      console.log(`🧹 [${roomName}] Nettoyage - suppression des écouteurs`);
       videoSocket.off("connect", onConnect);
       videoSocket.off("authenticated", onAuthenticated);
       videoSocket.off("disconnect", onDisconnect);
       videoSocket.off("job_progress", onJobProgress);
       videoSocket.off("error", onSocketError);
-
-      // Décrémenter le compteur
-      const newCount = (roomRefCounter.get(roomName) || 1) - 1;
-      
-      if (newCount <= 0) {
-        roomRefCounter.delete(roomName);
-        if (videoSocket.connected && isAuthenticated) {
-          videoSocket.emit("leave_room", { room: roomName });
-        }
-        
-        // Déconnecter si plus aucune room active
-        if (roomRefCounter.size === 0) {
-          console.log(`🔌 Plus de rooms actives, déconnexion`);
-          videoSocket.disconnect();
-        }
-      } else {
-        roomRefCounter.set(roomName, newCount);
-      }
+      // ✅ NE PAS DÉCONNECTER LE SOCKET ICI
     };
-  }, [room, autoConnect, accessToken, connect, reconnect, isAuthenticated, onError]);
+  }, [room, autoConnect, connect, reconnect, onError]);
 
   return { 
     isConnected, 
