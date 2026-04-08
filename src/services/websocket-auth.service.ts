@@ -26,6 +26,7 @@ class WebSocketAuthService {
 
     if (response) {
       this.wsToken = response.token;
+      console.log("wsToken:"+response.token);
       this.wsTokenExpiry = new Date(Date.now() + response.expiresIn * 1000);
       return this.wsToken;
     }
