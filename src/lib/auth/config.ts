@@ -109,6 +109,7 @@ const authConfig: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
+  debug: true,
 
   callbacks: {
     async jwt({ token, account, profile }) {
