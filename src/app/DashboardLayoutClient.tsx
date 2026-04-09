@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { useSession, signIn,signOut  } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import Sidebar from "@/ui/layout/sidebar";
 import { BellDot, Lightbulb, Menu, SettingsIcon, X, LogOut } from "lucide-react";
@@ -15,34 +15,47 @@ interface DashboardLayoutClientProps {
 }
 
 export default function DashboardLayoutClient({ children }: DashboardLayoutClientProps) {
-  // ✅ TOUS LES HOOKS SONT APPELÉS DANS LE MÊME ORDRE À CHAQUE RENDU
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [isRedirecting, setIsRedirecting] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   
   const { data: session, status } = useSession();
   const pathname = usePathname();
+  //const router = useRouter();
 
-  // ✅ TOUS LES useEffect SONT DÉCLARÉS SANS CONDITION
+  // Éviter l'hydratation mismatch
   useEffect(() => {
-    if (isRedirecting) return;
+    setIsClient(true);
+  }, []);
+
+  // Gestion de la redirection vers Keycloak
+  useEffect(() => {
+    // Ne rien faire côté serveur
+    if (!isClient) return;
     
-    if (status === "unauthenticated" && pathname !== "/unauthorized") {
-      console.log("🔴 Utilisateur non authentifié, redirection vers Keycloak");
-      setIsRedirecting(true);
-      
+    // Si déjà en train de rediriger ou sur la page unauthorized, ne rien faire
+    if (pathname === "/unauthorized") return;
+    
+    // Si non authentifié, rediriger vers Keycloak
+    if (status === "unauthenticated") {
+      console.log("🔴 Non authentifié, redirection vers Keycloak");
       signIn("keycloak", { 
         callbackUrl: "/",
         redirect: true 
-      }).catch(error => {
-        console.error("Erreur redirection Keycloak:", error);
-        setIsRedirecting(false);
       });
     }
-  }, [status, isRedirecting, pathname]);
+  }, [status, pathname, isClient]);
 
-  // 🔒 Rendu avec authentification
-  // État de chargement initial
+  // Pendant l'hydratation côté serveur, afficher un loader
+  if (!isClient) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <LoadingSpinner size="lg" text="Chargement..." />
+      </div>
+    );
+  }
+
+  // État de chargement de la session
   if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
@@ -51,8 +64,8 @@ export default function DashboardLayoutClient({ children }: DashboardLayoutClien
     );
   }
 
-  // État de redirection
-  if (isRedirecting) {
+  // Non authentifié - l'useEffect va déclencher la redirection
+  if (status === "unauthenticated") {
     return (
       <AuthStatusCard 
         type="redirecting"
@@ -62,18 +75,7 @@ export default function DashboardLayoutClient({ children }: DashboardLayoutClien
     );
   }
 
-  // Non authentifié
-  if (status === "unauthenticated") {
-    return (
-      <AuthStatusCard 
-        type="error"
-        title="Session expirée"
-        message="Votre session a expiré ou vous n'êtes pas connecté. Veuillez vous reconnecter."
-        onRetry={() => signIn("keycloak", { callbackUrl: "/" })}
-      />
-    );
-  }
-
+  // Pas de session
   if (!session) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
@@ -161,7 +163,7 @@ export default function DashboardLayoutClient({ children }: DashboardLayoutClien
                             Paramètres
                           </button>
                           <button 
-                            onClick={() => signOut()}
+                            onClick={() => signOut({ callbackUrl: "/" })}
                             className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-lg transition-colors duration-200"
                           >
                             <LogOut className="inline w-4 h-4 mr-2" />
