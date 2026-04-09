@@ -100,7 +100,7 @@ const authConfig: NextAuthOptions = {
       issuer,
       authorization: {
         params: {
-          scope: "openid profile email offline_access",
+          scope: "openid profile email",
         },
       },
     }),
