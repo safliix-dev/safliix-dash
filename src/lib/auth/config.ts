@@ -172,11 +172,7 @@ const authConfig: NextAuthOptions = {
 
       return session;
     },
-  },
-
-  pages: {
-    signIn: "/auth/login",
-  },
+  }
 };
 
 export default authConfig;
