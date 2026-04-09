@@ -3,13 +3,25 @@ import { AlertCircle, Loader2, LogIn } from "lucide-react";
 import Link from "next/link";
 
 interface AuthStatusCardProps {
-  type: "loading" | "redirecting" | "error" | "unauthorized";
+  type: "loading" | "redirecting" | "error" | "unauthorized" | "unauthenticated";
   title?: string;
   message?: string;
+
+  // 🔥 NOUVEAU
+  actionLabel?: string;
+  onAction?: () => void;
+
   onRetry?: () => void;
 }
 
-export function AuthStatusCard({ type, title, message, onRetry }: AuthStatusCardProps) {
+export function AuthStatusCard({
+  type,
+  title,
+  message,
+  actionLabel,
+  onAction,
+  onRetry,
+}: AuthStatusCardProps) {
   const config = {
     loading: {
       icon: <Loader2 className="h-12 w-12 animate-spin text-blue-500" />,
@@ -39,6 +51,13 @@ export function AuthStatusCard({ type, title, message, onRetry }: AuthStatusCard
       bgColor: "bg-orange-50",
       iconBg: "bg-orange-100",
     },
+    unauthenticated: {
+      icon: <AlertCircle className="h-12 w-12 text-gray-500" />,
+      defaultTitle: "Vous n'êtes pas connecté",
+      defaultMessage: "Veuillez vous connecter pour continuer.",
+      bgColor: "bg-gray-50",
+      iconBg: "bg-gray-200",
+    },
   };
 
   const current = config[type];
@@ -47,19 +66,35 @@ export function AuthStatusCard({ type, title, message, onRetry }: AuthStatusCard
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
       <div className={`${current.bgColor} rounded-2xl shadow-xl p-8 max-w-md w-full mx-4 transition-all duration-300 animate-fade-in`}>
         <div className="flex flex-col items-center text-center">
+
+          {/* Icon */}
           <div className={`${current.iconBg} rounded-full p-4 mb-6`}>
             {current.icon}
           </div>
-          
+
+          {/* Title */}
           <h2 className="text-2xl font-bold text-gray-800 mb-2">
             {title || current.defaultTitle}
           </h2>
-          
+
+          {/* Message */}
           <p className="text-gray-600 mb-6">
             {message || current.defaultMessage}
           </p>
-          
-          {type === "error" && onRetry && (
+
+          {/* 🔥 ACTION PRINCIPALE (login, retry, etc.) */}
+          {actionLabel && onAction && (
+            <button
+              onClick={onAction}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+            >
+              <LogIn className="h-4 w-4" />
+              {actionLabel}
+            </button>
+          )}
+
+          {/* 🔁 Retry spécifique */}
+          {type === "error" && onRetry && !actionLabel && (
             <button
               onClick={onRetry}
               className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
@@ -68,8 +103,9 @@ export function AuthStatusCard({ type, title, message, onRetry }: AuthStatusCard
               Réessayer
             </button>
           )}
-          
-          {type === "unauthorized" && (
+
+          {/* 🔐 Unauthorized fallback */}
+          {type === "unauthorized" && !actionLabel && (
             <Link
               href="/"
               className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"

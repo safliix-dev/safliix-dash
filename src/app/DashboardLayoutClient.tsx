@@ -1,9 +1,7 @@
-// app/DashboardLayoutClient.tsx
 'use client';
 
 import { useState, useEffect } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
-import { usePathname } from "next/navigation";
 import Sidebar from "@/ui/layout/sidebar";
 import { BellDot, Lightbulb, Menu, SettingsIcon, X, LogOut } from "lucide-react";
 import Image from "next/image";
@@ -20,33 +18,19 @@ export default function DashboardLayoutClient({ children }: DashboardLayoutClien
   const [isClient, setIsClient] = useState(false);
   
   const { data: session, status } = useSession();
-  const pathname = usePathname();
-  //const router = useRouter();
 
-  // Éviter l'hydratation mismatch
+  // Hydratation safe
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Gestion de la redirection vers Keycloak
+  // 🔍 Debug utile (tu peux supprimer après)
   useEffect(() => {
-    // Ne rien faire côté serveur
-    if (!isClient) return;
-    
-    // Si déjà en train de rediriger ou sur la page unauthorized, ne rien faire
-    if (pathname === "/unauthorized") return;
-    
-    // Si non authentifié, rediriger vers Keycloak
-    if (status === "unauthenticated") {
-      console.log("🔴 Non authentifié, redirection vers Keycloak");
-      signIn("keycloak", { 
-        callbackUrl: "/",
-        redirect: true 
-      });
-    }
-  }, [status, pathname, isClient]);
+    console.log("SESSION STATUS:", status);
+    console.log("SESSION DATA:", session);
+  }, [status, session]);
 
-  // Pendant l'hydratation côté serveur, afficher un loader
+  // 🧱 Eviter mismatch SSR
   if (!isClient) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
@@ -55,7 +39,7 @@ export default function DashboardLayoutClient({ children }: DashboardLayoutClien
     );
   }
 
-  // État de chargement de la session
+  // ⏳ Session en cours
   if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
@@ -64,18 +48,20 @@ export default function DashboardLayoutClient({ children }: DashboardLayoutClien
     );
   }
 
-  // Non authentifié - l'useEffect va déclencher la redirection
+  // ❌ NON AUTHENTIFIÉ (plus de redirect auto !)
   if (status === "unauthenticated") {
     return (
       <AuthStatusCard 
-        type="redirecting"
-        title="Redirection vers Keycloak"
-        message="Vous allez être redirigé vers le portail d'authentification sécurisé..."
+        type="unauthenticated"
+        title="Non authentifié"
+        message="Vous devez vous connecter pour accéder au dashboard."
+        actionLabel="Se connecter"
+        onAction={() => signIn("keycloak", { callbackUrl: "/" })}
       />
     );
   }
 
-  // Pas de session
+  // ⚠️ sécurité (rare mais clean)
   if (!session) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
@@ -84,87 +70,91 @@ export default function DashboardLayoutClient({ children }: DashboardLayoutClien
     );
   }
 
-  // Rendu normal avec session réelle
+  // ✅ RENDU NORMAL
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       <div className={`transition-all duration-300 ${sidebarOpen ? "pl-64" : "pl-0"}`}>
+
         {/* Sidebar */}
         <aside className={`fixed top-0 left-0 bottom-0 w-64 bg-gray-900/95 backdrop-blur-sm border-r border-gray-700 transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
           <Sidebar />
         </aside>
 
-        {/* Main content */}
+        {/* Main */}
         <main className="min-h-screen">
+
           {/* Topbar */}
           <div className="sticky top-0 z-10 bg-gray-900/80 backdrop-blur-md border-b border-gray-700">
             <div className="flex items-center justify-between px-6 py-4">
+
+              {/* Left */}
               <div className="flex items-center gap-4">
                 <button
-                  className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors duration-200 text-gray-300 hover:text-white"
+                  className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white"
                   onClick={() => setSidebarOpen(prev => !prev)}
-                  aria-label={sidebarOpen ? "Fermer le menu" : "Ouvrir le menu"}
                 >
                   {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 </button>
+
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
                   SaFliix Dashboard
                 </h1>
               </div>
-              
+
+              {/* Right */}
               <div className="flex items-center gap-3">
-                <button className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors duration-200 text-gray-300 hover:text-white relative">
+
+                <button className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white">
                   <Lightbulb className="w-5 h-5" />
                 </button>
-                <button className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors duration-200 text-gray-300 hover:text-white relative">
+
+                <button className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white relative">
                   <BellDot className="w-5 h-5" />
                   <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                 </button>
-                
-                {/* Menu utilisateur */}
+
+                {/* User menu */}
                 <div className="relative">
                   <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="flex items-center gap-3 pl-2 pr-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors duration-200"
+                    className="flex items-center gap-3 pl-2 pr-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700"
                   >
-                    <div className="relative">
-                      <Image
-                        width={32}
-                        height={32}
-                        src={session?.user?.image || "/gildas.png"}
-                        alt="Avatar"
-                        className="w-8 h-8 rounded-full object-cover ring-2 ring-gray-600"
-                      />
-                      <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full ring-2 ring-gray-800"></div>
-                    </div>
+                    <Image
+                      width={32}
+                      height={32}
+                      src={session?.user?.image || "/gildas.png"}
+                      alt="Avatar"
+                      className="w-8 h-8 rounded-full"
+                    />
+
                     <div className="text-left">
-                      <p className="text-sm font-medium text-white">
-                        {session?.user?.name || "Utilisateur"}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {session?.user?.email || "email@exemple.com"}
-                      </p>
+                      <p className="text-sm text-white">{session.user?.name}</p>
+                      <p className="text-xs text-gray-400">{session.user?.email}</p>
                     </div>
                   </button>
-                  
+
                   {showUserMenu && (
                     <>
                       <div 
-                        className="fixed inset-0 z-10"
+                        className="fixed inset-0"
                         onClick={() => setShowUserMenu(false)}
                       />
-                      <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-20 animate-fade-in">
+
+                      <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg border border-gray-700 z-20">
                         <div className="p-3 border-b border-gray-700">
-                          <p className="text-sm font-medium text-white">{session?.user?.name}</p>
-                          <p className="text-xs text-gray-400">{session?.user?.email}</p>
+                          <p className="text-sm text-white">{session.user?.name}</p>
+                          <p className="text-xs text-gray-400">{session.user?.email}</p>
                         </div>
+
                         <div className="p-2">
-                          <button className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-lg transition-colors duration-200">
+                          <button className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-lg">
                             <SettingsIcon className="inline w-4 h-4 mr-2" />
                             Paramètres
                           </button>
+
                           <button 
                             onClick={() => signOut({ callbackUrl: "/" })}
-                            className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-lg transition-colors duration-200"
+                            className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-lg"
                           >
                             <LogOut className="inline w-4 h-4 mr-2" />
                             Se déconnecter
@@ -174,11 +164,12 @@ export default function DashboardLayoutClient({ children }: DashboardLayoutClien
                     </>
                   )}
                 </div>
+
               </div>
             </div>
           </div>
 
-          {/* Page content */}
+          {/* Content */}
           <div className="p-6">
             {children}
           </div>
