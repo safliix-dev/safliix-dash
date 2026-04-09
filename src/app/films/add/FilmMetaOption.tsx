@@ -43,12 +43,30 @@ export function FilmMetadataStep({
     }
   }, [typeValue, priceValue, setValue]);
 
+  // Options pour la classification d'âge
+  const ageRatingOptions = [
+    { value: "Tous publics", label: "Tous publics" },
+    { value: "10+", label: "Déconseillé aux moins de 10 ans" },
+    { value: "12+", label: "Déconseillé aux moins de 12 ans" },
+    { value: "14+", label: "Déconseillé aux moins de 14 ans" },
+    { value: "16+", label: "Déconseillé aux moins de 16 ans" },
+    { value: "18+", label: "Déconseillé aux moins de 18 ans" },
+  ];
+
+  // Options pour les langues (à adapter selon vos besoins)
+  const languageOptions = (meta.options?.languages ?? []).map((item: string) => ({
+    value: item,
+    label: item
+  }));
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Titre */}
         <div>
-          <label className="label text-sm mb-1">Nom du Film</label>
+          <label className="label text-sm mb-1">
+            Nom du Film <span className="text-red-500">*</span>
+          </label>
           <Controller
             name="title"
             control={control}
@@ -65,7 +83,9 @@ export function FilmMetadataStep({
 
         {/* Maison de Production */}
         <div>
-          <label className="label text-sm mb-1">Maison de Production</label>
+          <label className="label text-sm mb-1">
+            Maison de Production <span className="text-red-500">*</span>
+          </label>
           <Controller
             name="productionHouse"
             control={control}
@@ -87,7 +107,9 @@ export function FilmMetadataStep({
 
         {/* Pays de Production */}
         <div>
-          <label className="label text-sm mb-1">Pays de Production</label>
+          <label className="label text-sm mb-1">
+            Pays de Production <span className="text-red-500">*</span>
+          </label>
           <Controller
             name="country"
             control={control}
@@ -109,7 +131,9 @@ export function FilmMetadataStep({
 
         {/* Type */}
         <div>
-          <label className="label text-sm mb-1">Type</label>
+          <label className="label text-sm mb-1">
+            Type <span className="text-red-500">*</span>
+          </label>
           <Controller
             name="type"
             control={control}
@@ -132,7 +156,9 @@ export function FilmMetadataStep({
         {/* Prix (conditionnel) */}
         {typeValue === "location" && (
           <div>
-            <label className="label text-sm mb-1">Prix de location</label>
+            <label className="label text-sm mb-1">
+              Prix de location <span className="text-red-500">*</span>
+            </label>
             <Controller
               name="price"
               control={control}
@@ -157,7 +183,9 @@ export function FilmMetadataStep({
 
         {/* Date de sortie */}
         <div>
-          <label className="label text-sm mb-1">Date de sortie</label>
+          <label className="label text-sm mb-1">
+            Date de sortie <span className="text-red-500">*</span>
+          </label>
           <Controller
             name="releaseDate"
             control={control}
@@ -171,7 +199,9 @@ export function FilmMetadataStep({
 
         {/* Date de publication */}
         <div>
-          <label className="label text-sm mb-1">Date de publication SaFLIX</label>
+          <label className="label text-sm mb-1">
+            Date de publication SaFLIX <span className="text-red-500">*</span>
+          </label>
           <Controller
             name="publishDate"
             control={control}
@@ -185,7 +215,9 @@ export function FilmMetadataStep({
 
         {/* Format */}
         <div>
-          <label className="label text-sm mb-1">Format</label>
+          <label className="label text-sm mb-1">
+            Format <span className="text-red-500">*</span>
+          </label>
           <Controller
             name="format"
             control={control}
@@ -207,7 +239,9 @@ export function FilmMetadataStep({
 
         {/* Catégorie */}
         <div>
-          <label className="label text-sm mb-1">Catégorie</label>
+          <label className="label text-sm mb-1">
+            Catégorie <span className="text-red-500">*</span>
+          </label>
           <Controller
             name="category"
             control={control}
@@ -229,7 +263,9 @@ export function FilmMetadataStep({
 
         {/* Genre */}
         <div>
-          <label className="label text-sm mb-1">Genre</label>
+          <label className="label text-sm mb-1">
+            Genre <span className="text-red-500">*</span>
+          </label>
           <Controller
             name="genre"
             control={control}
@@ -251,7 +287,9 @@ export function FilmMetadataStep({
 
         {/* Acteurs */}
         <div className="md:col-span-2">
-          <label className="label text-sm mb-1">Acteurs principaux</label>
+          <label className="label text-sm mb-1">
+            Acteurs principaux <span className="text-red-500">*</span>
+          </label>
           <Controller
             name="actors"
             control={control}
@@ -272,7 +310,9 @@ export function FilmMetadataStep({
 
         {/* Directeur */}
         <div>
-          <label className="label text-sm mb-1">Directeur</label>
+          <label className="label text-sm mb-1">
+            Directeur <span className="text-red-500">*</span>
+          </label>
           <Controller
             name="director"
             control={control}
@@ -286,7 +326,9 @@ export function FilmMetadataStep({
 
         {/* Durée */}
         <div>
-          <label className="label text-sm mb-1">Durée (minutes)</label>
+          <label className="label text-sm mb-1">
+            Durée (minutes) <span className="text-red-500">*</span>
+          </label>
           <Controller
             name="duration"
             control={control}
@@ -363,41 +405,54 @@ export function FilmMetadataStep({
           />
         </div>
 
-        {/* Langue */}
+        {/* Langue - Transformé en select */}
         <div>
-          <label className="label text-sm mb-1">Langue</label>
+          <label className="label text-sm mb-1">
+            Langue <span className="text-red-500">*</span>
+          </label>
           <Controller
             name="language"
             control={control}
             rules={{ required: "La langue est obligatoire" }}
             render={({ field }) => (
-              <SuggestionsInput
-                optionList={(meta.options?.languages ?? []).map((item: string) => ({
-                  label: item,
-                  value: item
-                }))}
+              <select
                 {...field}
                 value={field.value ?? ""}
-                className="input bg-base-200 border-base-300"
-              />
+                onChange={(e) => field.onChange(e.target.value)}
+                className="input bg-base-200 border-base-300 w-full"
+              >
+                <option value="">Sélectionnez une langue</option>
+                {languageOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             )}
           />
           {errors.language && <p className="text-red-600 text-sm">{errors.language.message as string}</p>}
         </div>
 
-        {/* Age rating */}
+        {/* Age rating - Transformé en select */}
         <div>
           <label className="label text-sm mb-1">Classification (âge)</label>
           <Controller
             name="ageRating"
             control={control}
             render={({ field }) => (
-              <InputField
+              <select
                 {...field}
                 value={field.value ?? ""}
-                placeholder="Ex: R, PG-13"
-                className="input bg-base-200 border-base-300"
-              />
+                onChange={(e) => field.onChange(e.target.value)}
+                className="input bg-base-200 border-base-300 w-full"
+              >
+                <option value="">Sélectionnez une classification</option>
+                {ageRatingOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             )}
           />
         </div>
@@ -405,7 +460,9 @@ export function FilmMetadataStep({
 
       {/* Description */}
       <div className="space-y-2">
-        <label className="label text-sm mb-1">Synopsis</label>
+        <label className="label text-sm mb-1">
+          Synopsis <span className="text-red-500">*</span>
+        </label>
         <Controller
           name="description"
           control={control}
