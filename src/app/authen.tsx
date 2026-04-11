@@ -1,9 +1,12 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import Sidebar from "@/ui/layout/sidebar";
 import { BellDot, Lightbulb, Menu, SettingsIcon, X, LogOut } from "lucide-react";
 import Image from "next/image";
+import { LoadingSpinner } from "@/ui/components/loadingSpinner";
+import { AuthStatusCard } from "@/ui/components/authStatusCard";
 
 interface DashboardLayoutClientProps {
   children: React.ReactNode;
@@ -12,17 +15,62 @@ interface DashboardLayoutClientProps {
 export default function DashboardLayoutClient({ children }: DashboardLayoutClientProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  
+  const { data: session, status } = useSession();
 
-  // Données mock pour les tests
-  const mockSession = {
-    user: {
-      name: "Utilisateur Test",
-      email: "test@example.com",
-      image: "/gildas.png"
-    }
-  };
+  // Hydratation safe
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
-  // ✅ RENDU NORMAL SANS VÉRIFICATION
+  // 🔍 Debug utile (tu peux supprimer après)
+  useEffect(() => {
+    console.log("SESSION STATUS:", status);
+    console.log("SESSION DATA:", session);
+  }, [status, session]);
+
+  // 🧱 Eviter mismatch SSR
+  if (!isClient) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <LoadingSpinner size="lg" text="Chargement..." />
+      </div>
+    );
+  }
+
+  // ⏳ Session en cours
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <LoadingSpinner size="lg" text="Vérification de votre session..." />
+      </div>
+    );
+  }
+
+  // ❌ NON AUTHENTIFIÉ (plus de redirect auto !)
+  if (status === "unauthenticated") {
+    return (
+      <AuthStatusCard 
+        type="unauthenticated"
+        title="Non authentifié"
+        message="Vous devez vous connecter pour accéder au dashboard."
+        actionLabel="Se connecter"
+        onAction={() => signIn("keycloak", { callbackUrl: "/" })}
+      />
+    );
+  }
+
+  // ⚠️ sécurité (rare mais clean)
+  if (!session) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <LoadingSpinner size="lg" text="Initialisation de votre session..." />
+      </div>
+    );
+  }
+
+  // ✅ RENDU NORMAL
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       <div className={`transition-all duration-300 ${sidebarOpen ? "pl-64" : "pl-0"}`}>
@@ -74,14 +122,14 @@ export default function DashboardLayoutClient({ children }: DashboardLayoutClien
                     <Image
                       width={32}
                       height={32}
-                      src={mockSession.user.image}
+                      src={session?.user?.image || "/gildas.png"}
                       alt="Avatar"
                       className="w-8 h-8 rounded-full"
                     />
 
                     <div className="text-left">
-                      <p className="text-sm text-white">{mockSession.user.name}</p>
-                      <p className="text-xs text-gray-400">{mockSession.user.email}</p>
+                      <p className="text-sm text-white">{session.user?.name}</p>
+                      <p className="text-xs text-gray-400">{session.user?.email}</p>
                     </div>
                   </button>
 
@@ -94,8 +142,8 @@ export default function DashboardLayoutClient({ children }: DashboardLayoutClien
 
                       <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg border border-gray-700 z-20">
                         <div className="p-3 border-b border-gray-700">
-                          <p className="text-sm text-white">{mockSession.user.name}</p>
-                          <p className="text-xs text-gray-400">{mockSession.user.email}</p>
+                          <p className="text-sm text-white">{session.user?.name}</p>
+                          <p className="text-xs text-gray-400">{session.user?.email}</p>
                         </div>
 
                         <div className="p-2">
@@ -105,7 +153,7 @@ export default function DashboardLayoutClient({ children }: DashboardLayoutClien
                           </button>
 
                           <button 
-                            onClick={() => console.log("Déconnexion (mock)")}
+                            onClick={() => signOut({ callbackUrl: "/" })}
                             className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-lg"
                           >
                             <LogOut className="inline w-4 h-4 mr-2" />
