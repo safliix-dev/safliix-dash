@@ -54,9 +54,18 @@ export function FilmMetadataStep({
   ];
 
   // Options pour les langues (à adapter selon vos besoins)
-  const languageOptions = (meta.options?.languages ?? []).map((item: string) => ({
-    value: item,
-    label: item
+  const languageOptions = ([
+    {
+      value:"fr",
+      label:"français",
+    },
+    {
+      value:"en",
+      label:"anglais",
+    },
+  ]).map((item):{value:string; label:string} => ({
+    value: item.value,
+    label: item.label
   }));
 
   return (
