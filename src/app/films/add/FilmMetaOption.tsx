@@ -44,14 +44,14 @@ export function FilmMetadataStep({
   }, [typeValue, priceValue, setValue]);
 
   // Options pour la classification d'âge
-  const ageRatingOptions = [
-    { value: "Tous publics", label: "Tous publics" },
-    { value: "10+", label: "Déconseillé aux moins de 10 ans" },
-    { value: "12+", label: "Déconseillé aux moins de 12 ans" },
-    { value: "14+", label: "Déconseillé aux moins de 14 ans" },
-    { value: "16+", label: "Déconseillé aux moins de 16 ans" },
-    { value: "18+", label: "Déconseillé aux moins de 18 ans" },
-  ];
+ const ageRatingOptions = [
+  { value: "TP", label: "Tous publics" },
+  { value: "10", label: "Déconseillé aux moins de 10 ans" },
+  { value: "12", label: "Déconseillé aux moins de 12 ans" },
+  { value: "14", label: "Déconseillé aux moins de 14 ans" },
+  { value: "16", label: "Déconseillé aux moins de 16 ans" },
+  { value: "18", label: "Déconseillé aux moins de 18 ans" },
+];
 
   // Options pour les langues (à adapter selon vos besoins)
   const languageOptions = ([
