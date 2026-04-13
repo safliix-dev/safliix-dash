@@ -1,7 +1,7 @@
 // lib/contexts/SocketContext.tsx
 import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { videoSocket } from '@/lib/socket/socket-client';
-
+import { websocketAuth } from "@/services/websocket-auth.service";
 interface SocketState {
   isConnected: boolean;
   isAuthenticated: boolean;
@@ -37,7 +37,30 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     setState(prev => ({ ...prev, error: null }));
   }, []);
 
+  
+
   useEffect(() => {
+    const initSocket = async () => {
+    try {
+      // 1. Récupérer un token valide
+      const wsToken = await websocketAuth.getValidToken();
+      
+      if (wsToken) {
+        videoSocket.auth = { token: wsToken };
+        
+        // 2. Ne connecter que si ce n'est pas déjà fait
+        if (!videoSocket.connected) {
+          console.log("🚀 Initialisation du WebSocket global...");
+          videoSocket.connect();
+        }
+      }
+    } catch (err) {
+      console.error("❌ Échec initialisation Socket:", err);
+      setState(prev => ({ ...prev, error: "Erreur d'authentification WebSocket" }));
+    }
+  };
+
+  initSocket();
     const onConnect = () => {
       setState(prev => ({ ...prev, isConnected: true, error: null }));
     };
