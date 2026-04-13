@@ -4,6 +4,8 @@ import { useState } from "react";
 import Sidebar from "@/ui/layout/sidebar";
 import { BellDot, Lightbulb, Menu, SettingsIcon, X, LogOut } from "lucide-react";
 import Image from "next/image";
+import { SocketProvider } from '@/lib/contexts/SocketContext';
+
 
 interface DashboardLayoutClientProps {
   children: React.ReactNode;
@@ -24,7 +26,8 @@ export default function DashboardLayoutClient({ children }: DashboardLayoutClien
 
   // ✅ RENDU NORMAL SANS VÉRIFICATION
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <SocketProvider>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       <div className={`transition-all duration-300 ${sidebarOpen ? "pl-64" : "pl-0"}`}>
 
         {/* Sidebar */}
@@ -128,5 +131,7 @@ export default function DashboardLayoutClient({ children }: DashboardLayoutClien
         </main>
       </div>
     </div>
+    </SocketProvider>
+    
   );
 }

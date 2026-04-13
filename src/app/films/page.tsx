@@ -17,7 +17,7 @@ import { RightsHolderMoviesReport, type MovieReportEntry } from "@/ui/pdf/Rights
 import type { RightsHolderContentResponse } from "@/types/api/imageRights";
 import type { FilmListItem } from "@/types/api/films";
 import { NormalizedStats } from "@/ui/specific/films/components/videoCard";
-import { useSocketStatus,SocketIndicator } from "@/lib/hooks/useSocketStatus";
+import { SocketIndicator } from "@/lib/hooks/useSocketStatus";
 
 type DistributionMode = "location" | "abonnement";
 type SortOption = "none" | "best" | "latest";
@@ -37,7 +37,7 @@ export default function FilmsPage() {
   const toast = useToast();
   
   // ✅ Hook pour le statut de connexion socket
-  const { onConnectionChange, ...socketProps } = useSocketStatus();
+  
 
   const extractFilmStats = (film: FilmListItem): NormalizedStats => {
     const stats = film.stats;
@@ -187,7 +187,7 @@ export default function FilmsPage() {
           </div>
           
           {/* ✅ Indicateur de connexion socket */}
-          <SocketIndicator {...socketProps} />
+          <SocketIndicator />
           
           <Link className="btn btn-primary btn-sm rounded-lg" href="/films/add">
             <Plus className="w-4 h-4 mr-1" /> Ajouter un film
@@ -200,7 +200,6 @@ export default function FilmsPage() {
         room="movies"
         jobType="MOVIE"
         title="Encodage des films"
-        onConnectionChange={onConnectionChange}
       />
 
       {/* Filtres */}

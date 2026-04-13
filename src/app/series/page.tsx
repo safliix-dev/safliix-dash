@@ -17,7 +17,7 @@ import { PDFDownloadLink } from "@react-pdf/renderer";
 import { RightsHolderMoviesReport, type MovieReportEntry } from "@/ui/pdf/RightsHolderMoviesReport";
 import { SeriesListItem } from "@/types/api/series";
 import { NormalizedStats } from "@/ui/specific/films/components/videoCard";
-import { useSocketStatus,SocketIndicator } from "@/lib/hooks/useSocketStatus";
+import { SocketIndicator } from "@/lib/hooks/useSocketStatus";
 
 export default function SeriesPage() {
   const mode: "location" | "abonnement" = "abonnement";
@@ -53,8 +53,7 @@ export default function SeriesPage() {
   
   const toast = useToast();
   
-  // ✅ Hook pour le statut de connexion socket
-  const { onConnectionChange, ...socketProps} = useSocketStatus();
+  
 
   const extractSerieStats = (serie: SeriesListItem): NormalizedStats => {
     const stats = serie.stats;
@@ -209,7 +208,7 @@ export default function SeriesPage() {
           </div>
           
           {/* ✅ Indicateur de connexion socket */}
-          <SocketIndicator {...socketProps} />
+          <SocketIndicator/>
           
           <div className="flex items-center gap-2">
             <button className="btn btn-primary btn-sm rounded-lg">
@@ -228,7 +227,6 @@ export default function SeriesPage() {
         room="episodes"
         jobType="EPISODE"
         title="Encodage des épisodes"
-        onConnectionChange={onConnectionChange}
         onJobClick={(job) => {
           console.log("Job cliqué:", job);
           // Tu peux ajouter une navigation vers le détail du job ici

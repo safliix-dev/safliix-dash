@@ -1,4 +1,3 @@
-// lib/hooks/useEncodingJobs.ts
 import { useEffect, useState, useCallback } from "react";
 import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { jobApi } from "@/lib/api/job";
@@ -13,27 +12,11 @@ interface UseEncodingJobsOptions {
   autoLoad?: boolean;
 }
 
-interface UseEncodingJobsReturn {
-  jobs: EncodingJob[];
-  isLoading: boolean;
-  activeJobsCount: number;
-  completedJobsCount: number;
-  failedJobsCount: number;
-  lastUpdate: Date | null;
-  socketConnected: boolean;
-  isAuthenticated: boolean;
-  pauseJob: (jobId: string) => Promise<void>;
-  resumeJob: (jobId: string) => Promise<void>;
-  failJob: (jobId: string) => Promise<void>;
-  retryJob: (jobId: string) => Promise<void>;
-  refreshJobs: () => Promise<void>;
-}
-
 export const useEncodingJobs = ({
   room,
   jobType,
   autoLoad = true
-}: UseEncodingJobsOptions): UseEncodingJobsReturn => {
+}: UseEncodingJobsOptions) => {
   const [jobs, setJobs] = useState<EncodingJob[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -41,33 +24,21 @@ export const useEncodingJobs = ({
   const accessToken = useAccessToken();
   const toast = useToast();
 
-  // Helper pour mapper le statut socket
   const mapSocketStatus = (status: string): EncodingJob['status'] => {
     switch (status?.toLowerCase()) {
       case 'running':
-      case 'processing':
-        return 'processing';
-      case 'paused':
-        return 'paused';
-      case 'failed':
-        return 'failed';
-      case 'completed':
-        return 'completed';
-      default:
-        return 'processing';
+      case 'processing': return 'processing';
+      case 'paused': return 'paused';
+      case 'failed': return 'failed';
+      case 'completed': return 'completed';
+      default: return 'processing';
     }
   };
 
-  // WebSocket pour les mises à jour temps réel
-  const { 
-    isConnected: socketConnected, 
-    isAuthenticated,
-
-  } = useJobSocket({
+  // 1. Utilisation du nouveau useJobSocket simplifié
+  const { isConnected: socketConnected, isAuthenticated } = useJobSocket({
     room,
-    accessToken,
     onJobUpdate: (data: JobProgressPayload) => {
-      console.log(`📡 Mise à jour socket reçue pour ${room}:`, data);
       setLastUpdate(new Date());
       
       if (data.jobId) {
@@ -80,17 +51,11 @@ export const useEncodingJobs = ({
               message: data.message || '',
             };
             
-            // Notifications pour les événements importants
+            // Logique de toast identique
             if (updatedJob.status === 'completed' && job.status !== 'completed') {
-              toast.success({ 
-                title: "Encodage terminé", 
-                description: `${job.title} est maintenant disponible` 
-              });
+              toast.success({ title: "Terminé", description: job.title });
             } else if (updatedJob.status === 'failed' && job.status !== 'failed') {
-              toast.error({ 
-                title: "Erreur d'encodage", 
-                description: `${job.title} - ${data.message || 'Une erreur est survenue'}` 
-              });
+              toast.error({ title: "Erreur", description: data.message || job.title });
             }
             
             return updatedJob;
@@ -100,102 +65,54 @@ export const useEncodingJobs = ({
       }
     },
     onError: (error) => {
-      console.error(`❌ Erreur WebSocket pour ${room}:`, error);
-      toast.warning({ 
-        title: "Connexion temps réel", 
-        description: "Mise à jour des tâches en différé"+error 
-      });
+      console.error(`❌ Socket Room Error [${room}]:`, error);
     }
   });
 
-  // Chargement initial des jobs
+  // 2. Refresh Jobs (API REST)
   const refreshJobs = useCallback(async () => {
     if (!accessToken) return;
-    
     setIsLoading(true);
     try {
       const res = await jobApi.list({ type: jobType }, accessToken);
       if (Array.isArray(res)) {
         setJobs(res);
-        console.log(`📊 ${res.length} jobs d'encodage chargés pour ${room}`);
       }
     } catch (err) {
-      console.error(`Erreur lors du chargement des jobs ${room}:`, err);
-      toast.error({ 
-        title: "Erreur", 
-        description: "Impossible de charger les tâches d'encodage" 
-      });
+      toast.error({ title: "Erreur", description: "Impossible de charger les tâches:"+err });
     } finally {
       setIsLoading(false);
     }
-  }, [accessToken, jobType, room, toast]);
+  }, [accessToken, jobType, toast]);
 
-  // Actions sur les jobs
+  // 3. Actions (API TODO)
+  // Note: Ici vous devriez normalement appeler jobApi.pause() etc.
   const pauseJob = useCallback(async (jobId: string) => {
-    try {
-      // TODO: Appeler l'API de pause
-      setJobs(prev => prev.map(job => 
-        job.id === jobId ? { ...job, status: 'paused' } : job
-      ));
-      toast.info({ title: "Encodage en pause", description: "La tâche a été mise en pause" });
-    } catch (error) {
-      toast.error({ title: "Erreur", description: "Impossible de mettre en pause"+error });
-    }
-  }, [toast]);
+    setJobs(prev => prev.map(j => j.id === jobId ? { ...j, status: 'paused' } : j));
+  }, []);
 
   const resumeJob = useCallback(async (jobId: string) => {
-    try {
-      // TODO: Appeler l'API de reprise
-      setJobs(prev => prev.map(job => 
-        job.id === jobId ? { ...job, status: 'processing' } : job
-      ));
-      toast.success({ title: "Reprise de l'encodage", description: "La tâche a été reprise" });
-    } catch (error) {
-      toast.error({ title: "Erreur", description: "Impossible de reprendre"+error });
-    }
-  }, [toast]);
+    setJobs(prev => prev.map(j => j.id === jobId ? { ...j, status: 'processing' } : j));
+  }, []);
 
   const failJob = useCallback(async (jobId: string) => {
-    try {
-      // TODO: Appeler l'API d'échec
-      setJobs(prev => prev.map(job => 
-        job.id === jobId ? { ...job, status: 'failed' } : job
-      ));
-    } catch (error) {
-      console.error(error);
-    }
+    setJobs(prev => prev.map(j => j.id === jobId ? { ...j, status: 'failed' } : j));
   }, []);
 
   const retryJob = useCallback(async (jobId: string) => {
-    try {
-      // TODO: Appeler l'API de relance
-      setJobs(prev => prev.map(job => 
-        job.id === jobId ? { ...job, status: 'processing', progress: 0 } : job
-      ));
-      toast.info({ title: "Relance de l'encodage", description: "La tâche a été relancée" });
-    } catch (error) {
-      toast.error({ title: "Erreur", description: "Impossible de relancer"+error });
-    }
-  }, [toast]);
+    setJobs(prev => prev.map(j => j.id === jobId ? { ...j, status: 'processing', progress: 0 } : j));
+  }, []);
 
-  // Auto-load
   useEffect(() => {
-    if (autoLoad && accessToken) {
-      refreshJobs();
-    }
+    if (autoLoad && accessToken) refreshJobs();
   }, [autoLoad, accessToken, refreshJobs]);
-
-  // Stats
-  const activeJobsCount = jobs.filter(j => j.status === 'processing').length;
-  const completedJobsCount = jobs.filter(j => j.status === 'completed').length;
-  const failedJobsCount = jobs.filter(j => j.status === 'failed').length;
 
   return {
     jobs,
     isLoading,
-    activeJobsCount,
-    completedJobsCount,
-    failedJobsCount,
+    activeJobsCount: jobs.filter(j => j.status === 'processing').length,
+    completedJobsCount: jobs.filter(j => j.status === 'completed').length,
+    failedJobsCount: jobs.filter(j => j.status === 'failed').length,
     lastUpdate,
     socketConnected,
     isAuthenticated,
