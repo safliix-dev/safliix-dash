@@ -5,7 +5,6 @@ import FilterBtn from "@/ui/components/filterBtn";
 import Header from "@/ui/components/header";
 import VideoCard from "@/ui/specific/films/components/videoCard";
 import ClientPDFDownload from "@/ui/components/clientPdfDownloader";
-import { EncodingJobsMonitor } from "@/ui/components/EncodingJobsMonitor";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -17,7 +16,6 @@ import { RightsHolderMoviesReport, type MovieReportEntry } from "@/ui/pdf/Rights
 import type { RightsHolderContentResponse } from "@/types/api/imageRights";
 import type { FilmListItem } from "@/types/api/films";
 import { NormalizedStats } from "@/ui/specific/films/components/videoCard";
-import { SocketIndicator } from "@/lib/hooks/useSocketStatus";
 
 type DistributionMode = "location" | "abonnement";
 type SortOption = "none" | "best" | "latest";
@@ -187,7 +185,7 @@ export default function FilmsPage() {
           </div>
           
           {/* ✅ Indicateur de connexion socket */}
-          <SocketIndicator />
+          
           
           <Link className="btn btn-primary btn-sm rounded-lg" href="/films/add">
             <Plus className="w-4 h-4 mr-1" /> Ajouter un film
@@ -195,12 +193,7 @@ export default function FilmsPage() {
         </div>
       </Header>
 
-      {/* ✅ Monitoring des jobs d'encodage */}
-      <EncodingJobsMonitor 
-        room="movies"
-        jobType="MOVIE"
-        title="Encodage des films"
-      />
+      
 
       {/* Filtres */}
       <div className="flex flex-col gap-3">

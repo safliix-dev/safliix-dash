@@ -5,11 +5,11 @@ export interface EncodingJob{
   startedAt:string;
   progress:number;
   status:string;
+  type:string;
 }
 
 export interface JobParams extends Record<string,unknown> {
   status?: string;
-  type: string;
   limit?: number;
   offset?: number;
 }

@@ -34,6 +34,10 @@ export interface JobProgressPayload {
   
   /** Étape actuelle du traitement */
   stage: string | null;
+
+  title?: string | null;
+
+  type?: string;
   
   /** Message d'erreur ou information */
   message?: string | null;

@@ -4,7 +4,6 @@
 import Header from "@/ui/components/header";
 import VideoCard from "@/ui/specific/films/components/videoCard";
 import FilterBtn from "@/ui/components/filterBtn";
-import { EncodingJobsMonitor } from "@/ui/components/EncodingJobsMonitor";
 import { Download } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -17,7 +16,6 @@ import { PDFDownloadLink } from "@react-pdf/renderer";
 import { RightsHolderMoviesReport, type MovieReportEntry } from "@/ui/pdf/RightsHolderMoviesReport";
 import { SeriesListItem } from "@/types/api/series";
 import { NormalizedStats } from "@/ui/specific/films/components/videoCard";
-import { SocketIndicator } from "@/lib/hooks/useSocketStatus";
 
 export default function SeriesPage() {
   const mode: "location" | "abonnement" = "abonnement";
@@ -207,8 +205,8 @@ export default function SeriesPage() {
             </div>
           </div>
           
-          {/* ✅ Indicateur de connexion socket */}
-          <SocketIndicator/>
+          
+          
           
           <div className="flex items-center gap-2">
             <button className="btn btn-primary btn-sm rounded-lg">
@@ -222,16 +220,7 @@ export default function SeriesPage() {
         </div>
       </Header>
 
-      {/* ✅ Monitoring des jobs d'encodage */}
-      <EncodingJobsMonitor 
-        room="episodes"
-        jobType="EPISODE"
-        title="Encodage des épisodes"
-        onJobClick={(job) => {
-          console.log("Job cliqué:", job);
-          // Tu peux ajouter une navigation vers le détail du job ici
-        }}
-      />
+     
 
       <div className="flex items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">

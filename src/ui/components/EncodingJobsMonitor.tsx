@@ -1,55 +1,52 @@
 // ui/components/EncodingJobsMonitor.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useEncodingJobs } from '@/lib/hooks/useEncodingJobs';
-import type { EncodingJob } from '@/types/api/job';
+import { useState, useMemo } from 'react';
+import { useGlobalJobs } from '@/lib/contexts/JobContext'; // Utilisation directe du context
+import { JobItem } from './jobItem';
+import { EncodingJob } from '@/types/api/job';
 
 interface EncodingJobsMonitorProps {
-  room: "movies" | "episodes" | "series";
-  jobType: "MOVIE" | "EPISODE" | "SERIE";
   title?: string;
   showHeader?: boolean;
+  showFilters?: boolean;
   maxHeight?: string;
   className?: string;
   onJobClick?: (job: EncodingJob) => void;
-  onConnectionChange?: (connected: boolean, authenticated: boolean) => void;
 }
 
-export const EncodingJobsMonitor = ({
-  room,
-  jobType,
-  title = "Tâches d'encodage",
-  showHeader = true,
-  maxHeight = "max-h-96",
-  className = "",
-  onJobClick,
-  onConnectionChange
-}: EncodingJobsMonitorProps) => {
-  const [isExpanded, setIsExpanded] = useState(true);
-  
+export const EncodingJobsMonitor = (props: EncodingJobsMonitorProps) => {
   const {
-    jobs,
-    isLoading,
-    activeJobsCount,
-    completedJobsCount,
-    failedJobsCount,
-    lastUpdate,
-    socketConnected,
-    isAuthenticated,
-    pauseJob,
-    resumeJob,
-    failJob,
-    retryJob,
-  } = useEncodingJobs({ room, jobType });
+    title = "Flux global d'encodage", showHeader = true,
+    showFilters = false, maxHeight = "max-h-96", className = "", onJobClick
+  } = props;
 
-  // Notifier les changements de connexion
-  useEffect(() => {
-    onConnectionChange?.(socketConnected, isAuthenticated);
-  }, [socketConnected, isAuthenticated, onConnectionChange]);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  
+  // On récupère TOUT sans filtre de type
+  const {
+    jobs, isLoading, activeCount,
+    refreshAll, pauseJob, resumeJob, retryJob // Assure-toi que ces méthodes existent dans useGlobalJobs
+  } = useGlobalJobs();
 
-  const hasNoJobs = jobs.length === 0 && !isLoading;
+  const filteredJobs = useMemo(() => {
+    // Tri : On met les jobs en cours et les erreurs en haut
+    const sorted = [...jobs].sort((a) => {
+      if (a.status === 'processing' || a.status === 'failed') return -1;
+      return 1;
+    });
 
+    if (statusFilter === 'all') return sorted;
+    return sorted.filter(job => job.status === statusFilter);
+  }, [jobs, statusFilter]);
+
+  const hasNoJobs = useMemo(() => 
+    filteredJobs.length === 0 && !isLoading, 
+    [filteredJobs.length, isLoading]
+  );
+
+  // ✅ Helpers (statiques ou mémorisés)
   const getJobStatusColor = (status: string) => {
     switch (status) {
       case 'processing': return 'border-primary/30 bg-primary/5';
@@ -69,169 +66,67 @@ export const EncodingJobsMonitor = ({
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'processing': return '🎬';
-      case 'completed': return '✅';
-      case 'failed': return '❌';
-      case 'paused': return '⏸️';
-      default: return '📋';
-    }
-  };
-
   const getStatusText = (status: string) => {
     switch (status) {
       case 'processing': return 'Encodage en cours';
-      case 'completed': return 'Encodage terminé';
-      case 'failed': return 'Échec d\'encodage';
+      case 'completed': return 'Terminé';
+      case 'failed': return 'Échec';
       case 'paused': return 'En pause';
       default: return 'En attente';
     }
   };
 
   return (
-    <div className={`bg-neutral rounded-2xl border border-base-300 p-4 shadow-sm ${className}`}>
+    <div className={`bg-neutral flex flex-col ${className}`}>
       {showHeader && (
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase text-white/50">Encodage</p>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-lg font-semibold text-white">{title}</h3>
-              {activeJobsCount > 0 && (
-                <span className="badge badge-sm badge-warning animate-pulse">
-                  {activeJobsCount} en cours
-                </span>
-              )}
-              {completedJobsCount > 0 && (
-                <span className="badge badge-sm badge-success">
-                  {completedJobsCount} terminés
-                </span>
-              )}
-              {failedJobsCount > 0 && (
-                <span className="badge badge-sm badge-error">
-                  {failedJobsCount} échoués
-                </span>
-              )}
-              {socketConnected && isAuthenticated && activeJobsCount > 0 && (
-                <span className="badge badge-xs badge-success gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
-                  Live
-                </span>
-              )}
-              {hasNoJobs && socketConnected && isAuthenticated && (
-                <span className="badge badge-xs badge-info gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
-                  Connecté
-                </span>
-              )}
+        <div className="p-4 border-b border-white/5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-white uppercase tracking-widest">{title}</h3>
+            <div className="flex gap-1.5">
+               {activeCount > 0 && <span className="badge badge-primary badge-xs font-bold p-2">{activeCount}</span>}
+               <input type="checkbox" className="toggle toggle-primary toggle-xs" checked={isExpanded} onChange={() => setIsExpanded(!isExpanded)} />
             </div>
           </div>
-          
-          <div className="flex items-center gap-3 text-xs text-white/60">
-            <span>
-              Source: {socketConnected && isAuthenticated ? 'WebSocket (temps réel)' : 'API (polling)'}
-            </span>
-            {lastUpdate && socketConnected && (
-              <span className="text-white/40 text-[10px]">
-                {lastUpdate.toLocaleTimeString()}
-              </span>
-            )}
-            <label className="flex items-center gap-2 cursor-pointer text-white/70">
-              <span>{isExpanded ? "Masquer" : "Afficher"}</span>
-              <input 
-                type="checkbox" 
-                className="toggle toggle-primary toggle-sm" 
-                checked={isExpanded} 
-                onChange={() => setIsExpanded(!isExpanded)} 
-              />
-            </label>
-          </div>
+
+          {showFilters && (
+            <div className="flex gap-2">
+              <select 
+                className="select select-xs select-bordered bg-base-300 text-[10px] flex-1"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="all">Tous</option>
+                <option value="processing">En cours</option>
+                <option value="failed">Échecs</option>
+                <option value="completed">Finis</option>
+              </select>
+              <button onClick={refreshAll} className="btn btn-xs btn-ghost text-[9px]">Actualiser</button>
+            </div>
+          )}
         </div>
       )}
 
       {isExpanded && (
-        <div className={`mt-3 space-y-3 ${maxHeight} overflow-y-auto custom-scrollbar`}>
+        <div className={`p-3 space-y-3 ${maxHeight} overflow-y-auto custom-scrollbar`}>
           {isLoading && jobs.length === 0 ? (
-            <div className="flex justify-center py-4">
-              <span className="loading loading-spinner loading-sm"></span>
-              <span className="ml-2 text-xs text-white/50">Chargement des tâches...</span>
-            </div>
+            <div className="flex justify-center py-6"><span className="loading loading-spinner text-primary"></span></div>
           ) : hasNoJobs ? (
-            <div className="text-center py-4 text-white/40 text-sm">
-              Aucune tâche d&apos;encodage en cours
+            <div className="text-center py-10 text-white/20 text-[10px] uppercase font-bold tracking-widest">
+               Aucun flux actif
             </div>
           ) : (
-            jobs.map((job) => (
-              <div 
+            filteredJobs.map((job) => (
+              <JobItem 
                 key={job.id} 
-                className={`rounded-xl border p-3 space-y-2 transition-all cursor-pointer hover:shadow-lg ${getJobStatusColor(job.status)}`}
-                onClick={() => onJobClick?.(job)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm text-white/70">{job.title}</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-white">
-                        {getStatusIcon(job.status)} {getStatusText(job.status)}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-xs text-white/50">{job.startedAt}</span>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between text-xs text-white/60 mb-1">
-                      <span>Progression</span>
-                      <span className="font-mono">{job.progress}%</span>
-                    </div>
-                    <progress 
-                      className={`progress w-full ${getProgressColor(job.status)}`} 
-                      value={job.progress} 
-                      max="100"
-                    ></progress>
-                  </div>
-                  
-                  {/* ✅ Actions temporairement désactivées si non implémentées */}
-                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                    {job.status === 'failed' && retryJob && (
-                      <button 
-                        className="btn btn-xs btn-primary" 
-                        onClick={() => retryJob(job.id)}
-                      >
-                        Relancer
-                      </button>
-                    )}
-                    
-                    {job.status !== 'completed' && job.status !== 'failed' && (
-                      <>
-                        <button 
-                          className="btn btn-xs btn-ghost text-white/60 hover:text-white/80" 
-                          onClick={() => failJob?.(job.id)}
-                        >
-                          Échouer
-                        </button>
-                        
-                        {job.status === 'processing' ? (
-                          <button 
-                            className="btn btn-xs btn-warning text-white" 
-                            onClick={() => pauseJob?.(job.id)}
-                          >
-                            Pause
-                          </button>
-                        ) : job.status === 'paused' ? (
-                          <button 
-                            className="btn btn-xs btn-primary" 
-                            onClick={() => resumeJob?.(job.id)}
-                          >
-                            Reprendre
-                          </button>
-                        ) : null}
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
+                job={job}
+                onJobClick={onJobClick}
+                onRetry={() => retryJob?.(job.id)}
+                onPause={() => pauseJob?.(job.id)}
+                onResume={() => resumeJob?.(job.id)}
+                getStatusText={getStatusText}
+                getJobStatusColor={getJobStatusColor}
+                getProgressColor={getProgressColor}
+              />
             ))
           )}
         </div>

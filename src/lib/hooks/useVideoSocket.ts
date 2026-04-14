@@ -1,4 +1,3 @@
-// lib/hooks/useJobSocket.ts
 import { useEffect, useRef, useCallback } from "react";
 import { videoSocket } from "@/lib/socket/socket-client";
 import { useGlobalSocket } from "@/lib/contexts/SocketContext";
@@ -15,48 +14,55 @@ export const useJobSocket = ({
   onJobUpdate, 
   onError 
 }: UseJobSocketProps) => {
+  // 1. On consomme l'état de connexion global
   const { isConnected, isAuthenticated, reconnect } = useGlobalSocket();
   
+  // 2. Ref pour le callback afin d'éviter de redéclencher le useEffect 
+  // quand la logique de traitement des données change dans le composant parent
   const onJobUpdateRef = useRef(onJobUpdate);
   onJobUpdateRef.current = onJobUpdate;
-  
-  const roomRef = useRef(room);
-  roomRef.current = room;
 
-  const onSocketError = useCallback((error: { message: string; code: string }) => {
-    console.error(`🚨 [${roomRef.current}] Erreur:`, error);
+  // 3. Gestion des erreurs
+  const handleSocketError = useCallback((error: { message: string; code: string }) => {
+    console.error(`🚨 [Socket Room: ${room}] Erreur:`, error);
     onError?.(error);
     
     if (error.code === 'TOKEN_EXPIRED' || error.code === 'INVALID_TOKEN') {
       reconnect();
     }
-  }, [onError, reconnect]);
+  }, [room, onError, reconnect]);
 
   useEffect(() => {
-    const currentRoom = roomRef.current;
-    
+    // Gestionnaire de réception des données
     const onJobProgress = (data: JobProgressPayload) => {
-      // Optionnel: filtrer par room si le payload contient la room
-      // if (data.room === currentRoom) {
-        onJobUpdateRef.current(data);
-      // }
+      onJobUpdateRef.current(data);
     };
 
+    // Attachement des écouteurs
     videoSocket.on("job_progress", onJobProgress);
-    videoSocket.on("error", onSocketError);
+    videoSocket.on("error", handleSocketError);
 
+    // 4. CONNEXION À LA ROOM
+    // On n'émet join_room que si le socket est authentifié globalement
     if (isAuthenticated) {
-      console.log(`📡 [${currentRoom}] Joining room...`);
-      videoSocket.emit("join_room", { room: currentRoom });
+      console.log(`📡 [${room}] Joining room...`);
+      videoSocket.emit("join_room", { room });
     }
 
+    // 5. NETTOYAGE (Cleanup)
+    // S'exécute quand on quitte la page OU quand 'room' change
     return () => {
-      console.log(`🧹 [${currentRoom}] Leaving room...`);
-      videoSocket.emit("leave_room", { room: currentRoom });
+      if (isAuthenticated) {
+        console.log(`🧹 [${room}] Leaving room...`);
+        videoSocket.emit("leave_room", { room });
+      }
       videoSocket.off("job_progress", onJobProgress);
-      videoSocket.off("error", onSocketError);
+      videoSocket.off("error", handleSocketError);
     };
-  }, [isAuthenticated, onSocketError]); // Pas de room dans dépendances !
+    
+    // On ajoute 'room' dans les dépendances pour permettre le switch 
+    // dynamique (ex: passer de Films à Séries)
+  }, [room, isAuthenticated, handleSocketError]);
 
   return { 
     isConnected, 
