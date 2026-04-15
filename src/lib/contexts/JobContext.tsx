@@ -5,7 +5,64 @@ import { videoSocket } from '@/lib/socket/socket-client';
 import { jobApi } from '@/lib/api/job';
 import { useAccessToken } from '@/lib/auth/useAccessToken';
 import type { EncodingJob } from '@/types/api/job';
-import type { JobProgressPayload } from '@/types/socket';
+
+// Types pour les événements socket
+interface JobCreatedEvent {
+  job: EncodingJob;
+  room: string;
+}
+
+interface JobCompletedEvent {
+  jobId: string;
+  s3Key?: string;
+  outputUrl?: string;
+  status?: string;
+  completedAt?: string;
+  room?: string;
+}
+
+interface JobFailedEvent {
+  jobId: string;
+  s3Key?: string;
+  error: string;
+  message?: string;
+  status?: string;
+  failedAt?: string;
+  room?: string;
+}
+
+interface JobPausedEvent {
+  jobId: string;
+  status?: string;
+  pausedAt?: string;
+  room?: string;
+}
+
+interface JobResumedEvent {
+  jobId: string;
+  status?: string;
+  resumedAt?: string;
+  room?: string;
+}
+
+interface JobDeletedEvent {
+  jobId: string;
+  room?: string;
+  deletedAt?: string;
+}
+
+// Type pour le payload brut de job_progress du backend
+interface RawJobProgressEvent {
+  s3Key: string;
+  room: string;
+  jobId: string;
+  stage: string;
+  progress: number;
+  status: string;
+  message?: string;
+  updatedAt: string;
+  timestamp: string;
+}
 
 interface JobContextValue {
   jobs: EncodingJob[];
@@ -14,9 +71,9 @@ interface JobContextValue {
   completedCount: number;
   failedCount: number;
   refreshAll: () => Promise<void>;
-  retryJob: (jobId:string) => Promise<void>;
-  resumeJob: (jobId:string) => Promise<void>;
-  pauseJob: (jobId:string) => Promise<void>;
+  retryJob: (jobId: string) => Promise<void>;
+  resumeJob: (jobId: string) => Promise<void>;
+  pauseJob: (jobId: string) => Promise<void>;
 }
 
 const JobContext = createContext<JobContextValue | undefined>(undefined);
@@ -28,135 +85,249 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const updateJob = useCallback((jobId: string, changes: Partial<EncodingJob>) => {
-  setJobs(prev => {
-    // On vérifie si le job existe et si les changements sont réels
-    const jobIndex = prev.findIndex(j => j.id === jobId);
-    if (jobIndex === -1) return prev;
-
-    const currentJob = prev[jobIndex];
+    console.log(`📝 [JobContext] updateJob called for jobId: ${jobId}`, changes);
     
-    // Optimisation : On ne met à jour que si les données critiques ont changé
-    // (on évite de mettre à jour lastUpdate si le progrès est identique)
-    if (currentJob.progress === changes.progress && currentJob.status === changes.status) {
-      return prev;
-    }
+    setJobs(prev => {
+      const jobIndex = prev.findIndex(j => j.id === jobId);
+      if (jobIndex === -1) {
+        console.warn(`⚠️ [JobContext] Job ${jobId} not found in list`);
+        return prev;
+      }
 
-    const newJobs = [...prev];
-    newJobs[jobIndex] = { 
-      ...currentJob, 
-      ...changes,
-    };
-    return newJobs;
-  });
-}, []);
+      const currentJob = prev[jobIndex];
+      
+      if (currentJob.progress === changes.progress && currentJob.status === changes.status) {
+        console.log(`⏭️ [JobContext] Skipping update - no changes for job ${jobId}`);
+        return prev;
+      }
+
+      console.log(`✅ [JobContext] Updating job ${jobId}: ${currentJob.progress}% → ${changes.progress}%, ${currentJob.status} → ${changes.status}`);
+      
+      const newJobs = [...prev];
+      newJobs[jobIndex] = { 
+        ...currentJob, 
+        ...changes,
+      };
+      return newJobs;
+    });
+  }, []);
 
   const refreshAll = useCallback(async () => {
-    if (!accessToken) return;
+    if (!accessToken) {
+      console.warn('⚠️ [JobContext] refreshAll skipped - no access token');
+      return;
+    }
+    console.log('🔄 [JobContext] Refreshing all jobs...');
     setIsLoading(true);
     try {
-      const data = await jobApi.list({accessToken});
+      const data = await jobApi.list({ accessToken });
+      console.log(`✅ [JobContext] Loaded ${data.length} jobs from API`);
       setJobs(data);
-    } catch (err) { 
-      console.error("Erreur sync jobs:", err);
-    } finally { 
-      setIsLoading(false); 
+    } catch (err) {
+      console.error("❌ [JobContext] Error syncing jobs:", err);
+    } finally {
+      setIsLoading(false);
     }
   }, [accessToken]);
 
   const pauseJob = useCallback(async (jobId: string) => {
     if (!accessToken) return;
     try {
+      console.log(`⏸️ [JobContext] Pausing job: ${jobId}`);
       await jobApi.pause(jobId, accessToken);
-      // Note: Le changement de statut sera géré par le socket "job_paused"
     } catch (err) {
-      console.error("Erreur pause job:", err);
+      console.error(`❌ [JobContext] Error pausing job ${jobId}:`, err);
     }
   }, [accessToken]);
 
   const resumeJob = useCallback(async (jobId: string) => {
     if (!accessToken) return;
     try {
-      await jobApi.resume(jobId,accessToken );
-      // Note: Le changement de statut sera géré par le socket "job_resumed"
+      console.log(`▶️ [JobContext] Resuming job: ${jobId}`);
+      await jobApi.resume(jobId, accessToken);
     } catch (err) {
-      console.error("Erreur resume job:", err);
+      console.error(`❌ [JobContext] Error resuming job ${jobId}:`, err);
     }
   }, [accessToken]);
 
   const retryJob = useCallback(async (jobId: string) => {
     if (!accessToken) return;
     try {
-      // On peut passer le job en "pending" localement pour UI feedback immédiat
+      console.log(`🔄 [JobContext] Retrying job: ${jobId}`);
       updateJob(jobId, { status: 'processing', progress: 0 });
       await jobApi.retry(jobId, accessToken);
     } catch (err) {
-      console.error("Erreur retry job:", err);
-      // En cas d'erreur API, on remet en failed
+      console.error(`❌ [JobContext] Error retrying job ${jobId}:`, err);
       updateJob(jobId, { status: 'failed' });
     }
   }, [accessToken, updateJob]);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    console.log('🎬 [JobContext] useEffect triggered, isAuthenticated:', isAuthenticated);
+    
+    if (!isAuthenticated) {
+      console.log('⏸️ [JobContext] Skipping socket setup - not authenticated');
+      return;
+    }
+
+    console.log('✅ [JobContext] Setting up socket handlers...');
+    console.log('🔌 [JobContext] Socket connection state:', {
+      connected: videoSocket.connected,
+      id: videoSocket.id,
+    });
 
     // Rejoindre toutes les rooms
     const rooms = ["movies", "episodes", "series"] as const;
-    rooms.forEach(room => videoSocket.emit("join_room", { room }));
+    console.log(`🏠 [JobContext] Joining rooms: ${rooms.join(', ')}`);
+    
+    rooms.forEach(room => {
+      console.log(`📡 [JobContext] Emitting join_room for: ${room}`);
+      videoSocket.emit("join_room", { room }, (response?: { event: string; data: string }) => {
+        console.log(`✅ [JobContext] join_room response for ${room}:`, response);
+      });
+    });
 
-    const handlers = {
-      job_created: (data: { job: EncodingJob; room: string }) => {
+    // Handler pour job_created
+    const handleJobCreated = (data: JobCreatedEvent) => {
+      console.log("🆕 [JobContext] job_created event received:", JSON.stringify(data, null, 2));
+      if (data.job) {
+        console.log(`📊 New job: ${data.job.id} - ${data.job.status}`);
         setJobs(prev => [data.job, ...prev]);
-      },
-      job_progress: (data: JobProgressPayload) => {
-        updateJob(data.jobId, { 
-          progress: data.progress, 
-          status: data.status?.toLowerCase()  || 'processing',
-        });
-      },
-      job_completed: (data: { jobId: string }) => {
-        updateJob(data.jobId, { progress: 100, status: 'completed' });
-      },
-      job_failed: (data: { jobId: string; message?: string }) => {
-        updateJob(data.jobId, { status: 'failed'});
-      },
-      job_paused: (data: { jobId: string }) => {
-        updateJob(data.jobId, { status: 'paused' });
-      },
-      job_resumed: (data: { jobId: string }) => {
-        updateJob(data.jobId, { status: 'processing' });
-      },
-      job_deleted: (data: { jobId: string }) => {
-        setJobs(prev => prev.filter(j => j.id !== data.jobId));
+      } else {
+        console.warn("⚠️ job_created: no job field in data", data);
       }
     };
 
-    Object.entries(handlers).forEach(([event, handler]) => {
-      videoSocket.on(event, handler);
-    });
+    // Handler pour job_progress
+    const handleJobProgress = (data: RawJobProgressEvent) => {
+      console.log("📊 [JobContext] job_progress RAW event received:", JSON.stringify(data, null, 2));
+      
+      const { jobId, progress, status } = data;
+      
+      console.log(`📈 [JobContext] Parsed progress data:`, {
+        jobId,
+        progress,
+        status,
+      });
+      
+      if (!jobId) {
+        console.error("❌ [JobContext] Cannot extract jobId from payload:", data);
+        return;
+      }
+      
+      updateJob(jobId, {
+        progress: progress ?? 0,
+        status: status?.toLowerCase() ?? 'processing',
+      });
+    };
+
+    // Handler pour job_completed
+    const handleJobCompleted = (data: JobCompletedEvent) => {
+      console.log("✅ [JobContext] job_completed event received:", data);
+      const { jobId } = data;
+      if (jobId) {
+        console.log(`🎉 Job ${jobId} completed!`);
+        updateJob(jobId, { progress: 100, status: 'completed' });
+      } else {
+        console.warn("⚠️ job_completed: no jobId found", data);
+      }
+    };
+
+    // Handler pour job_failed
+    const handleJobFailed = (data: JobFailedEvent) => {
+      console.log("❌ [JobContext] job_failed event received:", data);
+      const { jobId, error, message } = data;
+      if (jobId) {
+        console.log(`💀 Job ${jobId} failed: ${message ?? error}`);
+        updateJob(jobId, { status: 'failed' });
+      } else {
+        console.warn("⚠️ job_failed: no jobId found", data);
+      }
+    };
+
+    // Handler pour job_paused
+    const handleJobPaused = (data: JobPausedEvent) => {
+      console.log("⏸️ [JobContext] job_paused event received:", data);
+      const { jobId } = data;
+      if (jobId) {
+        updateJob(jobId, { status: 'paused' });
+      }
+    };
+
+    // Handler pour job_resumed
+    const handleJobResumed = (data: JobResumedEvent) => {
+      console.log("▶️ [JobContext] job_resumed event received:", data);
+      const { jobId } = data;
+      if (jobId) {
+        updateJob(jobId, { status: 'processing' });
+      }
+    };
+
+    // Handler pour job_deleted
+    const handleJobDeleted = (data: JobDeletedEvent) => {
+      console.log("🗑️ [JobContext] job_deleted event received:", data);
+      const { jobId } = data;
+      if (jobId) {
+        console.log(`Removing job ${jobId} from list`);
+        setJobs(prev => prev.filter(j => j.id !== jobId));
+      }
+    };
+
+    // Écouter TOUS les événements pour debug (sans any)
+    const onAnyEvent = (event: string, ...args: unknown[]) => {
+      console.log(`🔔 [JobContext] Socket ANY event: "${event}"`, args);
+    };
+    videoSocket.onAny(onAnyEvent);
+
+    // Enregistrer les handlers spécifiques
+    videoSocket.on('job_created', handleJobCreated);
+    videoSocket.on('job_progress', handleJobProgress);
+    videoSocket.on('job_completed', handleJobCompleted);
+    videoSocket.on('job_failed', handleJobFailed);
+    videoSocket.on('job_paused', handleJobPaused);
+    videoSocket.on('job_resumed', handleJobResumed);
+    videoSocket.on('job_deleted', handleJobDeleted);
     
+    // Rafraîchir la liste des jobs
     refreshAll();
 
+    // Nettoyage
     return () => {
-      Object.entries(handlers).forEach(([event, handler]) => {
-        videoSocket.off(event, handler);
+      console.log('🧹 [JobContext] Cleaning up socket handlers...');
+      videoSocket.offAny(onAnyEvent);
+      
+      videoSocket.off('job_created', handleJobCreated);
+      videoSocket.off('job_progress', handleJobProgress);
+      videoSocket.off('job_completed', handleJobCompleted);
+      videoSocket.off('job_failed', handleJobFailed);
+      videoSocket.off('job_paused', handleJobPaused);
+      videoSocket.off('job_resumed', handleJobResumed);
+      videoSocket.off('job_deleted', handleJobDeleted);
+      
+      rooms.forEach(room => {
+        console.log(`📡 [JobContext] Leaving room: ${room}`);
+        videoSocket.emit("leave_room", { room });
       });
-      rooms.forEach(room => videoSocket.emit("leave_room", { room }));
     };
   }, [isAuthenticated, updateJob, refreshAll]);
 
   // Statistiques mémorisées
-  const stats = useMemo(() => ({
-    activeCount: jobs.filter(j => ['processing', 'running', 'paused'].includes(j.status)).length,
-    completedCount: jobs.filter(j => j.status === 'completed').length,
-    failedCount: jobs.filter(j => j.status === 'failed').length,
-  }), [jobs]);
+  const stats = useMemo(() => {
+    const statsData = {
+      activeCount: jobs.filter(j => ['processing', 'running', 'paused'].includes(j.status)).length,
+      completedCount: jobs.filter(j => j.status === 'completed').length,
+      failedCount: jobs.filter(j => j.status === 'failed').length,
+    };
+    console.log(`📊 [JobContext] Stats updated:`, statsData);
+    return statsData;
+  }, [jobs]);
 
-  const value = useMemo(() => ({ 
+  const value = useMemo(() => ({
     jobs,
     retryJob,
     pauseJob,
-    resumeJob, 
-    isLoading, 
+    resumeJob,
+    isLoading,
     refreshAll,
     ...stats
   }), [jobs, retryJob, pauseJob, resumeJob, isLoading, refreshAll, stats]);
