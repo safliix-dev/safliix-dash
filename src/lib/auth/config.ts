@@ -1,6 +1,5 @@
-import { DefaultSession } from "next-auth";
+import { DefaultSession, NextAuthOptions } from "next-auth";
 import KeycloakProvider from "next-auth/providers/keycloak";
-import { NextAuthOptions } from "next-auth";
 import { JWT } from "next-auth/jwt";
 
 /* =======================
@@ -23,6 +22,7 @@ declare module "next-auth" {
     preferred_username?: string;
     realm_access?: { roles: string[] };
     resource_access?: { [key: string]: { roles: string[] } };
+    realm_roles?: string[]; // Ajouté pour correspondre à tes logs Keycloak
   }
 }
 
@@ -33,7 +33,7 @@ declare module "next-auth/jwt" {
     accessTokenExpires?: number;
     idToken?: string;
     error?: string;
-    roles?: string[]; // ✅ AJOUT IMPORTANT
+    roles?: string[];
     user?: {
       name?: string;
       email?: string;
@@ -78,8 +78,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     return {
       ...token,
       accessToken: refreshed.access_token,
-      accessTokenExpires:
-        Date.now() + (refreshed.expires_in as number) * 1000,
+      accessTokenExpires: Date.now() + (refreshed.expires_in as number) * 1000,
       refreshToken: refreshed.refresh_token ?? token.refreshToken,
     };
   } catch (error) {
@@ -92,7 +91,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
    NEXT AUTH CONFIG
 ======================= */
 
-const authConfig: NextAuthOptions = {
+export const authConfig: NextAuthOptions = {
   providers: [
     KeycloakProvider({
       clientId,
@@ -100,7 +99,7 @@ const authConfig: NextAuthOptions = {
       issuer,
       authorization: {
         params: {
-          scope: "openid profile email",
+          scope: "openid profile email roles", // Ajout de "roles" pour être sûr
         },
       },
     }),
@@ -109,6 +108,7 @@ const authConfig: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
+  
   debug: true,
 
   callbacks: {
@@ -119,10 +119,10 @@ const authConfig: NextAuthOptions = {
           ? account.expires_at * 1000
           : undefined;
 
-        // ✅ Récupération robuste des rôles
-        const realmRoles = profile.realm_access?.roles || [];
-        const clientRoles =
-          profile.resource_access?.[clientId]?.roles || [];
+        // ✅ RÉCUPÉRATION DES RÔLES (Adaptée à tes logs)
+        // On check realm_roles (vu dans tes logs) OU realm_access.roles
+        const realmRoles = profile.realm_roles || profile.realm_access?.roles || [];
+        const clientRoles = profile.resource_access?.[clientId]?.roles || [];
 
         token.roles = [...new Set([...realmRoles, ...clientRoles])];
 
@@ -131,27 +131,28 @@ const authConfig: NextAuthOptions = {
         token.accessTokenExpires = expiresAtMs;
         token.idToken = account.id_token;
 
+        // ✅ SÉCURISATION USER (Évite le undefined / crash 502)
         token.user = {
           name:
             profile.name ??
             profile.preferred_username ??
-            token.name ??
-            undefined,
+            (profile as { given_name?: string }).given_name ??
+            "Utilisateur SaFliix",
           email: profile.email ?? token.email ?? undefined,
         };
 
         return token;
       }
 
-      // 🧠 Si pas d'expiration → on ne touche pas
+      // 🧠 GESTION EXPIRATION
       if (!token.accessTokenExpires) return token;
 
-      // ✅ Token encore valide
+      // Token encore valide (marge de 30s)
       if (Date.now() < token.accessTokenExpires - 30_000) {
         return token;
       }
 
-      // 🔄 Refresh
+      // 🔄 REFRESH
       if (token.refreshToken) {
         return refreshAccessToken(token);
       }
@@ -160,20 +161,27 @@ const authConfig: NextAuthOptions = {
     },
 
     async session({ session, token }) {
+      // Transfert des données du JWT vers la Session
       session.accessToken = token.accessToken;
       session.idToken = token.idToken;
       session.error = token.error;
-
-      session.user.roles = token.roles || [];
-
+      
       if (token.user) {
         session.user.name = token.user.name;
         session.user.email = token.user.email;
       }
 
+      // On s'assure que roles est toujours un tableau
+      session.user.roles = token.roles || [];
+
       return session;
     },
-  }
+  },
+
+  // Optionnel : tu peux ajouter une page de login personnalisée si besoin
+  // pages: {
+  //   signIn: '/auth/signin',
+  // }
 };
 
 export default authConfig;
