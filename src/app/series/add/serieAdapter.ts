@@ -58,9 +58,9 @@ export const seriesAdapter: MediaFormEngineConfig<
    */
   collectFiles: (form) => {
     const slots = [
-      { key: 'secondaryImage', file: form.secondaryImage },
-      { key: 'mainImage', file: form.mainImage },
-      { key: 'trailerFile', file: form.trailerFile },
+      { key: 'THUMBNAIL', file: form.secondaryImage },
+      { key: 'POSTER', file: form.mainImage },
+      { key: 'TRAILER', file: form.trailerFile },
     ];
 
     return slots.filter(

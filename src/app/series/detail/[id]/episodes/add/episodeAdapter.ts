@@ -43,10 +43,9 @@ export const episodeAdapter: MediaFormEngineConfig<
 
   collectFiles: (form): { key: EpisodeSlot; file: File }[] => {
     const slots: { key: EpisodeSlot; file: File | null | undefined }[] = [
-      { key: 'mainImage', file: form.mainImage },
-      { key: 'movieFile', file: form.movieFile },
-      { key: 'trailerFile', file: form.trailerFile },
-      { key: 'subtitleFile', file: form.subtitleFile },
+      { key: 'POSTER', file: form.mainImage },
+      { key: 'MOVIE', file: form.movieFile },
+      { key: 'TRAILER', file: form.trailerFile },
     ];
     
     return slots.filter((s): s is { key: EpisodeSlot; file: File } => s.file instanceof File);

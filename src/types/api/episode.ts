@@ -41,7 +41,7 @@ export interface EpisodeMetaOptions {
   actors?: Array<{ id: string; name: string }>;
 }
 
-export type EpisodeSlot = 'mainImage' | 'movieFile' | 'trailerFile' | 'subtitleFile';
+export type EpisodeSlot = 'MAIN' | 'MOVIE' | 'TRAILER' | 'SUBTITLE' | 'POSTER';
 
 export interface EpisodeListParams  extends Record<string, unknown> { page?: number; pageSize?: number }
 export interface EpisodeItem {
