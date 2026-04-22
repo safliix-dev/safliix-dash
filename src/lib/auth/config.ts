@@ -1,6 +1,7 @@
+// auth.config.ts
 import { DefaultSession, NextAuthOptions } from "next-auth";
 import KeycloakProvider from "next-auth/providers/keycloak";
-import { JWT } from "next-auth/jwt";
+import { tokensApi } from "@/lib/api/kcToken";
 
 /* =======================
    TYPES NEXT-AUTH
@@ -8,10 +9,9 @@ import { JWT } from "next-auth/jwt";
 
 declare module "next-auth" {
   interface Session {
-    accessToken?: string;
-    idToken?: string;
     error?: string;
     user: {
+      id?: string;
       name?: string;
       email?: string;
       roles?: string[];
@@ -19,22 +19,24 @@ declare module "next-auth" {
   }
 
   interface Profile {
+    sub?: string;
     preferred_username?: string;
     realm_access?: { roles: string[] };
     resource_access?: { [key: string]: { roles: string[] } };
-    realm_roles?: string[]; // Ajouté pour correspondre à tes logs Keycloak
+    realm_roles?: string[];
+    email?: string;
+    name?: string;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
-    accessToken?: string;
-    refreshToken?: string;
+    sub?: string;
     accessTokenExpires?: number;
-    idToken?: string;
     error?: string;
     roles?: string[];
     user?: {
+      id?: string;
       name?: string;
       email?: string;
     };
@@ -50,44 +52,6 @@ const clientId = process.env.KEYCLOAK_CLIENT_ID!;
 const clientSecret = process.env.KEYCLOAK_CLIENT_SECRET!;
 
 /* =======================
-   REFRESH TOKEN
-======================= */
-
-async function refreshAccessToken(token: JWT): Promise<JWT> {
-  try {
-    const response = await fetch(
-      `${issuer}/protocol/openid-connect/token`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          client_id: clientId,
-          client_secret: clientSecret,
-          grant_type: "refresh_token",
-          refresh_token: token.refreshToken as string,
-        }),
-      }
-    );
-
-    if (!response.ok) throw new Error("Refresh failed");
-
-    const refreshed = await response.json();
-
-    return {
-      ...token,
-      accessToken: refreshed.access_token,
-      accessTokenExpires: Date.now() + (refreshed.expires_in as number) * 1000,
-      refreshToken: refreshed.refresh_token ?? token.refreshToken,
-    };
-  } catch (error) {
-    console.error("❌ RefreshAccessTokenError", error);
-    return { ...token, error: "RefreshAccessTokenError" };
-  }
-}
-
-/* =======================
    NEXT AUTH CONFIG
 ======================= */
 
@@ -99,8 +63,16 @@ export const authConfig: NextAuthOptions = {
       issuer,
       authorization: {
         params: {
-          scope: "openid profile email roles", // Ajout de "roles" pour être sûr
+          scope: "openid profile email roles",
         },
+      },
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name ?? profile.preferred_username ?? null,
+          email: profile.email ?? null,
+          realm_roles: profile.realm_roles || [],
+        };
       },
     }),
   ],
@@ -108,80 +80,96 @@ export const authConfig: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
-  
+
   debug: true,
 
   callbacks: {
     async jwt({ token, account, profile }) {
-      // 🔐 LOGIN INITIAL
+      // 🔐 LOGIN INITIAL - Sauvegarde dans le backend Nest.js
       if (account && profile) {
-        const expiresAtMs = account.expires_at
-          ? account.expires_at * 1000
-          : undefined;
+        // Vérification que les tokens existent
+        if (!account.access_token || !account.refresh_token || !account.id_token) {
+          console.error("❌ Tokens manquants dans le compte Keycloak");
+          return token;
+        }
 
-        // ✅ RÉCUPÉRATION DES RÔLES (Adaptée à tes logs)
-        // On check realm_roles (vu dans tes logs) OU realm_access.roles
+        // Récupération des rôles
         const realmRoles = profile.realm_roles || profile.realm_access?.roles || [];
         const clientRoles = profile.resource_access?.[clientId]?.roles || [];
 
+        token.sub = profile.sub;
         token.roles = [...new Set([...realmRoles, ...clientRoles])];
-
-        token.accessToken = account.access_token;
-        token.refreshToken = account.refresh_token;
-        token.accessTokenExpires = expiresAtMs;
-        token.idToken = account.id_token;
-
-        // ✅ SÉCURISATION USER (Évite le undefined / crash 502)
         token.user = {
-          name:
-            profile.name ??
-            profile.preferred_username ??
-            (profile as { given_name?: string }).given_name ??
-            "Utilisateur SaFliix",
-          email: profile.email ?? token.email ?? undefined,
+          id: profile.sub,
+          name: profile.name ?? profile.preferred_username ?? profile.email ?? "Utilisateur",
+          email: profile.email ?? undefined,
         };
+
+        // ⭐ SAUVEGARDE DES TOKENS VIA TON API
+        const expiresIn = typeof account.expires_in === 'number' 
+        ? account.expires_in 
+        : 300;
+        try {
+          await tokensApi.save({
+            userId: profile.sub!,
+            accessToken: account.access_token,
+            refreshToken: account.refresh_token,
+            idToken: account.id_token,
+            expiresIn: expiresIn,
+          });
+          
+          console.log(`✅ Tokens sauvegardés pour ${profile.sub}`);
+        } catch (error) {
+          console.error("❌ Erreur sauvegarde tokens:", error);
+        }
 
         return token;
       }
 
       // 🧠 GESTION EXPIRATION
-      if (!token.accessTokenExpires) return token;
-
-      // Token encore valide (marge de 30s)
-      if (Date.now() < token.accessTokenExpires - 30_000) {
-        return token;
-      }
-
-      // 🔄 REFRESH
-      if (token.refreshToken) {
-        return refreshAccessToken(token);
+      if (token.sub && (!token.accessTokenExpires || Date.now() >= token.accessTokenExpires - 30000)) {
+        try {
+          // ⭐ RAFRAÎCHIR VIA TON API
+          const response = await tokensApi.refresh(token.sub);
+          
+          if (response.success && response.expiresIn) {
+            token.accessTokenExpires = Date.now() + response.expiresIn * 1000;
+            console.log(`✅ Tokens rafraîchis pour ${token.sub}`);
+          }
+        } catch (error) {
+          console.error("❌ Refresh error:", error);
+          token.error = "RefreshAccessTokenError";
+        }
       }
 
       return token;
     },
 
     async session({ session, token }) {
-      // Transfert des données du JWT vers la Session
-      session.accessToken = token.accessToken;
-      session.idToken = token.idToken;
-      session.error = token.error;
-      
-      if (token.user) {
-        session.user.name = token.user.name;
-        session.user.email = token.user.email;
-      }
-
-      // On s'assure que roles est toujours un tableau
+      // Session LÉGÈRE - uniquement les infos nécessaires
+      session.user.id = token.sub;
+      session.user.name = token.user?.name;
+      session.user.email = token.user?.email;
       session.user.roles = token.roles || [];
+      session.error = token.error;
 
       return session;
     },
   },
 
-  // Optionnel : tu peux ajouter une page de login personnalisée si besoin
-  // pages: {
-  //   signIn: '/auth/signin',
-  // }
+  events: {
+    async signOut({ token }) {
+      // ⭐ DÉCONNEXION VIA TON API
+      if (token.sub) {
+        try {
+          await tokensApi.delete(token.sub);
+          console.log(`✅ Logout backend pour ${token.sub}`);
+        } catch (error) {
+          console.error("❌ Logout error:", error);
+        }
+      }
+    },
+  },
 };
 
 export default authConfig;
