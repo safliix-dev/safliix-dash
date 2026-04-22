@@ -7,12 +7,14 @@ import { useWatch } from "react-hook-form";
 import { Control, UseFormSetValue } from "react-hook-form";
 import UploadBox from "@/ui/specific/films/components/uploadBox";
 import type { AdsFormData } from "@/types/api/ads";
+import { DialogStatus } from "@/ui/components/confirmationDialog";
+
 
 interface AdsFilesStepProps {
   control: Control<AdsFormData>;
   setValue: UseFormSetValue<AdsFormData>;
   onPreview: (url: string) => void;
-  dialogStatus: 'idle' | 'loading' | 'success' | 'error';
+  dialogStatus: DialogStatus;
 }
 
 export function AdsFilesStep({

@@ -8,12 +8,12 @@ import { Control, UseFormSetValue } from "react-hook-form";
 import UploadBox from "@/ui/specific/films/components/uploadBox";
 import { VideoUpload } from "@/ui/components/form/VideoUpload";
 import type { FilmFormData } from "@/types/api/films";
-
+import { DialogStatus } from "@/ui/components/confirmationDialog";
 interface FilmFilesStepProps {
   control: Control<FilmFormData>;
   setValue: UseFormSetValue<FilmFormData>;
   onPreview: (url: string) => void;
-  dialogStatus: 'idle' | 'loading' | 'success' | 'error';
+  dialogStatus: DialogStatus;
   metaLoading: boolean;
   onOpenConfirm: () => void;
 }

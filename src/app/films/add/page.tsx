@@ -63,8 +63,8 @@ export default function FilmPage() {
 
   return (
     <MediaPage<FilmFormData, FilmSlot, FilmMetaOptions>
-      useFormHook={useFilmForm}
-      MetadataComponent={FilmMetadataComponent}
+      useFormHook={useFilmForm} 
+       MetadataComponent={FilmMetadataComponent}
       FilesComponent={FilmFilesComponent}
       title="Édition de film"
       metaFields={[

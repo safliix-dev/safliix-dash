@@ -51,7 +51,6 @@ interface JobDeletedEvent {
   deletedAt?: string;
 }
 
-// Type pour le payload brut de job_progress du backend
 interface RawJobProgressEvent {
   s3Key: string;
   room: string;
@@ -83,53 +82,65 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
   const accessToken = useAccessToken();
   const [jobs, setJobs] = useState<EncodingJob[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  const updateJob = useCallback((jobId: string, changes: Partial<EncodingJob>) => {
-    console.log(`📝 [JobContext] updateJob called for jobId: ${jobId}`, changes);
+  // Fonction centrale de mise à jour avec déduplication automatique
+  const upsertJobs = useCallback((newJobs: EncodingJob | EncodingJob[]) => {
+    const jobsToAdd = Array.isArray(newJobs) ? newJobs : [newJobs];
     
     setJobs(prev => {
-      const jobIndex = prev.findIndex(j => j.id === jobId);
-      if (jobIndex === -1) {
-        console.warn(`⚠️ [JobContext] Job ${jobId} not found in list`);
-        return prev;
-      }
-
-      const currentJob = prev[jobIndex];
+      const jobMap = new Map<string, EncodingJob>();
       
-      if (currentJob.progress === changes.progress && currentJob.status === changes.status) {
-        console.log(`⏭️ [JobContext] Skipping update - no changes for job ${jobId}`);
-        return prev;
-      }
-
-      console.log(`✅ [JobContext] Updating job ${jobId}: ${currentJob.progress}% → ${changes.progress}%, ${currentJob.status} → ${changes.status}`);
+      // Ajouter les jobs existants
+      prev.forEach(job => jobMap.set(job.id, job));
       
-      const newJobs = [...prev];
-      newJobs[jobIndex] = { 
-        ...currentJob, 
-        ...changes,
-      };
-      return newJobs;
+      // Merger les nouveaux (le plus récent basé sur updatedAt l'emporte)
+      jobsToAdd.forEach(job => {
+        const existing = jobMap.get(job.id);
+        if (!existing || new Date(job.startedAt) > new Date(existing.startedAt)) {
+          jobMap.set(job.id, job);
+        }
+      });
+      
+      return Array.from(jobMap.values());
     });
   }, []);
 
-  const refreshAll = useCallback(async () => {
-    if (!accessToken) {
-      console.warn('⚠️ [JobContext] refreshAll skipped - no access token');
-      return;
-    }
-    console.log('🔄 [JobContext] Refreshing all jobs...');
+  // Chargement initial unique
+  const loadInitialJobs = useCallback(async () => {
+    if (!accessToken || isInitialized) return;
+    
+    console.log('🔄 [JobContext] Loading initial jobs...');
     setIsLoading(true);
     try {
       const data = await jobApi.list({ accessToken });
-      console.log(`✅ [JobContext] Loaded ${data.length} jobs from API`);
+      console.log(`✅ [JobContext] Loaded ${data.length} initial jobs`);
       setJobs(data);
+      setIsInitialized(true);
     } catch (err) {
-      console.error("❌ [JobContext] Error syncing jobs:", err);
+      console.error("❌ [JobContext] Error loading initial jobs:", err);
     } finally {
       setIsLoading(false);
     }
-  }, [accessToken]);
+  }, [accessToken, isInitialized]);
 
+  // Refresh manuel (pour bouton "Actualiser")
+  const refreshAll = useCallback(async () => {
+    if (!accessToken) return;
+    
+    console.log('🔄 [JobContext] Manual refresh...');
+    setIsLoading(true);
+    try {
+      const data = await jobApi.list({ accessToken });
+      upsertJobs(data);
+    } catch (err) {
+      console.error("❌ [JobContext] Error refreshing jobs:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [accessToken, upsertJobs]);
+
+  // Actions utilisateur
   const pauseJob = useCallback(async (jobId: string) => {
     if (!accessToken) return;
     try {
@@ -154,132 +165,93 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
     if (!accessToken) return;
     try {
       console.log(`🔄 [JobContext] Retrying job: ${jobId}`);
-      updateJob(jobId, { status: 'processing', progress: 0 });
+      // Optimistic update
+      upsertJobs({ id: jobId, status: 'processing', progress: 0 } as EncodingJob);
       await jobApi.retry(jobId, accessToken);
     } catch (err) {
       console.error(`❌ [JobContext] Error retrying job ${jobId}:`, err);
-      updateJob(jobId, { status: 'failed' });
+      upsertJobs({ id: jobId, status: 'failed' } as EncodingJob);
     }
-  }, [accessToken, updateJob]);
+  }, [accessToken, upsertJobs]);
 
+  // Setup des sockets
   useEffect(() => {
-    console.log('🎬 [JobContext] useEffect triggered, isAuthenticated:', isAuthenticated);
-    
-    if (!isAuthenticated) {
-      console.log('⏸️ [JobContext] Skipping socket setup - not authenticated');
-      return;
-    }
+    if (!isAuthenticated) return;
 
     console.log('✅ [JobContext] Setting up socket handlers...');
-    console.log('🔌 [JobContext] Socket connection state:', {
-      connected: videoSocket.connected,
-      id: videoSocket.id,
-    });
-
-    // Rejoindre toutes les rooms
-    const rooms = ["movies", "episodes", "series"] as const;
-    console.log(`🏠 [JobContext] Joining rooms: ${rooms.join(', ')}`);
     
+    // Rejoindre les rooms
+    const rooms = ["movies", "episodes", "series"] as const;
     rooms.forEach(room => {
-      console.log(`📡 [JobContext] Emitting join_room for: ${room}`);
-      videoSocket.emit("join_room", { room }, (response?: { event: string; data: string }) => {
-        console.log(`✅ [JobContext] join_room response for ${room}:`, response);
-      });
+      videoSocket.emit("join_room", { room });
     });
 
-    // Handler pour job_created
+    // Handlers socket
     const handleJobCreated = (data: JobCreatedEvent) => {
-      console.log("🆕 [JobContext] job_created event received:", JSON.stringify(data, null, 2));
-      if (data.job) {
-        console.log(`📊 New job: ${data.job.id} - ${data.job.status}`);
-        setJobs(prev => [data.job, ...prev]);
-      } else {
-        console.warn("⚠️ job_created: no job field in data", data);
-      }
+      console.log("🆕 [JobContext] Job created:", data.job?.id);
+      if (data.job) upsertJobs(data.job);
     };
 
-    // Handler pour job_progress
     const handleJobProgress = (data: RawJobProgressEvent) => {
-      console.log("📊 [JobContext] job_progress RAW event received:", JSON.stringify(data, null, 2));
-      
       const { jobId, progress, status } = data;
-      
-      console.log(`📈 [JobContext] Parsed progress data:`, {
-        jobId,
-        progress,
-        status,
-      });
-      
-      if (!jobId) {
-        console.error("❌ [JobContext] Cannot extract jobId from payload:", data);
-        return;
+      if (jobId) {
+        upsertJobs({ 
+          id: jobId, 
+          progress: progress ?? 0, 
+          status: status?.toLowerCase() ?? 'processing' 
+        } as EncodingJob);
       }
-      
-      updateJob(jobId, {
-        progress: progress ?? 0,
-        status: status?.toLowerCase() ?? 'processing',
-      });
     };
 
-    // Handler pour job_completed
     const handleJobCompleted = (data: JobCompletedEvent) => {
-      console.log("✅ [JobContext] job_completed event received:", data);
-      const { jobId } = data;
-      if (jobId) {
-        console.log(`🎉 Job ${jobId} completed!`);
-        updateJob(jobId, { progress: 100, status: 'completed' });
-      } else {
-        console.warn("⚠️ job_completed: no jobId found", data);
+      console.log("✅ [JobContext] Job completed:", data.jobId);
+      if (data.jobId) {
+        upsertJobs({ 
+          id: data.jobId, 
+          progress: 100, 
+          status: 'completed' 
+        } as EncodingJob);
       }
     };
 
-    // Handler pour job_failed
     const handleJobFailed = (data: JobFailedEvent) => {
-      console.log("❌ [JobContext] job_failed event received:", data);
-      const { jobId, error, message } = data;
-      if (jobId) {
-        console.log(`💀 Job ${jobId} failed: ${message ?? error}`);
-        updateJob(jobId, { status: 'failed' });
-      } else {
-        console.warn("⚠️ job_failed: no jobId found", data);
+      console.log("❌ [JobContext] Job failed:", data.jobId, data.error);
+      if (data.jobId) {
+        upsertJobs({ 
+          id: data.jobId, 
+          status: 'failed' 
+        } as EncodingJob);
       }
     };
 
-    // Handler pour job_paused
     const handleJobPaused = (data: JobPausedEvent) => {
-      console.log("⏸️ [JobContext] job_paused event received:", data);
-      const { jobId } = data;
-      if (jobId) {
-        updateJob(jobId, { status: 'paused' });
+      console.log("⏸️ [JobContext] Job paused:", data.jobId);
+      if (data.jobId) {
+        upsertJobs({ 
+          id: data.jobId, 
+          status: 'paused' 
+        } as EncodingJob);
       }
     };
 
-    // Handler pour job_resumed
     const handleJobResumed = (data: JobResumedEvent) => {
-      console.log("▶️ [JobContext] job_resumed event received:", data);
-      const { jobId } = data;
-      if (jobId) {
-        updateJob(jobId, { status: 'processing' });
+      console.log("▶️ [JobContext] Job resumed:", data.jobId);
+      if (data.jobId) {
+        upsertJobs({ 
+          id: data.jobId, 
+          status: 'processing' 
+        } as EncodingJob);
       }
     };
 
-    // Handler pour job_deleted
     const handleJobDeleted = (data: JobDeletedEvent) => {
-      console.log("🗑️ [JobContext] job_deleted event received:", data);
-      const { jobId } = data;
-      if (jobId) {
-        console.log(`Removing job ${jobId} from list`);
-        setJobs(prev => prev.filter(j => j.id !== jobId));
+      console.log("🗑️ [JobContext] Job deleted:", data.jobId);
+      if (data.jobId) {
+        setJobs(prev => prev.filter(j => j.id !== data.jobId));
       }
     };
 
-    // Écouter TOUS les événements pour debug (sans any)
-    const onAnyEvent = (event: string, ...args: unknown[]) => {
-      console.log(`🔔 [JobContext] Socket ANY event: "${event}"`, args);
-    };
-    videoSocket.onAny(onAnyEvent);
-
-    // Enregistrer les handlers spécifiques
+    // Enregistrement des handlers
     videoSocket.on('job_created', handleJobCreated);
     videoSocket.on('job_progress', handleJobProgress);
     videoSocket.on('job_completed', handleJobCompleted);
@@ -287,15 +259,12 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
     videoSocket.on('job_paused', handleJobPaused);
     videoSocket.on('job_resumed', handleJobResumed);
     videoSocket.on('job_deleted', handleJobDeleted);
-    
-    // Rafraîchir la liste des jobs
-    refreshAll();
 
-    // Nettoyage
+    // Chargement initial unique
+    loadInitialJobs();
+
+    // Cleanup
     return () => {
-      console.log('🧹 [JobContext] Cleaning up socket handlers...');
-      videoSocket.offAny(onAnyEvent);
-      
       videoSocket.off('job_created', handleJobCreated);
       videoSocket.off('job_progress', handleJobProgress);
       videoSocket.off('job_completed', handleJobCompleted);
@@ -305,22 +274,17 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
       videoSocket.off('job_deleted', handleJobDeleted);
       
       rooms.forEach(room => {
-        console.log(`📡 [JobContext] Leaving room: ${room}`);
         videoSocket.emit("leave_room", { room });
       });
     };
-  }, [isAuthenticated, updateJob, refreshAll]);
+  }, [isAuthenticated, upsertJobs, loadInitialJobs]);
 
   // Statistiques mémorisées
-  const stats = useMemo(() => {
-    const statsData = {
-      activeCount: jobs.filter(j => ['processing', 'running', 'paused'].includes(j.status)).length,
-      completedCount: jobs.filter(j => j.status === 'completed').length,
-      failedCount: jobs.filter(j => j.status === 'failed').length,
-    };
-    console.log(`📊 [JobContext] Stats updated:`, statsData);
-    return statsData;
-  }, [jobs]);
+  const stats = useMemo(() => ({
+    activeCount: jobs.filter(j => ['processing', 'running', 'paused'].includes(j.status)).length,
+    completedCount: jobs.filter(j => j.status === 'completed').length,
+    failedCount: jobs.filter(j => j.status === 'failed').length,
+  }), [jobs]);
 
   const value = useMemo(() => ({
     jobs,

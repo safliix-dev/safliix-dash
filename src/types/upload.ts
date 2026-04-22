@@ -37,8 +37,9 @@ export type UploadResult<TSlot extends string> = {
   failed: { key: TSlot; error: Error }[];
   cancelled: boolean;
   stats: UploadStats;
+  failedKeys: TSlot[];     
+  successfulKeys: TSlot[];
 };
-
 export type UploadStats = {
   totalFiles: number;
   totalBytes: number;
@@ -55,6 +56,10 @@ export interface UploadState<TSlot extends string> {
   progress: UploadProgress;
   globalProgress: number;
   errors: UploadError<TSlot>[];
+  stats: UploadStats;
+  failedKeys: TSlot[];                                      // ✅ Ajouté
+  successfulKeys: TSlot[];                                  // ✅ Ajouté
+  failedAtStage: Map<TSlot, 'presign' | 'upload'>;         // ✅ Ajouté
 }
 
 export interface UploadError<TSlot extends string> {

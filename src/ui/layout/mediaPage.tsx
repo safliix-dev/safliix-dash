@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Control, FieldErrors, FieldValues, UseFormHandleSubmit, UseFormSetValue } from "react-hook-form";
 import Image from "next/image";
 
@@ -11,7 +11,7 @@ import { FormNavigation } from "@/ui/components/form/FormNavigation";
 import { FormConfirmation } from "@/ui/components/form/FormConfirmation";
 import { VideoPreviewModal } from "@/ui/components/form/VideoPreviewModal";
 import { UploadState } from "@/types/upload";
-
+import { DialogStatus } from "../components/confirmationDialog";
 /**
  * Interface pour les métadonnées du formulaire (retour de useMetaOptions)
  */
@@ -40,9 +40,10 @@ export interface MediaFormEngineReturn<
   openConfirm: (data: TFormData) => void;
   confirmSubmit: (step: number) => void;
   closeDialog: () => void;
+  retryFailedUploads: () => void;
 
   dialogOpen: boolean;
-  dialogStatus: 'idle' | 'loading' | 'success' | 'error';
+  dialogStatus: 'idle' | 'loading' | 'success' | 'error' | 'partial_success';
 
   upload: UploadState<TSlot>;
   pendingData: TFormData | null;
@@ -74,7 +75,7 @@ export interface FilesComponentProps<
   control: Control<TFormData>;
   setValue: UseFormSetValue<TFormData>;
   onPreview: (url: string) => void;
-  dialogStatus: 'idle' | 'loading' | 'success' | 'error';
+  dialogStatus:DialogStatus ;
 }
 
 /**
@@ -140,11 +141,28 @@ export function MediaPage<
     prepareForNextStep,
     resetEngine,
     meta,
+    retryFailedUploads,
   } = useFormHook();
+
+  
+// ✅ En cas de succès partiel, on reste sur l'étape 1
+// L'utilisateur clique sur "Réessayer" qui appelle retryFailedUploads
 
   const [currentStep, setCurrentStep] = useState(0);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
+
+  // ✅ Réinitialiser après un succès d'upload
+  useEffect(() => {
+    if (dialogStatus === 'success' && currentStep === 1) {
+      const timer = setTimeout(() => {
+        setCurrentStep(0);
+        resetEngine();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [dialogStatus, currentStep, resetEngine]);
+
 
   const handleStepSubmit = async (data: TFormData) => {
     if (currentStep === 0) {
@@ -274,6 +292,7 @@ export function MediaPage<
          prepareForNextStep();
           setCurrentStep(1);
         }}
+         onRetry={retryFailedUploads} 
       />
     </FormStepLayout>
   );

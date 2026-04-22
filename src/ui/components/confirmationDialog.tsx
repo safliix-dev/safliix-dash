@@ -2,7 +2,7 @@
 
 import React from "react";
 
-export type DialogStatus = "idle" | "loading" | "success" | "error";
+export type DialogStatus = "idle" | "loading" | "success" | "error" | "partial_success";
 
 type ConfirmationDialogProps = {
   open: boolean;
