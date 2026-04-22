@@ -26,6 +26,7 @@ export function useAccessToken() {
         if (response.exists && response.accessToken) {
           cachedToken = response.accessToken;
           cachedUserId = session.user.id;
+          console.log(`✅ Token récupéré pour ${session.user.id} (cache mis à jour)`);
           setAccessToken(response.accessToken);
         }
       } else if (status === "unauthenticated") {
