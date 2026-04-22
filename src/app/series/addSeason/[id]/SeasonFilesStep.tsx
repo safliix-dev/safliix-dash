@@ -7,12 +7,12 @@ import { useWatch } from "react-hook-form";
 import { Control, UseFormSetValue } from "react-hook-form";
 import UploadBox from "@/ui/specific/films/components/uploadBox";
 import type { SeasonFormData } from "@/types/api/season";
-
+import { DialogStatus } from "@/ui/components/confirmationDialog";
 interface SeasonFilesStepProps {
   control: Control<SeasonFormData>;
   setValue: UseFormSetValue<SeasonFormData>;
   onPreview: (url: string) => void;
-  dialogStatus: 'idle' | 'loading' | 'success' | 'error';
+  dialogStatus: DialogStatus;
 }
 
 export function SeasonFilesStep({
