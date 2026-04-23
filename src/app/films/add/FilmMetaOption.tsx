@@ -44,26 +44,20 @@ export function FilmMetadataStep({
   }, [typeValue, priceValue, setValue]);
 
   // Options pour la classification d'âge
- const ageRatingOptions = [
-  { value: "TP", label: "Tous publics" },
-  { value: "10", label: "Déconseillé aux moins de 10 ans" },
-  { value: "12", label: "Déconseillé aux moins de 12 ans" },
-  { value: "14", label: "Déconseillé aux moins de 14 ans" },
-  { value: "16", label: "Déconseillé aux moins de 16 ans" },
-  { value: "18", label: "Déconseillé aux moins de 18 ans" },
-];
+  const ageRatingOptions = [
+    { value: "TP", label: "Tous publics" },
+    { value: "10", label: "Déconseillé aux moins de 10 ans" },
+    { value: "12", label: "Déconseillé aux moins de 12 ans" },
+    { value: "14", label: "Déconseillé aux moins de 14 ans" },
+    { value: "16", label: "Déconseillé aux moins de 16 ans" },
+    { value: "18", label: "Déconseillé aux moins de 18 ans" },
+  ];
 
-  // Options pour les langues (à adapter selon vos besoins)
+  // Options pour les langues
   const languageOptions = ([
-    {
-      value:"fr",
-      label:"français",
-    },
-    {
-      value:"en",
-      label:"anglais",
-    },
-  ]).map((item):{value:string; label:string} => ({
+    { value: "fr", label: "français" },
+    { value: "en", label: "anglais" },
+  ]).map((item): { value: string; label: string } => ({
     value: item.value,
     label: item.label
   }));
@@ -162,7 +156,7 @@ export function FilmMetadataStep({
           {errors.type && <p className="text-red-600 text-sm">{errors.type.message as string}</p>}
         </div>
 
-        {/* Prix (conditionnel) */}
+        {/* Prix (conditionnel avec validation conditionnelle) */}
         {typeValue === "location" && (
           <div>
             <label className="label text-sm mb-1">
@@ -172,7 +166,7 @@ export function FilmMetadataStep({
               name="price"
               control={control}
               rules={{
-                required: "Le prix est obligatoire",
+                required: typeValue === "location" ? "Le prix est obligatoire" : false,
                 min: { value: 0, message: "Le prix doit être positif" }
               }}
               render={({ field }) => (
@@ -414,7 +408,7 @@ export function FilmMetadataStep({
           />
         </div>
 
-        {/* Langue - Transformé en select */}
+        {/* Langue */}
         <div>
           <label className="label text-sm mb-1">
             Langue <span className="text-red-500">*</span>
@@ -442,7 +436,7 @@ export function FilmMetadataStep({
           {errors.language && <p className="text-red-600 text-sm">{errors.language.message as string}</p>}
         </div>
 
-        {/* Age rating - Transformé en select */}
+        {/* Age rating */}
         <div>
           <label className="label text-sm mb-1">Classification (âge)</label>
           <Controller

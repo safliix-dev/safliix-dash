@@ -321,15 +321,112 @@ export function FormConfirmation<T extends BaseMetadata & MediaFileFields, TSlot
 // --- Sous-composants de résumé ---
 
 function MetadataSummary<T extends BaseMetadata>({ data }: { data: T }) {
-  const displayTitle = data.title || data.name || "Élément sans nom";
+  // Exclure les champs techniques ou trop volumineux
+  const excludeKeys = ['__typename', 'id', 'createdAt', 'updatedAt'];
+  
+  // Filtrer les clés à afficher
+  const entries = Object.entries(data || {})
+    .filter(([key, value]) => {
+      // Exclure les clés techniques
+      if (excludeKeys.includes(key)) return false;
+      // Exclure les valeurs vides
+      if (value === undefined || value === null) return false;
+      if (typeof value === 'string' && value === '') return false;
+      if (Array.isArray(value) && value.length === 0) return false;
+      // Exclure les fichiers
+      if (value instanceof File) return false;
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        // Pour les objets, on vérifie si c'est un File
+        if ('name' in value && 'size' in value) return false;
+      }
+      return true;
+    });
+
+  if (entries.length === 0) {
+    return (
+      <div className="space-y-2">
+        <h4 className="font-bold border-b border-white/5 pb-1 text-[11px] uppercase tracking-widest text-white/40">
+          Informations
+        </h4>
+        <p className="text-xs text-white/40 italic text-center py-2">Aucune information à afficher</p>
+      </div>
+    );
+  }
+
+  // Fonction pour formater la valeur selon son type
+  const formatValue = (value: unknown): string => {
+    if (value === null || value === undefined) return '-';
+    if (typeof value === 'boolean') return value ? 'Oui' : 'Non';
+    if (typeof value === 'number') return value.toString();
+    if (typeof value === 'string') {
+      if (value.length > 100) return value.substring(0, 100) + '...';
+      return value;
+    }
+    if (Array.isArray(value)) {
+      if (value.length === 0) return '-';
+      if (value.length > 3) return `${value.slice(0, 3).join(', ')} (+${value.length - 3})`;
+      return value.join(', ');
+    }
+    if (typeof value === 'object') {
+      try {
+        const str = JSON.stringify(value);
+        if (str.length > 100) return str.substring(0, 100) + '...';
+        return str;
+      } catch {
+        return '[Objet]';
+      }
+    }
+    return String(value);
+  };
+
+  // Traduire les clés en français
+  const translateKey = (key: string): string => {
+    const translations: Record<string, string> = {
+      title: 'Titre',
+      name: 'Nom',
+      productionHouse: 'Maison de Production',
+      country: 'Pays',
+      type: 'Type',
+      price: 'Prix',
+      releaseDate: 'Date de sortie',
+      publishDate: 'Date de publication',
+      format: 'Format',
+      category: 'Catégorie',
+      genre: 'Genre',
+      director: 'Directeur',
+      duration: 'Durée',
+      language: 'Langue',
+      ageRating: 'Classification',
+      description: 'Synopsis',
+      actors: 'Acteurs',
+      blockCountries: 'Pays bloqués',
+      rightHolderId: 'Ayant droit',
+      entertainmentMode: 'Type de programme',
+      isSafliixProd: 'Production SaFlix',
+      haveSubtitles: 'Sous-titres',
+      subtitleLanguages: 'Langues sous-titres',
+      movieFile: 'Fichier film',
+      trailerFile: 'Bande-annonce',
+      mainImage: 'Image principale',
+      secondaryImage: 'Image secondaire',
+    };
+    return translations[key] || key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
+  };
+
   return (
     <div className="space-y-2">
       <h4 className="font-bold border-b border-white/5 pb-1 text-[11px] uppercase tracking-widest text-white/40">
-        Informations
+        Informations ({entries.length} champs)
       </h4>
-      <div className="flex justify-between py-1">
-        <span className="text-white/60">Titre</span>
-        <span className="font-medium text-white">{displayTitle}</span>
+      <div className="space-y-1 max-h-96 overflow-y-auto">
+        {entries.map(([key, value]) => (
+          <div key={key} className="flex justify-between py-1 text-xs border-b border-white/5 last:border-0">
+            <span className="text-white/50">{translateKey(key)}</span>
+            <span className="font-medium text-white/80 text-right max-w-[60%] truncate">
+              {formatValue(value)}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );
