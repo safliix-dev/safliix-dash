@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import FilterBtn from "@/ui/components/filterBtn";
+//import FilterBtn from "@/ui/components/filterBtn";
 import Header from "@/ui/components/header";
 import { Ligature } from "lucide-react";
 import Link from "next/link";
@@ -46,9 +46,9 @@ export default function Page(){
       <Header title="Liste et statistique de pubs"/>
       <div className="flex items-center justify-between mt-4">
         <div className="flex items-center gap-2"> 
-          <FilterBtn title="Filtrer par statut"/>
+          {/* <FilterBtn title="Filtrer par statut"/>
           <FilterBtn title="Meilleures résultats"/>
-          <FilterBtn title="Dernier ajout"/>
+          <FilterBtn title="Dernier ajout"/> */}
         </div>
         <div className="flex items-center gap-2">
           <button className="btn btn-primary">Exporter les rapports</button>
