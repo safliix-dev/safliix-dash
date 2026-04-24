@@ -1,12 +1,11 @@
-import { type PaginatedResponse } from "./common";
+import { type PaginatedResponse,ContentStatus } from "./common";
 
-export type FilmStatus = "DRAFT" | "PROCESSING" | "PUBLISHED" | "ARCHIVED";
 
 export interface FilmListParams extends Record<string,unknown> {
   page?: number;
   pageSize?: number;
   search?: string;
-  status?: FilmStatus;
+  status?: ContentStatus;
   category?: string;
   sort?: string;
 }
@@ -50,7 +49,7 @@ export type FilmStatsByType =
 export interface FilmListItem {
   id: string;
   title: string;
-  status: FilmStatus;
+  status: ContentStatus;
   director: string;
   dp: string;
   category: string;
@@ -71,7 +70,7 @@ export type FilmListResponse = PaginatedResponse<FilmListItem>;
 export interface FilmDetail {
   id: string;
   title: string;
-  status: FilmStatus;
+  status: ContentStatus;
   category: string;
   director: string;
   dp: string;
@@ -116,7 +115,7 @@ export interface FilmActionPayload {
 }
 
 export interface FilmActionResponse {
-  status: FilmStatus;
+  status: ContentStatus;
 }
 
 

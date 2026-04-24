@@ -25,23 +25,23 @@ interface FilmMetadataStepProps {
   typeValue: string;
   setValue:  UseFormSetValue<FilmFormData>;
 }
-
 export function FilmMetadataStep({
   control,
   errors,
   meta,
   countries,
-  typeValue,
   setValue
 }: FilmMetadataStepProps) {
+  // Surveiller directement le champ "type" dans le composant (au lieu de recevoir typeValue en prop)
+  const watchedType = useWatch({ control, name: "type" });
   const priceValue = useWatch({ control, name: "price" });
 
   // Synchronisation prix/type
   React.useEffect(() => {
-    if (typeValue?.toLowerCase() === "abonnement" && priceValue !== null) {
+    if (watchedType?.toLowerCase() === "abonnement" && priceValue !== null) {
       setValue("price", null, { shouldValidate: true });
     }
-  }, [typeValue, priceValue, setValue]);
+  }, [watchedType, priceValue, setValue]);
 
   // Options pour la classification d'âge
   const ageRatingOptions = [
@@ -157,7 +157,7 @@ export function FilmMetadataStep({
         </div>
 
         {/* Prix (conditionnel avec validation conditionnelle) */}
-        {typeValue === "location" && (
+        {watchedType === "location" && (
           <div>
             <label className="label text-sm mb-1">
               Prix de location <span className="text-red-500">*</span>
@@ -166,7 +166,7 @@ export function FilmMetadataStep({
               name="price"
               control={control}
               rules={{
-                required: typeValue === "location" ? "Le prix est obligatoire" : false,
+                required: watchedType === "location" ? "Le prix est obligatoire" : false,
                 min: { value: 0, message: "Le prix doit être positif" }
               }}
               render={({ field }) => (

@@ -1,9 +1,9 @@
+// ui/specific/films/components/videoCard.tsx
 import React, { useMemo } from "react";
 import { Gauge, Play, Star, TrendingUp } from "lucide-react";
 import Image from "next/image";
-/* ============================================================
- * Type guards
- * ============================================================ */
+import { StatusBadge } from "@/ui/components/statusBadge";
+import type { ContentStatus,ContentAction } from "@/types/api/common";
 
 export type NormalizedStats = {
   locationsCount?: number;
@@ -19,6 +19,18 @@ export type NormalizedStats = {
   }[];
 };
 
+// Configuration des actions selon le statut
+const STATUS_ACTION_CONFIG: Record<
+  ContentStatus,
+  { action: ContentAction; label: string } | null
+> = {
+  DRAFT: { action: "publish", label: "Publier" },
+  PROCESSING: null, // Pas d'action
+  PROCESSED: { action: "publish", label: "Publier" },
+  PUBLISHED: { action: "archive", label: "Archiver" },
+  ARCHIVED: { action: "restore", label: "Restaurer" },
+};
+
 type VideoCardProps = {
   title: string;
   poster?: string;
@@ -26,27 +38,15 @@ type VideoCardProps = {
   director?: string;
   dp?: string;
   category?: string;
-  status: string;
+  status: ContentStatus;
   stars?: number;
   stats: NormalizedStats;
   mode: "abonnement" | "location";
   detailHref?: string;
+  onEdit?: () => void;
+  onPlay?: () => void;
+  onAction?: (action: ContentAction) => void; // Nouveau callback
 };
-
-
-
-/* ============================================================
- * Helpers métier (lecture des stats)
- * ============================================================ */
-
-
-
-
-
-
-/* ============================================================
- * Component
- * ============================================================ */
 
 export default function VideoCard({
   title,
@@ -60,10 +60,11 @@ export default function VideoCard({
   stats,
   mode,
   detailHref,
+  onEdit,
+  onPlay,
+  onAction,
 }: VideoCardProps) {
   const posterSrc = poster || "/image-icon.jpg";
-    //const heroSrc = hero || poster;
-
 
   const {
     locationsCount,
@@ -71,7 +72,20 @@ export default function VideoCard({
     donutViewed,
     donutCatalog,
     donutRevenue,
+    geo,
   } = stats;
+
+  // Récupérer la configuration d'action pour ce statut
+  const actionConfig = STATUS_ACTION_CONFIG[status];
+
+  // Gestionnaire pour le bouton d'action contextuel
+  const handleAction = () => {
+    if (actionConfig && onAction) {
+      onAction(actionConfig.action);
+    }
+  };
+
+  // Calcul du gradient pour le donut chart
   const conicGradient = useMemo(() => {
     const segments = [
       { color: "#16a34a", value: donutViewed },
@@ -90,6 +104,12 @@ export default function VideoCard({
       .join(", ");
   }, [donutCatalog, donutViewed]);
 
+  // Calcul du max pour les progress bars géographiques
+  const geoMaxValue = useMemo(() => {
+    if (geo.length === 0) return 100;
+    return Math.max(...geo.map(g => g.value || 0));
+  }, [geo]);
+
   return (
     <div className="bg-neutral text-white p-4 rounded-xl shadow-lg flex flex-col gap-4 border border-base-300">
       <div className="flex items-start gap-4">
@@ -102,9 +122,24 @@ export default function VideoCard({
             alt="Video Poster"
             className="w-40 h-28 object-cover rounded-md"
           />
-          <button className="btn btn-success btn-sm w-full rounded-full">
+          
+          {/* Bouton Modifier */}
+          <button 
+            className="btn btn-success btn-sm w-full rounded-full"
+            onClick={onEdit}
+          >
             Modifier
           </button>
+
+          {/* Bouton d'action contextuel (selon statut) */}
+          {actionConfig && (
+            <button
+              className="btn btn-primary btn-sm w-full rounded-full"
+              onClick={handleAction}
+            >
+              {actionConfig.label}
+            </button>
+          )}
 
           {detailHref && (
             <a
@@ -114,14 +149,14 @@ export default function VideoCard({
               Voir les détails
             </a>
           )}
-
-          
         </div>
 
         {/* === INFO === */}
         <div className="flex-1 flex flex-col gap-1">
           <h2 className="text-2xl font-bold">{title}</h2>
-          <p className="text-green-400 text-sm">{status}</p>
+          <div className="flex items-center gap-2">
+            <StatusBadge status={status} size="sm" />
+          </div>
           <p className="text-sm">Réalisé par {director}</p>
           <p className="text-sm">DP : {dp}</p>
           <p className="text-sm">Catégorie : {category}</p>
@@ -137,7 +172,10 @@ export default function VideoCard({
               alt="scene"
               className="w-60 h-48 object-cover rounded-md"
             />
-            <button className="absolute inset-0 flex items-center justify-center">
+            <button 
+              className="absolute inset-0 flex items-center justify-center"
+              onClick={onPlay}
+            >
               <span className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-lg">
                 <Play className="w-6 h-6 text-black" />
               </span>
@@ -151,9 +189,9 @@ export default function VideoCard({
             <div className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-primary" />
               <div>
-                <h4 className="text-primary font-bold">{locationsCount}</h4>
+                <h4 className="text-primary font-bold">{locationsCount ?? 0}</h4>
                 <p className="text-xs text-white/60">
-                  {mode === "location" ? "Location" : "Abonnements"}
+                  {mode === "location" ? "Locations" : "Abonnements"}
                 </p>
               </div>
             </div>
@@ -161,8 +199,10 @@ export default function VideoCard({
             <div className="flex items-center gap-2">
               <Gauge className="w-5 h-5 text-primary" />
               <div>
-                <h4 className="text-primary font-bold">{revenue}</h4>
-                <p className="text-xs text-white/60">revenus</p>
+                <h4 className="text-primary font-bold">
+                  {revenue.toLocaleString()} FCFA
+                </h4>
+                <p className="text-xs text-white/60">Revenus</p>
               </div>
             </div>
 
@@ -172,7 +212,7 @@ export default function VideoCard({
                 <Star
                   key={i}
                   className={`w-5 h-5 ${
-                    i < (stars ?? 0)
+                    i < stars
                       ? "fill-yellow-400 text-yellow-400"
                       : "text-yellow-400"
                   }`}
@@ -187,21 +227,27 @@ export default function VideoCard({
           <div className="flex-1 space-y-2">
             <h3 className="font-semibold">Revenu géographique</h3>
 
-            <div className="space-y-2">
-              {stats.geo.map((geoItem, index) => (
-                <div key={index} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <p>{geoItem.label}</p>
-                    <p>{geoItem?.value?.toLocaleString()} f</p>
+            {geo.length > 0 ? (
+              <div className="space-y-2">
+                {geo.map((geoItem, index) => (
+                  <div key={index} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <p>{geoItem.label || "Pays"}</p>
+                      <p>{geoItem.value?.toLocaleString() || 0} FCFA</p>
+                    </div>
+                    <progress
+                      className="progress w-full"
+                      value={geoItem.value || 0}
+                      max={geoMaxValue}
+                    />
                   </div>
-                  <progress
-                    className="progress w-full"
-                    value={geoItem.value}
-                    max={100}
-                  />
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-white/40 italic text-center py-4">
+                Aucune donnée géographique disponible
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center gap-4">
@@ -224,10 +270,10 @@ export default function VideoCard({
 
             <div className="text-sm space-y-2">
               <p>Temps total du catalogue</p>
-              <p className="text-white/60">{donutCatalog} minutes</p>
+              <p className="text-white/60">{donutCatalog.toLocaleString()} minutes</p>
 
               <p>Revenu généré</p>
-              <p className="text-white/60">{donutRevenue}</p>
+              <p className="text-white/60">{donutRevenue.toLocaleString()} FCFA</p>
             </div>
           </div>
         )}

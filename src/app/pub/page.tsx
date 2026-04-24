@@ -1,4 +1,5 @@
-"use client";
+// app/pub/page.tsx
+'use client';
 
 import FilterBtn from "@/ui/components/filterBtn";
 import Header from "@/ui/components/header";
@@ -29,96 +30,13 @@ type Campaign = {
   addedAt: string;
 };
 
-const demoCampaigns: Campaign[] = [
-  {
-    id: "cine",
-    title: "Soirée Ciné",
-    creative: "Au fil du temps",
-    status: "Actif",
-    startDate: "08/22/2023",
-    endDate: "08/22/2023",
-    number: "01",
-    poster: "/pub_stat.jpg",
-    views: 234,
-    interactions: 145,
-    geo: [
-      { label: "France", value: 12, max: 20, color: "#04b19d" },
-      { label: "Togo", value: 15, max: 30, color: "#e7507a" },
-      { label: "Bénin", value: 99, max: 120, color: "#f5f5f5" },
-      { label: "Sénégal", value: 6, max: 12, color: "#f3c552" },
-    ],
-    score: 92,
-    addedAt: "2023-08-22",
-  },
-  {
-    id: "aromate",
-    title: "Aromate",
-    creative: "Méchanceté d'une Maman",
-    status: "Actif",
-    startDate: "08/22/2023",
-    endDate: "08/22/2023",
-    number: "02",
-    poster: "/sidebar.jpg",
-    views: 294,
-    interactions: 99,
-    geo: [
-      { label: "France", value: 13, max: 24, color: "#04b19d" },
-      { label: "Togo", value: 22, max: 36, color: "#e7507a" },
-      { label: "Bénin", value: 100, max: 120, color: "#f5f5f5" },
-      { label: "Sénégal", value: 5, max: 12, color: "#f3c552" },
-    ],
-    score: 95,
-    addedAt: "2023-08-21",
-  },
-  {
-    id: "festival",
-    title: "Festival des cannes",
-    creative: "Le cauchemar",
-    status: "Actif",
-    startDate: "08/22/2023",
-    endDate: "08/22/2023",
-    number: "03",
-    poster: "/bg_stat_card.png",
-    views: 225,
-    interactions: 100,
-    geo: [
-      { label: "France", value: 15, max: 26, color: "#04b19d" },
-      { label: "Togo", value: 55, max: 85, color: "#e7507a" },
-      { label: "Bénin", value: 88, max: 120, color: "#f5f5f5" },
-      { label: "Sénégal", value: 3, max: 10, color: "#f3c552" },
-    ],
-    score: 88,
-    addedAt: "2023-08-20",
-  },
-  {
-    id: "boum",
-    title: "BOUM Télé",
-    creative: "Téléfilm d'action",
-    status: "Actif",
-    startDate: "08/22/2023",
-    endDate: "08/22/2023",
-    number: "04",
-    poster: "/elegbara.png",
-    views: 238,
-    interactions: 185,
-    geo: [
-      { label: "France", value: 19, max: 30, color: "#04b19d" },
-      { label: "Togo", value: 32, max: 50, color: "#e7507a" },
-      { label: "Bénin", value: 66, max: 100, color: "#f5f5f5" },
-      { label: "Sénégal", value: 2, max: 10, color: "#f3c552" },
-    ],
-    score: 91,
-    addedAt: "2023-08-18",
-  },
-];
+const palette = ["#04b19d", "#e7507a", "#f5f5f5", "#f3c552"];
 
 const toNumber = (value: unknown, fallback = 0) => {
   if (value === undefined || value === null) return fallback;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
-
-const palette = ["#04b19d", "#e7507a", "#f5f5f5", "#f3c552"];
 
 const normalizeAd = (ad: AdsItem, index: number): Campaign => {
   const views = toNumber((ad as unknown as { views?: unknown }).views ?? ad.stats?.views ?? ad.stats?.vues);
@@ -186,7 +104,7 @@ const periodOptions = [
 ];
 
 export default function Page() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>(demoCampaigns);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]); // Plus de mock, tableau vide par défaut
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -203,11 +121,9 @@ export default function Page() {
       setError(null);
       try {
         const res = await adsApi.list({ page: 1, pageSize: 20 }, accessToken, controller.signal);
-        console.dir(res,{depth:2});
         if (cancelled) return;
         const mapped = Array.isArray(res) ? res.map((ad, idx) => normalizeAd(ad, idx)) : [];
-        if (mapped.length) setCampaigns(mapped);
-        else setCampaigns([]);
+        setCampaigns(mapped);
       } catch (err) {
         if (cancelled || controller.signal.aborted) return;
         const friendly = formatApiError(err);

@@ -1,9 +1,9 @@
 // types/api/seasons.ts
 
 export type SeasonFormData = {
-  numero: number | null;
-  title: string;
-  description: string;
+  numero: number;
+  title?: string;
+  description?: string;
   seriesId: string;
   poster?: File | null;
 }

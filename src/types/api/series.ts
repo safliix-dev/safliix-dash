@@ -1,6 +1,5 @@
-import { type PaginatedResponse } from "./common";
+import { type PaginatedResponse, ContentStatus } from "./common";
 import { SeasonSummary } from "./season";
-export type SeriesStatus = "publish" | "pause" | "draft" | string;
 
 
 export type SeriesFormData = {
@@ -54,7 +53,7 @@ export interface SeriesListParams extends Record<string,unknown> {
   page: number;
   pageSize: number;
   search?: string;
-  status?: SeriesStatus;
+  status?: ContentStatus;
   category?: string;
   sort?: string;
 }
@@ -62,7 +61,7 @@ export interface SeriesListParams extends Record<string,unknown> {
 export interface SeriesListItem {
   id: string;
   title: string;
-  status: SeriesStatus;
+  status: ContentStatus;
   director?: string;
   dp?: string;
   number?: number | string;
@@ -80,7 +79,7 @@ export type SeriesListResponse = PaginatedResponse<SeriesListItem>;
 export interface SeriesDetail {
   id: string;
   title: string;
-  status: SeriesStatus;
+  status: ContentStatus;
   category?: string;
   director?: string;
   dp?: string;

@@ -354,7 +354,7 @@ function MetadataSummary<T extends BaseMetadata>({ data }: { data: T }) {
   }
 
   // Fonction pour formater la valeur selon son type
-  const formatValue = (value: unknown): string => {
+  const formatValue = (value: unknown, depth: number = 0): string => {
     if (value === null || value === undefined) return '-';
     if (typeof value === 'boolean') return value ? 'Oui' : 'Non';
     if (typeof value === 'number') return value.toString();
@@ -362,20 +362,51 @@ function MetadataSummary<T extends BaseMetadata>({ data }: { data: T }) {
       if (value.length > 100) return value.substring(0, 100) + '...';
       return value;
     }
+    
+    // Gestion des tableaux
     if (Array.isArray(value)) {
       if (value.length === 0) return '-';
-      if (value.length > 3) return `${value.slice(0, 3).join(', ')} (+${value.length - 3})`;
-      return value.join(', ');
-    }
-    if (typeof value === 'object') {
-      try {
-        const str = JSON.stringify(value);
-        if (str.length > 100) return str.substring(0, 100) + '...';
-        return str;
-      } catch {
-        return '[Objet]';
+      if (value.length === 1) return formatValue(value[0], depth + 1);
+      if (value.length <= 3) {
+        return value.map(v => formatValue(v, depth + 1)).join(', ');
       }
+      return `${value.slice(0, 3).map(v => formatValue(v, depth + 1)).join(', ')} (+${value.length - 3})`;
     }
+    
+    // Gestion des objets
+    if (typeof value === 'object') {
+      // Cas particulier: objet avec propriété name (comme pour les acteurs)
+      if ('name' in value && typeof value.name === 'string') {
+        return value.name;
+      }
+      // Cas particulier: objet avec propriété label
+      if ('label' in value && typeof value.label === 'string') {
+        return value.label;
+      }
+      // Cas particulier: objet avec propriété title
+      if ('title' in value && typeof value.title === 'string') {
+        return value.title;
+      }
+      // Cas particulier: objet avec propriété firstName et lastName
+      if ('firstName' in value && 'lastName' in value) {
+        return `${value.firstName} ${value.lastName}`;
+      }
+      
+      // Pour les objets génériques, afficher les propriétés principales
+      const objEntries = Object.entries(value)
+        .filter(([k, v]) => !excludeKeys.includes(k) && v !== undefined && v !== null && v !== '');
+      
+      if (objEntries.length === 0) return '{ }';
+      if (objEntries.length === 1) {
+        const [objKey, objValue] = objEntries[0];
+        return `${objKey}: ${formatValue(objValue, depth + 1)}`;
+      }
+      if (objEntries.length <= 3) {
+        return objEntries.map(([k, v]) => `${k}: ${formatValue(v, depth + 1)}`).join(', ');
+      }
+      return `${objEntries.slice(0, 3).map(([k, v]) => `${k}: ${formatValue(v, depth + 1)}`).join(', ')} (+${objEntries.length - 3})`;
+    }
+    
     return String(value);
   };
 
@@ -422,7 +453,7 @@ function MetadataSummary<T extends BaseMetadata>({ data }: { data: T }) {
         {entries.map(([key, value]) => (
           <div key={key} className="flex justify-between py-1 text-xs border-b border-white/5 last:border-0">
             <span className="text-white/50">{translateKey(key)}</span>
-            <span className="font-medium text-white/80 text-right max-w-[60%] truncate">
+            <span className="font-medium text-white/80 text-right max-w-[60%] truncate" title={formatValue(value)}>
               {formatValue(value)}
             </span>
           </div>

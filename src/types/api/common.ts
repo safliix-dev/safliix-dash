@@ -15,3 +15,8 @@ export interface TimeRangeParams extends Record<string,unknown> {
   to?: string;
   range?: string;
 }
+
+export type ContentStatus = "DRAFT" | "PROCESSING" | "PUBLISHED" | "ARCHIVED" | "PROCESSED";
+// types/api/content.ts
+export type ContentAction = "publish" | "archive" | "restore";
+
