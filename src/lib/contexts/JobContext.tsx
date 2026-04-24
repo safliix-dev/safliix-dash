@@ -63,6 +63,9 @@ interface RawJobProgressEvent {
   timestamp: string;
 }
 
+// Type pour les mises à jour partielles d'un job
+type JobUpdate = Partial<EncodingJob> & { id: string };
+
 interface JobContextValue {
   jobs: EncodingJob[];
   isLoading: boolean;
@@ -84,9 +87,24 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Fonction centrale de mise à jour avec déduplication automatique
-  const upsertJobs = useCallback((newJobs: EncodingJob | EncodingJob[]) => {
-    const jobsToAdd = Array.isArray(newJobs) ? newJobs : [newJobs];
+  // Créer un job minimal pour les updates WebSocket
+  const createMinimalJob = (update: JobUpdate): EncodingJob => {
+    const now = new Date().toISOString();
+    return {
+      id: update.id,
+
+      status: update.status || 'processing',
+      progress: update.progress || 0,
+      title: update.title || '',
+      createdAt: now,
+      type: "MOVIE",
+      startedAt: update.startedAt || now,
+    } as EncodingJob;
+  };
+
+  // Fonction centrale de mise à jour avec MERGE (pas remplacement)
+  const upsertJobs = useCallback((updates: JobUpdate | JobUpdate[]) => {
+    const updatesArray = Array.isArray(updates) ? updates : [updates];
     
     setJobs(prev => {
       const jobMap = new Map<string, EncodingJob>();
@@ -94,11 +112,17 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
       // Ajouter les jobs existants
       prev.forEach(job => jobMap.set(job.id, job));
       
-      // Merger les nouveaux (le plus récent basé sur updatedAt l'emporte)
-      jobsToAdd.forEach(job => {
-        const existing = jobMap.get(job.id);
-        if (!existing || new Date(job.startedAt) > new Date(existing.startedAt)) {
-          jobMap.set(job.id, job);
+      // MERGER les nouvelles données
+      updatesArray.forEach(update => {
+        const existing = jobMap.get(update.id);
+        
+        if (existing) {
+          // Merge : conserver toutes les propriétés existantes, écraser seulement celles fournies
+          jobMap.set(update.id, { ...existing, ...update });
+        } else {
+          // Nouveau job venant du WebSocket (pas encore dans la liste)
+          const newJob = createMinimalJob(update);
+          jobMap.set(update.id, newJob);
         }
       });
       
@@ -166,11 +190,11 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       console.log(`🔄 [JobContext] Retrying job: ${jobId}`);
       // Optimistic update
-      upsertJobs({ id: jobId, status: 'processing', progress: 0 } as EncodingJob);
+      upsertJobs({ id: jobId, status: 'processing', progress: 0 });
       await jobApi.retry(jobId, accessToken);
     } catch (err) {
       console.error(`❌ [JobContext] Error retrying job ${jobId}:`, err);
-      upsertJobs({ id: jobId, status: 'failed' } as EncodingJob);
+      upsertJobs({ id: jobId, status: 'failed' });
     }
   }, [accessToken, upsertJobs]);
 
@@ -183,23 +207,28 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
     // Rejoindre les rooms
     const rooms = ["movies", "episodes", "series"] as const;
     rooms.forEach(room => {
+      console.log(`📡 [JobContext] Joining room: ${room}`);
       videoSocket.emit("join_room", { room });
     });
 
     // Handlers socket
     const handleJobCreated = (data: JobCreatedEvent) => {
       console.log("🆕 [JobContext] Job created:", data.job?.id);
-      if (data.job) upsertJobs(data.job);
+      if (data.job) {
+        upsertJobs(data.job);
+      }
     };
 
     const handleJobProgress = (data: RawJobProgressEvent) => {
+      console.log(`📊 [JobContext] Progress: ${data.jobId} - ${data.progress}%`);
       const { jobId, progress, status } = data;
       if (jobId) {
         upsertJobs({ 
-          id: jobId, 
-          progress: progress ?? 0, 
-          status: status?.toLowerCase() ?? 'processing' 
-        } as EncodingJob);
+          id: jobId,
+          progress,
+          status: status?.toLowerCase() ?? 'processing',
+         
+        });
       }
     };
 
@@ -209,8 +238,8 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
         upsertJobs({ 
           id: data.jobId, 
           progress: 100, 
-          status: 'completed' 
-        } as EncodingJob);
+          status: 'completed'
+        });
       }
     };
 
@@ -219,8 +248,9 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
       if (data.jobId) {
         upsertJobs({ 
           id: data.jobId, 
-          status: 'failed' 
-        } as EncodingJob);
+          status: 'failed',
+          
+        });
       }
     };
 
@@ -229,8 +259,8 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
       if (data.jobId) {
         upsertJobs({ 
           id: data.jobId, 
-          status: 'paused' 
-        } as EncodingJob);
+          status: 'paused',
+        });
       }
     };
 
@@ -239,8 +269,8 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
       if (data.jobId) {
         upsertJobs({ 
           id: data.jobId, 
-          status: 'processing' 
-        } as EncodingJob);
+          status: 'processing',
+        });
       }
     };
 
@@ -265,6 +295,7 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Cleanup
     return () => {
+      console.log('🧹 [JobContext] Cleaning up socket handlers...');
       videoSocket.off('job_created', handleJobCreated);
       videoSocket.off('job_progress', handleJobProgress);
       videoSocket.off('job_completed', handleJobCompleted);
