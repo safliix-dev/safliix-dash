@@ -10,8 +10,8 @@ export type SeasonFormData = {
 
 export interface SeasonMetadataPayload {
   numero: number;
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
 }
 
 export interface SeasonMetaOptions {

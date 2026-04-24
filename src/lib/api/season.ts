@@ -1,11 +1,11 @@
 // lib/api/seasons.ts
 
 import { apiRequest } from "./client";
-import { SeasonFormData, SeasonMetadataPayload,SeasonSummary } from "@/types/api/season";
+import { SeasonMetadataPayload,SeasonSummary } from "@/types/api/season";
 
 export const seasonsApi = {
   // Créer une saison
-  create: (payload: SeasonFormData, accessToken?: string) =>
+  create: (payload: SeasonMetadataPayload, accessToken?: string) =>
     apiRequest<{ id: string }>(`/seasons`, {
       method: "POST",
       body: payload,

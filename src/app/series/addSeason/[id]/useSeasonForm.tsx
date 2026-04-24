@@ -21,7 +21,7 @@ export function useSeasonForm({ seriesId, seasonId }: UseSeasonFormProps) {
   const engine = useMediaFormEngine(
     seasonAdapter, 
     {
-      numero: null,
+      numero: 0,
       title: "",
       description: "",
       seriesId,
