@@ -198,8 +198,8 @@ export default function SeriesPage() {
                       </div>
                       <VideoCard
                         title={serie.title}
-                        poster={serie.poster}
-                        hero={serie.hero}
+                        poster={serie.posterUrl}
+                        hero={serie.trailerUrl}
                         director={serie.director}
                         dp={serie.dp}
                         category={serie.category}

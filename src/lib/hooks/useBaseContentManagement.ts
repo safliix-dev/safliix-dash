@@ -1,5 +1,5 @@
 // lib/hooks/useBaseContentManagement.ts
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect,useCallback } from "react";
 import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { formatApiError } from "@/lib/api/errors";
@@ -56,27 +56,18 @@ export function useBaseContentManagement<T extends { status: ContentStatus; type
   const accessToken = useAccessToken();
   const toast = useToast();
 
-  const refreshData = () => {
-  // Re-déclencher le chargement
-    const load = async () => {
-      setLoading(true);
-      try {
-        const res = await imageRightsApi.contentsList(contentType, { 
-          accessToken, 
-        });
-        setRawContentByRightholder(res.filter((g) => {
-          const items = getItemsFromGroup(g);
-          return items.length > 0;
-        }));
-      } catch (err) {
-        const friendly = formatApiError(err);
-        toast.error({ title: "Erreur", description: friendly.message });
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  };
+  const refreshData = useCallback(async () => {
+  setLoading(true);
+  try {
+    const res = await imageRightsApi.contentsList(contentType, { accessToken });
+    setRawContentByRightholder(res.filter((g) => getItemsFromGroup(g).length > 0));
+  } catch (err) {
+    const friendly = formatApiError(err);
+    toast.error({ title: "Erreur", description: friendly.message });
+  } finally {
+    setLoading(false);
+  }
+}, [accessToken, contentType, getItemsFromGroup, toast]);
   // Chargement des données
   useEffect(() => {
     const controller = new AbortController();

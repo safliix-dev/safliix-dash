@@ -53,8 +53,8 @@ export interface FilmListItem {
   director: string;
   dp: string;
   category: string;
-  poster: string;
-  hero: string;
+  posterUrl: string;
+  movieUrl: string;
   type: FilmDistributionType;
   stats: FilmStatsByType;
 

@@ -1,5 +1,5 @@
 // lib/contexts/SocketContext.tsx
-import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { videoSocket } from '@/lib/socket/socket-client';
 import { websocketAuth } from "@/services/websocket-auth.service";
 
@@ -9,118 +9,124 @@ interface SocketState {
   error: string | null;
 }
 
+interface SocketError extends Error {
+  data?: {
+    code?: number;
+    message?: string;
+  };
+}
+
 interface SocketContextValue extends SocketState {
   disconnect: () => void;
   reconnect: () => void;
   clearError: () => void;
 }
 
-// Types pour les événements socket
-interface AuthenticatedEvent {
-  message: string;
-  userId: string;
-}
-
-interface ConnectErrorEvent extends Error {
-  message: string;
-}
+interface AuthenticatedEvent { message: string; userId: string; }
 
 const SocketContext = createContext<SocketContextValue | undefined>(undefined);
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
-  const [state, setState] = useState<SocketState>(() => ({
+  const [state, setState] = useState<SocketState>({
     isConnected: videoSocket.connected,
     isAuthenticated: false,
     error: null,
-  }));
+  });
+
+  // Utilisation d'une Ref pour initSocket afin d'éviter de reconstruire le useEffect
+  const isInitializing = useRef(false);
 
   const disconnect = useCallback(() => {
-    console.log('🔌 [SocketContext] Manual disconnect called');
+    console.log('🔌 [SocketContext] Manual disconnect');
     videoSocket.disconnect();
-    setState(prev => ({ ...prev, isConnected: false, isAuthenticated: false }));
   }, []);
 
-  const reconnect = useCallback(() => {
-    console.log('🔄 [SocketContext] Manual reconnect called');
-    videoSocket.connect();
-    setState(prev => ({ ...prev, error: null }));
+  const reconnect = useCallback(async () => {
+    console.log('🔄 [SocketContext] Manual reconnect');
+    const token = await websocketAuth.getValidToken();
+    if (token) {
+      videoSocket.auth = { token };
+      videoSocket.connect();
+    }
   }, []);
 
-  const clearError = useCallback(() => {
-    console.log('🧹 [SocketContext] Clearing error');
-    setState(prev => ({ ...prev, error: null }));
-  }, []);
+  const clearError = useCallback(() => setState(prev => ({ ...prev, error: null })), []);
 
   useEffect(() => {
-    console.log('🎬 [SocketContext] useEffect initializing...');
-    
-    const initSocket = async () => {
-      try {
-        console.log('🔐 [SocketContext] Getting WebSocket token...');
-        const wsToken = await websocketAuth.getValidToken();
-        
-        if (wsToken) {
-          console.log('✅ [SocketContext] Token obtained, setting auth');
-          videoSocket.auth = { token: wsToken };
-          
-          if (!videoSocket.connected) {
-            console.log('🚀 [SocketContext] Connecting WebSocket...');
-            //console.log('🔌 [SocketContext] Socket URL:', videoSocket.io?.uri);
-            console.log('🏷️ [SocketContext] Socket connected state:', videoSocket.connected);
-            videoSocket.connect();
-          } else {
-            console.log('✅ [SocketContext] Socket already connected');
-          }
-        } else {
-          console.warn('⚠️ [SocketContext] No token received from websocketAuth');
-        }
-      } catch (err) {
-        const error = err as Error;
-        console.error('❌ [SocketContext] Failed to initialize socket:', error.message);
-        setState(prev => ({ ...prev, error: "Erreur d'authentification WebSocket" }));
+    let isMounted = true;
+
+    // --- 1. DÉFINITION DES HANDLERS ---
+    const onConnect = () => {
+      console.log('🔌 [SocketContext] ✅ Connected', videoSocket.id);
+      if (isMounted) setState(prev => ({ ...prev, isConnected: true, error: null }));
+    };
+
+    const onDisconnect = (reason: string) => {
+      console.log('🔌 [SocketContext] ❌ Disconnected:', reason);
+      if (isMounted) setState(prev => ({ ...prev, isConnected: false, isAuthenticated: false }));
+      
+      // Si déconnexion par le serveur (token expiré par ex), on tente de reconnecter
+      if (reason === "io server disconnect") {
+        videoSocket.connect();
       }
     };
 
-    initSocket();
-
-    const onConnect = (): void => {
-      console.log('🔌 [SocketContext] ✅ connect event - Socket connected');
-      console.log('📡 [SocketContext] Socket ID:', videoSocket.id);
-      // Utiliser io?.opts?.path pour avoir des infos sur la connexion
-      //console.log('🔗 [SocketContext] Socket URI:', videoSocket.io?.uri);
-      setState(prev => ({ ...prev, isConnected: true, error: null }));
+    const onAuthenticated = (data: AuthenticatedEvent) => {
+      console.log('👤 [SocketContext] Authenticated:', data.userId);
+      if (isMounted) setState(prev => ({ ...prev, isAuthenticated: true }));
     };
 
-    const onDisconnect = (reason: string): void => {
-      console.log('🔌 [SocketContext] ❌ disconnect event - Reason:', reason);
-      setState(prev => ({ ...prev, isConnected: false, isAuthenticated: false }));
+    const onConnectError = async (err: SocketError) => {
+      console.error('❌ [SocketContext] Connection Error:', err.message);
+      
+      // GESTION DU TOKEN EXPIRÉ : Si erreur d'auth, on refresh et on retente
+      if (err.message === "unauthorized" || err.data?.code === 401) {
+        console.log('🔑 [SocketContext] Auth error, refreshing token...');
+        const wsToken = await websocketAuth.getValidToken();
+        if (wsToken && isMounted) {
+          videoSocket.auth = { token: wsToken };
+          videoSocket.connect();
+        }
+      }
+      
+      if (isMounted) setState(prev => ({ ...prev, error: err.message }));
     };
 
-    const onAuthenticated = (data: AuthenticatedEvent): void => {
-      console.log('✅ [SocketContext] authenticated event received:', data);
-      console.log(`👤 [SocketContext] User ${data.userId} authenticated successfully`);
-      setState(prev => ({ ...prev, isAuthenticated: true }));
-    };
-
-    const onConnectError = (error: ConnectErrorEvent): void => {
-      console.error('❌ [SocketContext] connect_error event:', error.message);
-      setState(prev => ({ ...prev, error: error.message }));
-    };
-
-    // Écouter tous les événements pour debug
-    const onAnyEvent = (event: string, ...args: unknown[]): void => {
-      console.log(`🔔 [SocketContext] ANY event: "${event}"`, args);
-    };
-    videoSocket.onAny(onAnyEvent);
-
+    // --- 2. ATTACHER LES LISTENERS (AVANT TOUTE ACTION) ---
     videoSocket.on('connect', onConnect);
     videoSocket.on('disconnect', onDisconnect);
     videoSocket.on('authenticated', onAuthenticated);
     videoSocket.on('connect_error', onConnectError);
 
-    return (): void => {
-      console.log('🧹 [SocketContext] Cleaning up listeners...');
-      videoSocket.offAny(onAnyEvent);
+    // --- 3. INITIALISATION ---
+    const init = async () => {
+      if (isInitializing.current) return;
+      isInitializing.current = true;
+
+      try {
+        // Si déjà connecté, on synchronise juste le state
+        if (videoSocket.connected) {
+          setState(prev => ({ ...prev, isConnected: true }));
+          return;
+        }
+
+        const wsToken = await websocketAuth.getValidToken();
+        if (wsToken && isMounted) {
+          videoSocket.auth = { token: wsToken };
+          videoSocket.connect();
+        }
+      } catch (err) {
+        console.error("Failed to init socket auth", err);
+      } finally {
+        isInitializing.current = false;
+      }
+    };
+
+    init();
+
+    // --- 4. CLEANUP (ON ENLÈVE LES ÉCOUTEURS MAIS ON GARDE LA CONNEXION) ---
+    return () => {
+      isMounted = false;
       videoSocket.off('connect', onConnect);
       videoSocket.off('disconnect', onDisconnect);
       videoSocket.off('authenticated', onAuthenticated);
@@ -142,10 +148,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export const useGlobalSocket = (): SocketContextValue => {
+export const useGlobalSocket = () => {
   const context = useContext(SocketContext);
-  if (context === undefined) {
-    throw new Error('useGlobalSocket must be used within a SocketProvider');
-  }
+  if (!context) throw new Error('useGlobalSocket must be used within a SocketProvider');
   return context;
 };

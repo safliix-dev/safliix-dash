@@ -66,8 +66,8 @@ export interface SeriesListItem {
   dp?: string;
   number?: number | string;
   category?: string;
-  poster?: string;
-  hero?: string;
+  posterUrl: string;
+  trailerUrl: string;
   stats: SerieStats;
   stars: number;
   donut?: { label?: string; value: number; color?: string };

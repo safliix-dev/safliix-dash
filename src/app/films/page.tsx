@@ -215,9 +215,9 @@ export default function FilmsPage() {
                         key={film.id}
                         title={film.title}
                         director={film.director}
-                        poster={film.poster}
+                        poster={film.posterUrl}
                         dp={film.dp}
-                        hero={film.hero}
+                        hero={film.movieUrl}
                         category={film.category}
                         stats={stats}
                         status={film.status}
