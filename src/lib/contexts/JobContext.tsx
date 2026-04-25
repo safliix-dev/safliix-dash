@@ -1,4 +1,3 @@
-// lib/contexts/JobContext.tsx
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useGlobalSocket } from './SocketContext';
 import { videoSocket } from '@/lib/socket/socket-client';
@@ -6,7 +5,10 @@ import { jobApi } from '@/lib/api/job';
 import { useAccessToken } from '@/lib/auth/useAccessToken';
 import type { EncodingJob } from '@/types/api/job';
 
-// Types pour les événements socket (inchangés)
+// ============================================================
+// TYPES
+// ============================================================
+
 interface JobCreatedEvent {
   job: EncodingJob;
   room: string;
@@ -77,205 +79,253 @@ interface JobContextValue {
   pauseJob: (jobId: string) => Promise<void>;
 }
 
+// ============================================================
+// HELPERS
+// ============================================================
+
+const createMinimalJob = (update: JobUpdate): EncodingJob => {
+  const now = new Date().toISOString();
+  return {
+    id: update.id,
+    status: (update.status) || 'pending',
+    progress: update.progress ?? 0,
+    title: update.title || '',
+    createdAt: now,
+    type: "MOVIE",
+    startedAt: update.startedAt || now,
+    updatedAt: now,
+  } as EncodingJob;
+};
+
+// ============================================================
+// CONTEXT
+// ============================================================
+
 const JobContext = createContext<JobContextValue | undefined>(undefined);
 
 export const JobProvider = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated } = useGlobalSocket();
+  const { isAuthenticated, isConnected } = useGlobalSocket();
   const accessToken = useAccessToken();
-  const [jobs, setJobs] = useState<EncodingJob[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   
-  // ✅ Refs pour éviter les réinitialisations multiples
-  const isInitializedRef = useRef(false);
-  const handlersSetupRef = useRef(false);
+  const [jobs, setJobs] = useState<EncodingJob[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  
+  // Refs pour éviter les cycles
+  const isSetupComplete = useRef<boolean>(false);
+  const isInitialized = useRef<boolean>(false);
+  const roomsJoined = useRef<Set<string>>(new Set());
 
-  // ✅ Fonction utilitaire stable (pas besoin de useCallback car pas de dépendances)
-  const createMinimalJob = (update: JobUpdate): EncodingJob => {
-    const now = new Date().toISOString();
-    return {
-      id: update.id,
-      status: update.status || 'processing',
-      progress: update.progress || 0,
-      title: update.title || '',
-      createdAt: now,
-      type: "MOVIE",
-      startedAt: update.startedAt || now,
-    } as EncodingJob;
-  };
+  // ============================================================
+  // JOB MANAGEMENT
+  // ============================================================
 
-  // ✅ upsertJobs stable : dépendances vides car createMinimalJob est une fonction pure
-  const upsertJobs = useCallback((updates: JobUpdate | JobUpdate[]) => {
+  const upsertJobs = useCallback((updates: JobUpdate | JobUpdate[]): void => {
     const updatesArray = Array.isArray(updates) ? updates : [updates];
     
-    setJobs(prev => {
+    setJobs((prev: EncodingJob[]): EncodingJob[] => {
       const jobMap = new Map<string, EncodingJob>();
       
-      prev.forEach(job => jobMap.set(job.id, job));
+      // Ajouter les jobs existants
+      for (const job of prev) {
+        jobMap.set(job.id, job);
+      }
       
-      updatesArray.forEach(update => {
+      // Merger les mises à jour
+      for (const update of updatesArray) {
         const existing = jobMap.get(update.id);
         
         if (existing) {
+          // Merge : conserver toutes les propriétés existantes
           jobMap.set(update.id, { ...existing, ...update });
         } else {
-          const newJob = createMinimalJob(update);
-          jobMap.set(update.id, newJob);
+          // Nouveau job
+          jobMap.set(update.id, createMinimalJob(update));
         }
-      });
+      }
       
       return Array.from(jobMap.values());
     });
-  }, []); // ✅ Pas de dépendances
+  }, []);
 
-  // ✅ Chargement initial - version stable
-  const loadInitialJobs = useCallback(async () => {
+  const loadInitialJobs = useCallback(async (): Promise<void> => {
     if (!accessToken) return;
-    if (isInitializedRef.current) return;
+    if (isInitialized.current) return;
     
     console.log('🔄 [JobContext] Loading initial jobs...');
     setIsLoading(true);
+    
     try {
       const data = await jobApi.list({ accessToken });
       console.log(`✅ [JobContext] Loaded ${data.length} initial jobs`);
       setJobs(data);
-      isInitializedRef.current = true;
+      isInitialized.current = true;
     } catch (err) {
-      console.error("❌ [JobContext] Error loading initial jobs:", err);
+      const error = err as Error;
+      console.error("❌ [JobContext] Error loading initial jobs:", error.message);
     } finally {
       setIsLoading(false);
     }
-  }, [accessToken]); // ✅ Dépend seulement à accessToken
+  }, [accessToken]);
 
-  // ✅ Refresh manuel
-  const refreshAll = useCallback(async () => {
+  const refreshAll = useCallback(async (): Promise<void> => {
     if (!accessToken) return;
     
     console.log('🔄 [JobContext] Manual refresh...');
     setIsLoading(true);
+    
     try {
       const data = await jobApi.list({ accessToken });
       upsertJobs(data);
     } catch (err) {
-      console.error("❌ [JobContext] Error refreshing jobs:", err);
+      const error = err as Error;
+      console.error("❌ [JobContext] Error refreshing jobs:", error.message);
     } finally {
       setIsLoading(false);
     }
   }, [accessToken, upsertJobs]);
 
-  // ✅ Actions utilisateur stables
-  const pauseJob = useCallback(async (jobId: string) => {
+  // ============================================================
+  // JOB ACTIONS
+  // ============================================================
+
+  const pauseJob = useCallback(async (jobId: string): Promise<void> => {
     if (!accessToken) return;
+    
     try {
       console.log(`⏸️ [JobContext] Pausing job: ${jobId}`);
       await jobApi.pause(jobId, accessToken);
     } catch (err) {
-      console.error(`❌ [JobContext] Error pausing job ${jobId}:`, err);
+      const error = err as Error;
+      console.error(`❌ [JobContext] Error pausing job ${jobId}:`, error.message);
     }
   }, [accessToken]);
 
-  const resumeJob = useCallback(async (jobId: string) => {
+  const resumeJob = useCallback(async (jobId: string): Promise<void> => {
     if (!accessToken) return;
+    
     try {
       console.log(`▶️ [JobContext] Resuming job: ${jobId}`);
       await jobApi.resume(jobId, accessToken);
     } catch (err) {
-      console.error(`❌ [JobContext] Error resuming job ${jobId}:`, err);
+      const error = err as Error;
+      console.error(`❌ [JobContext] Error resuming job ${jobId}:`, error.message);
     }
   }, [accessToken]);
 
-  const retryJob = useCallback(async (jobId: string) => {
+  const retryJob = useCallback(async (jobId: string): Promise<void> => {
     if (!accessToken) return;
+    
     try {
       console.log(`🔄 [JobContext] Retrying job: ${jobId}`);
-      upsertJobs({ id: jobId, status: 'processing', progress: 0 });
+      // Optimistic update
+      upsertJobs({ id: jobId, status: 'processing' , progress: 0 });
       await jobApi.retry(jobId, accessToken);
     } catch (err) {
-      console.error(`❌ [JobContext] Error retrying job ${jobId}:`, err);
-      upsertJobs({ id: jobId, status: 'failed' });
+      const error = err as Error;
+      console.error(`❌ [JobContext] Error retrying job ${jobId}:`, error.message);
+      upsertJobs({ id: jobId, status: 'failed'  });
     }
   }, [accessToken, upsertJobs]);
 
-  // ✅ Setup des sockets - version stable
+  // ============================================================
+  // SOCKET SETUP
+  // ============================================================
+
   useEffect(() => {
-    if (!isAuthenticated) return;
-    if (handlersSetupRef.current) return; // ✅ Évite les doubles setups
+    // Attendre que la socket soit authentifiée
+    if (!isAuthenticated || !isConnected) {
+      console.log('⏳ [JobContext] Waiting for socket authentication...');
+      return;
+    }
+    
+    // Éviter les doubles setups
+    if (isSetupComplete.current) {
+      console.log('✅ [JobContext] Already setup, skipping...');
+      return;
+    }
     
     console.log('✅ [JobContext] Setting up socket handlers...');
-    handlersSetupRef.current = true;
+    isSetupComplete.current = true;
     
-    const rooms = ["movies", "episodes", "series"] as const;
+    const rooms: readonly string[] = ["movies", "episodes", "series"] as const;
+    const currentRooms = roomsJoined.current;
     
     // Rejoindre les rooms
-    rooms.forEach(room => {
-      console.log(`📡 [JobContext] Joining room: ${room}`);
-      videoSocket.emit("join_room", { room });
-    });
+    for (const room of rooms) {
+      if (!currentRooms.has(room)) {
+        console.log(`📡 [JobContext] Joining room: ${room}`);
+        videoSocket.emit("join_room", { room });
+        currentRooms.add(room);
+      }
+    }
 
-    // ✅ Handlers stables définis à l'intérieur (pas de dépendances externes)
-    const handleJobCreated = (data: JobCreatedEvent) => {
+    // Handlers socket
+    const handleJobCreated = (data: JobCreatedEvent): void => {
       console.log("🆕 [JobContext] Job created:", data.job?.id);
       if (data.job) {
         upsertJobs(data.job);
       }
     };
 
-    const handleJobProgress = (data: RawJobProgressEvent) => {
-      console.log(`📊 [JobContext] Progress: ${data.jobId} - ${data.progress}%`);
+    const handleJobProgress = (data: RawJobProgressEvent): void => {
       const { jobId, progress, status } = data;
       if (jobId) {
         upsertJobs({ 
-          id: jobId,
-          progress,
-          status: status?.toLowerCase() ?? 'processing',
+          id: jobId, 
+          progress, 
+          status: (status?.toLowerCase() ) ?? 'processing'
         });
       }
     };
 
-    const handleJobCompleted = (data: JobCompletedEvent) => {
+    const handleJobCompleted = (data: JobCompletedEvent): void => {
       console.log("✅ [JobContext] Job completed:", data.jobId);
       if (data.jobId) {
         upsertJobs({ 
           id: data.jobId, 
           progress: 100, 
-          status: 'completed'
+          status: 'completed' 
         });
       }
     };
 
-    const handleJobFailed = (data: JobFailedEvent) => {
-      console.log("❌ [JobContext] Job failed:", data.jobId, data.error);
+    const handleJobFailed = (data: JobFailedEvent): void => {
+      console.log("❌ [JobContext] Job failed:", data.jobId);
       if (data.jobId) {
         upsertJobs({ 
           id: data.jobId, 
-          status: 'failed',
+          status: 'failed' 
+          
         });
       }
     };
 
-    const handleJobPaused = (data: JobPausedEvent) => {
+    const handleJobPaused = (data: JobPausedEvent): void => {
       console.log("⏸️ [JobContext] Job paused:", data.jobId);
       if (data.jobId) {
         upsertJobs({ 
           id: data.jobId, 
-          status: 'paused',
+          status: 'paused' 
         });
       }
     };
 
-    const handleJobResumed = (data: JobResumedEvent) => {
+    const handleJobResumed = (data: JobResumedEvent): void => {
       console.log("▶️ [JobContext] Job resumed:", data.jobId);
       if (data.jobId) {
         upsertJobs({ 
           id: data.jobId, 
-          status: 'processing',
+          status: 'processing'
         });
       }
     };
 
-    const handleJobDeleted = (data: JobDeletedEvent) => {
+    const handleJobDeleted = (data: JobDeletedEvent): void => {
       console.log("🗑️ [JobContext] Job deleted:", data.jobId);
       if (data.jobId) {
-        setJobs(prev => prev.filter(j => j.id !== data.jobId));
+        setJobs((prev: EncodingJob[]): EncodingJob[] => 
+          prev.filter((job: EncodingJob): boolean => job.id !== data.jobId)
+        );
       }
     };
 
@@ -291,10 +341,11 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
     // Chargement initial
     loadInitialJobs();
 
-    // Cleanup - uniquement au démontage du provider
-    return () => {
-      console.log('🧹 [JobContext] Cleaning up socket handlers...');
+    // Cleanup - uniquement au démontage
+    return (): void => {
+      console.log('🧹 [JobContext] Component unmounting, cleaning up...');
       
+      // Retirer les handlers
       videoSocket.off('job_created', handleJobCreated);
       videoSocket.off('job_progress', handleJobProgress);
       videoSocket.off('job_completed', handleJobCompleted);
@@ -303,32 +354,52 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
       videoSocket.off('job_resumed', handleJobResumed);
       videoSocket.off('job_deleted', handleJobDeleted);
       
-      rooms.forEach(room => {
+      // Quitter les rooms
+      for (const room of currentRooms) {
         console.log(`👋 [JobContext] Leaving room: ${room}`);
         videoSocket.emit("leave_room", { room });
-      });
+      }
+      currentRooms.clear();
       
-      handlersSetupRef.current = false;
-      isInitializedRef.current = false;
+      isSetupComplete.current = false;
+      isInitialized.current = false;
     };
-  }, [isAuthenticated, upsertJobs, loadInitialJobs]); // ✅ Dépendances maintenant stables
+  }, [isAuthenticated, isConnected, upsertJobs, loadInitialJobs]);
 
-  // Statistiques mémorisées
-  const stats = useMemo(() => ({
-    activeCount: jobs.filter(j => ['processing', 'running', 'paused'].includes(j.status)).length,
-    completedCount: jobs.filter(j => j.status === 'completed').length,
-    failedCount: jobs.filter(j => j.status === 'failed').length,
-  }), [jobs]);
+  // ============================================================
+  // STATISTICS
+  // ============================================================
 
-  const value = useMemo(() => ({
+  const stats = useMemo((): { activeCount: number; completedCount: number; failedCount: number } => {
+    const activeStatuses = ['processing', 'pending'];
+    const activeCount = jobs.filter((job: EncodingJob): boolean => 
+      activeStatuses.includes(job.status)
+    ).length;
+    
+    const completedCount = jobs.filter((job: EncodingJob): boolean => 
+      job.status === 'completed'
+    ).length;
+    
+    const failedCount = jobs.filter((job: EncodingJob): boolean => 
+      job.status === 'failed'
+    ).length;
+    
+    return { activeCount, completedCount, failedCount };
+  }, [jobs]);
+
+  // ============================================================
+  // CONTEXT VALUE
+  // ============================================================
+
+  const value = useMemo((): JobContextValue => ({
     jobs,
+    isLoading,
+    refreshAll,
     retryJob,
     pauseJob,
     resumeJob,
-    isLoading,
-    refreshAll,
-    ...stats
-  }), [jobs, retryJob, pauseJob, resumeJob, isLoading, refreshAll, stats]);
+    ...stats,
+  }), [jobs, isLoading, refreshAll, retryJob, pauseJob, resumeJob, stats]);
 
   return (
     <JobContext.Provider value={value}>
@@ -337,8 +408,14 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export const useGlobalJobs = () => {
+// ============================================================
+// HOOK
+// ============================================================
+
+export const useGlobalJobs = (): JobContextValue => {
   const context = useContext(JobContext);
-  if (!context) throw new Error("useGlobalJobs must be used within JobProvider");
+  if (context === undefined) {
+    throw new Error('useGlobalJobs must be used within a JobProvider');
+  }
   return context;
 };
