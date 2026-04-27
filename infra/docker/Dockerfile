@@ -1,7 +1,7 @@
 # =============================================================================
 # Dockerfile — safliix-dash (Next.js 15 standalone)
 # Multi-stage build: deps -> builder -> runtime
-# Calque sur sachrist — sans Prisma (pas de DB propre)
+# Calque sur sachrist
 # =============================================================================
 
 # ---------------------------------------------------------------------------
