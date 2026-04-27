@@ -5,7 +5,6 @@
 import { useEffect, useMemo } from "react";
 import { useMediaFormEngine } from "@/lib/hooks/form/useMediaFormEngine";
 import { AdsAdapter } from "./adsAdapter";
-import { useSession } from "next-auth/react";
 import { AdsFormData, AdsSlot, AdsMetadataPayload } from "@/types/api/ads";
 import { PresignedSlot } from "@/types/upload";
 
@@ -23,8 +22,7 @@ export interface AdsPresignedSlot extends PresignedSlot<AdsSlot> {
 }
 
 export function useAdsForm({ adsId }: UseadsFormProps = {}) {
-  const { data: session } = useSession();
-  const  = session?.;
+  
 
   // 1. On définit les valeurs par défaut proprement
   const defaultValues: AdsFormData = {
@@ -63,6 +61,5 @@ export function useAdsForm({ adsId }: UseadsFormProps = {}) {
   return {
     ...engine,
     meta,
-    ,
   };
 }

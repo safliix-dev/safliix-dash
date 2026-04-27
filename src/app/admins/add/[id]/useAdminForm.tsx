@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/ui/components/toast/ToastProvider";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { formatApiError } from "@/lib/api/errors";
 import { adminsApi } from "@/lib/api/admin";
 import type { AdminFormState,AdminUpdateFormState } from "@/types/api/admin";
@@ -11,7 +10,7 @@ import type { DialogStatus } from "@/ui/components/confirmationDialog";
 
 export function useAdminForm(id?: string) {
   const toast = useToast();
-  const  = useAccessToken();
+  
 
   const isEditMode = Boolean(id && id !== "new");
 

@@ -5,11 +5,9 @@
     import { filmsApi } from "@/lib/api/films";
     import { filmAdapter } from "./filmAdapter";
     import { type FilmFormData } from "@/types/api/films";
-    import { useSession } from "next-auth/react";
 
     export function useFilmForm(initialId?: string) {
-      const { data: session } = useSession();
-      const  = session?.;
+      
 
       // 1. Chargement des options (Selects)
       // On passe l' pour que l'API puisse valider la requête
@@ -68,6 +66,5 @@
       return {
         ...engine,
         meta,
-        , // Utile si tu as besoin du token ailleurs dans l'UI
       };
     }

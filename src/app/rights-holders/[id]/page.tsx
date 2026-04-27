@@ -7,7 +7,6 @@ import Header from "@/ui/components/header";
 import { rightsHoldersMock } from "../data";
 import { LinkedContent } from "@/types/api/imageRights";
 import { imageRightsApi } from "@/lib/api/imageRights";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { formatApiError } from "@/lib/api/errors";
 import Image from "next/image";
@@ -25,7 +24,6 @@ export default function Page() {
   const [filter, setFilter] = useState<"all" | "film" | "serie">("all");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const  = useAccessToken();
   const toast = useToast();
 
   const [holder, setHolder] = useState(() => {

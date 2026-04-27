@@ -5,12 +5,9 @@ import { useMediaFormEngine } from "@/lib/hooks/form/useMediaFormEngine";
 import { useMetaOptions } from "@/lib/hooks/form/useMetaOptions";
 import { seriesApi } from "@/lib/api/series";
 import { seriesAdapter } from "./serieAdapter";
-import { useSession } from "next-auth/react";
 
 export function useSeriesForm(initialId?: string) {
-  const { data: session } = useSession();
-  const  = session?.;
-
+  
   /**
    * 1. Chargement des options (aligné film)
    */
@@ -69,6 +66,5 @@ export function useSeriesForm(initialId?: string) {
   return {
     ...engine,
     meta,
-    ,
   };
 }
