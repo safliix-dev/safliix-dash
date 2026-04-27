@@ -2,21 +2,26 @@ import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { TokenService } from "@/services/token.service";
 
-export async function ALL(req: NextRequest, { params }: { params: { path: string[] } }) {
+async function proxyHandler(
+  req: NextRequest,
+  { params }: { params: Promise<{ path: string[] }> }
+) {
+  // ⭐ Attendre que params soit résolu
+  const { path } = await params;
+  
   const token = await getToken({ req });
   
   if (!token?.sub) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  // ⭐ Une seule ligne : TokenService s'occupe de tout (get + refresh si besoin)
   const accessToken = await TokenService.getValidToken(token.sub);
   
   if (!accessToken) {
     return NextResponse.json({ error: "Session invalide ou expirée" }, { status: 401 });
   }
 
-  const targetUrl = `${process.env.NEST_API_URL}/${params.path.join("/")}${req.nextUrl.search}`;
+  const targetUrl = `${process.env.NEST_API_URL}/${path.join("/")}${req.nextUrl.search}`;
 
   const headers = new Headers();
   req.headers.forEach((value, key) => {
@@ -69,4 +74,8 @@ export async function ALL(req: NextRequest, { params }: { params: { path: string
   }
 }
 
-export { ALL as GET, ALL as POST, ALL as PUT, ALL as DELETE, ALL as PATCH };
+export const GET = proxyHandler;
+export const POST = proxyHandler;
+export const PUT = proxyHandler;
+export const DELETE = proxyHandler;
+export const PATCH = proxyHandler;

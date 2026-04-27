@@ -8,7 +8,6 @@ import {
 import { formatApiError } from "@/lib/api/errors";
 import { withRetry } from "@/lib/api/retry";
 import { useToast } from "@/ui/components/toast/ToastProvider";
-import { useSession } from "next-auth/react";
 
 interface DashboardData {
   metrics: DashboardMetricsResponse | null;
@@ -27,8 +26,7 @@ export function useDashboardData(): DashboardData {
   const [error, setError] = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
   const toast = useToast();
-  const { data: session } = useSession();
-  const  = session?.;
+  
 
   useEffect(() => {
     let cancelled = false;

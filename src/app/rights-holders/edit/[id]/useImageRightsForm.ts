@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { imageRightsApi } from "@/lib/api/imageRights";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { formatApiError } from "@/lib/api/errors";
 import type { DialogStatus } from "@/ui/components/confirmationDialog";
 import { ImageRightsFormState } from "@/types/api/imageRights";
@@ -12,7 +11,7 @@ import { ImageRightsFormState } from "@/types/api/imageRights";
 export function useImageRightsForm(id?: string) {
   const isEdit = !!id && id !== "new";
   const toast = useToast();
-  const  = useAccessToken();
+  
 
   const {
     control,

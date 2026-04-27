@@ -3,7 +3,6 @@
 import Header from "@/ui/components/header";
 import { useEffect, useState } from "react";
 import { introApi } from "@/lib/api/reports";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { formatApiError } from "@/lib/api/errors";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 
@@ -14,7 +13,7 @@ export default function Page(){
   const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const  = useAccessToken();
+  
   const toast = useToast();
 
   useEffect(() => {

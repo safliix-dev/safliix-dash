@@ -7,7 +7,6 @@ import { useMediaFormEngine } from "@/lib/hooks/form/useMediaFormEngine";
 import { useMetaOptions } from "@/lib/hooks/form/useMetaOptions";
 import { episodeApi } from "@/lib/api/episode";
 import { episodeAdapter } from "./episodeAdapter";
-import { useSession } from "next-auth/react";
 import { EpisodeFormData, EpisodeMetaOptions } from "@/types/api/episode";
 
 interface UseEpisodeFormProps {
@@ -17,11 +16,10 @@ interface UseEpisodeFormProps {
 }
 
 export function useEpisodeForm({ seriesId, seasonId, episodeId }: UseEpisodeFormProps) {
-  const { data: session } = useSession();
-  const  = session?.;
+  
 
   // 1. Chargement des options
-  const loadMetaOptions = () => episodeApi.metaOptions(, seriesId, seasonId);
+  const loadMetaOptions = () => episodeApi.metaOptions(seriesId, seasonId);
   const meta = useMetaOptions<EpisodeMetaOptions>(loadMetaOptions);
 
   // 2. Configuration du moteur (Engine)
@@ -57,7 +55,6 @@ export function useEpisodeForm({ seriesId, seasonId, episodeId }: UseEpisodeForm
   return {
     ...engine,
     meta,
-    ,
     seriesId,
     seasonId,
   };

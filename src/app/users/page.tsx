@@ -5,7 +5,6 @@ import DataTable from "@/ui/components/dataTable";
 import { Person,columns } from "./mapper";
 import { useEffect, useState } from "react";
 import { usersApi } from "@/lib/api/users";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { formatApiError } from "@/lib/api/errors";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import Link from "next/link";
@@ -19,7 +18,6 @@ export default function Page() {
   const [personnes, setPersonnes] = useState<Person[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const  = useAccessToken();
   const toast = useToast();
   const router = useRouter();
 

@@ -1,6 +1,5 @@
 // lib/hooks/useBaseContentManagement.ts
 import { useState, useMemo, useEffect,useCallback } from "react";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { formatApiError } from "@/lib/api/errors";
 import { imageRightsApi } from "@/lib/api/imageRights";
@@ -53,7 +52,7 @@ export function useBaseContentManagement<T extends { status: ContentStatus; type
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortFilter, setSortFilter] = useState<SortOption>("none");
 
-  const  = useAccessToken();
+ 
   const toast = useToast();
 
   const refreshData = useCallback(async () => {
@@ -75,7 +74,7 @@ export function useBaseContentManagement<T extends { status: ContentStatus; type
       setLoading(true);
       try {
         const res = await imageRightsApi.contentsList(contentType, { 
-          , 
+          
           signal: controller.signal 
         });
         setRawContentByRightholder(res.filter((g) => {

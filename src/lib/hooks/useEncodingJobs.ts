@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from "react";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { jobApi } from "@/lib/api/job";
 import { useJobSocket } from "./useVideoSocket";
 import { useToast } from "@/ui/components/toast/ToastProvider";
@@ -21,7 +20,6 @@ export const useEncodingJobs = ({
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   
-  const  = useAccessToken();
   const toast = useToast();
 
   const mapSocketStatus = (status: string): EncodingJob['status'] => {
@@ -71,7 +69,7 @@ export const useEncodingJobs = ({
 
   // 2. Refresh Jobs (API REST)
   const refreshJobs = useCallback(async () => {
-    if (!) return;
+    
     setIsLoading(true);
     try {
       const res = await jobApi.list({ type: jobType }, );
@@ -104,7 +102,7 @@ export const useEncodingJobs = ({
   }, []);
 
   useEffect(() => {
-    if (autoLoad && ) refreshJobs();
+    if (autoLoad) refreshJobs();
   }, [autoLoad, , refreshJobs]);
 
   return {

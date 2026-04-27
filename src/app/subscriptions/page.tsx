@@ -4,7 +4,6 @@ import Header from "@/ui/components/header";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { subscriptionsApi } from "@/lib/api/subscriptions";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { formatApiError } from "@/lib/api/errors";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import Image from "next/image";
@@ -27,7 +26,6 @@ export default function Page() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const  = useAccessToken();
   const toast = useToast();
 
   useEffect(() => {

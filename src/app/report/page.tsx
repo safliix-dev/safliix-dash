@@ -3,7 +3,6 @@
 import { useMemo, useState } from 'react';
 import { Download,AlertCircle } from 'lucide-react';
 import { reportsApi } from '@/lib/api/reports';
-import { useAccessToken } from '@/lib/auth/useAccessToken';
 import { formatApiError } from '@/lib/api/errors';
 import { useToast } from '@/ui/components/toast/ToastProvider';
 import { PDFDownloadLink } from '@react-pdf/renderer';
@@ -28,7 +27,7 @@ const SAMPLE_ENTRIES = [
 const ReportSelectionCard = () => {
   const [selectedReports, setSelectedReports] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
-  const  = useAccessToken();
+
   const toast = useToast();
 
   const toggleReport = (report: string) => {

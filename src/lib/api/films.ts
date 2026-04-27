@@ -15,7 +15,7 @@ export const filmsApi = {
   list: (params: FilmListParams, ) =>
     apiRequest<FilmListResponse>("/admin/movies", {
       params,
-      ,
+  
     }),
 
   detail: (id: string, ) =>
@@ -25,21 +25,20 @@ export const filmsApi = {
     apiRequest<FilmCreateOrUpdateResponse>("/admin/movies", {
       method: "POST",
       body: payload,
-      ,
     }),
 
   update: (id: string, payload: FilmMetadataPayload, ) =>
     apiRequest<FilmCreateOrUpdateResponse>(`/admin/movies/${id}`, {
       method: "PUT",
       body: payload,
-      ,
+      
     }),
 
   performAction: (id: string, payload: FilmActionPayload, ) =>
     apiRequest<FilmActionResponse>(`/admin/movies/${id}/actions`, {
       method: "POST",
       body: payload,
-      ,
+      
     }),
 
   

@@ -4,7 +4,6 @@
 
 import { useEffect } from "react";
 import { useMediaFormEngine } from "@/lib/hooks/form/useMediaFormEngine";
-import { useSession } from "next-auth/react";
 import { SeasonFormData } from "@/types/api/season";
 import { seasonAdapter } from "./seasonAdapter";
 
@@ -14,8 +13,8 @@ interface UseSeasonFormProps {
 }
 
 export function useSeasonForm({ seriesId, seasonId }: UseSeasonFormProps) {
-  const { data: session } = useSession();
-  const  = session?.;
+  //const { data: session } = useSession();
+ 
 
   // 1. Configuration du moteur (Engine)
   const engine = useMediaFormEngine(
@@ -47,6 +46,6 @@ export function useSeasonForm({ seriesId, seasonId }: UseSeasonFormProps) {
   return {
     ...engine,
     meta,
-    ,
+
   };
 }

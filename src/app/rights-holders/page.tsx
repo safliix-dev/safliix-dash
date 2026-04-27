@@ -8,7 +8,6 @@ import DataTable from "@/ui/components/dataTable";
 import { rightsHolderColumns } from "./mapper";
 import { ImageRightsHolder } from "@/types/api/imageRights";
 import { imageRightsApi } from "@/lib/api/imageRights";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { formatApiError } from "@/lib/api/errors";
 import ConfirmationDialog from "@/ui/components/confirmationDialog";
@@ -18,7 +17,6 @@ export default function Page() {
   const [holders, setHolders] = useState<ImageRightsHolder[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const  = useAccessToken();
   const toast = useToast();
   const router = useRouter();
 

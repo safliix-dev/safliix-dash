@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import MonthlyStatsChart from "@/ui/specific/stats/components/barChart";
 import { statsApi } from "@/lib/api/stats";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { formatApiError } from "@/lib/api/errors";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { type RevenueStatsResponse } from "@/types/api/stats";
@@ -30,7 +29,6 @@ export default function Page() {
   const [stats, setStats] = useState<RevenueStatsResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const  = useAccessToken();
   const toast = useToast();
 
   useEffect(() => {

@@ -4,7 +4,6 @@ import Header from "@/ui/components/header";
 import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
 import { plansApi } from "@/lib/api/subscriptions";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { formatApiError } from "@/lib/api/errors";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import type { PlanDetail } from "@/types/api/subscriptions";
@@ -17,7 +16,6 @@ export default function Page({ params }: Props) {
   // 👈 Utiliser use() pour résoudre la Promise
   const { id: planId } = use(params);
   
-  const  = useAccessToken();
   const toast = useToast();
   const [plan, setPlan] = useState<PlanDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,7 +29,7 @@ export default function Page({ params }: Props) {
       setLoading(true);
       setError(null);
       try {
-        const res = await plansApi.detail(planId, , controller.signal);
+        const res = await plansApi.detail(planId);
         if (cancelled) return;
         setPlan(res);
       } catch (err) {

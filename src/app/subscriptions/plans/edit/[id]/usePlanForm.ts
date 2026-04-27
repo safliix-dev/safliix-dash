@@ -6,14 +6,12 @@ import { useToast } from "@/ui/components/toast/ToastProvider";
 import { withRetry } from "@/lib/api/retry";
 import { formatApiError } from "@/lib/api/errors";
 import { plansApi } from "@/lib/api/subscriptions";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import type { DialogStatus } from "@/ui/components/confirmationDialog";
 import { PlanForm } from "@/types/api/subscriptions";
 
 
 export function usePlanForm(id:string) {
   const toast = useToast();
-  const  = useAccessToken();
   const isEdit = !!id && id !== "new";
 
   const {
@@ -102,7 +100,7 @@ export function usePlanForm(id:string) {
             quality: pendingPlan.quality,
             currency: pendingPlan.currency,
           },
-          ,
+          
         ),
       );
 
@@ -130,7 +128,7 @@ export function usePlanForm(id:string) {
             quality: pendingPlan.quality,
             currency: pendingPlan.currency,
           },
-          ,
+          
         ),
       );
 

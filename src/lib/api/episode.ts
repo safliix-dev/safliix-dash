@@ -9,7 +9,7 @@ import {
 
 export const episodeApi = {
   // Options (métadonnées pour les sélecteurs)
-  metaOptions: (, seriesId?: string, seasonId?: string) =>
+  metaOptions: (seriesId?: string, seasonId?: string) =>
     apiRequest<EpisodeMetaOptions>(`/series/seasons/${seasonId}/episodes/meta`, {  }),
 
   // Liste des épisodes d'une saison
@@ -25,7 +25,7 @@ export const episodeApi = {
     apiRequest<EpisodeCreateOrUpdateResponse>(`/series/${payload.seriesId}/seasons/${payload.seasonId}/episodes`, {
       method: "POST",
       body: payload,
-      ,
+      
     }),
 
   // Mettre à jour un épisode

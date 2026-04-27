@@ -5,7 +5,6 @@ import { Bell, CameraIcon, LocateIcon, Mail, Phone, PhoneCall } from "lucide-rea
 import { Controller, useForm } from "react-hook-form";
 import InputField from "@/ui/components/inputField";
 import { settingsApi } from "@/lib/api/settings";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { formatApiError } from "@/lib/api/errors";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { withRetry } from "@/lib/api/retry";
@@ -42,7 +41,6 @@ export default function Page(){
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<SettingsForm | null>(null);
-  const  = useAccessToken();
   const toast = useToast();
 
   useEffect(() => {

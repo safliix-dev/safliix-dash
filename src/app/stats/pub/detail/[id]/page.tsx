@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import Header from "@/ui/components/header";
 import Link from "next/link";
 import { statsApi } from "@/lib/api/stats";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { formatApiError } from "@/lib/api/errors";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { type PubStatsDetail } from "@/types/api/stats";
@@ -21,7 +20,6 @@ export default function Page({ params }: Props) {
   const [pub, setPub] = useState<PubStatsDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const  = useAccessToken();
   const toast = useToast();
 
   // 👈 Résoudre la Promise params

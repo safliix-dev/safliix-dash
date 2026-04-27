@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { promosApi } from "@/lib/api/subscriptions";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { formatApiError } from "@/lib/api/errors";
 import type { DialogStatus } from "@/ui/components/confirmationDialog";
 import type { PromotionPayload, PromotionPayloadUpdate } from "@/types/api/subscriptions";
@@ -15,7 +14,6 @@ type PendingPromotionData = PromotionPayload | PromotionPayloadUpdate;
 export function usePromoForm(id?: string) {
   const isEdit = !!id && id !== "new";
   const toast = useToast();
-  const  = useAccessToken();
 
   /* ---------------- Form Configuration ---------------- */
   const {

@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/ui/components/toast/ToastProvider";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import type { DialogStatus } from "@/ui/components/confirmationDialog";
 import { UserPayload} from "@/types/api/users";
 import { usersApi } from "@/lib/api/users";
@@ -11,7 +10,7 @@ import { usersApi } from "@/lib/api/users";
 export function useUserForm(id?: string) {
   const isEdit = !!id && id !== "new";
   const toast = useToast();
-  const  = useAccessToken();
+ 
 
   const {
     control,

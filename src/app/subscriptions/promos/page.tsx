@@ -3,7 +3,6 @@
 import Header from "@/ui/components/header";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { formatApiError } from "@/lib/api/errors";
 import DataTable from "@/ui/components/dataTable";
@@ -16,7 +15,6 @@ import ConfirmationDialog from "@/ui/components/confirmationDialog";
 
 
 export default function Page() {
-  const  = useAccessToken();
   const toast = useToast();
   const [promos, setPromos] = useState<PromotionItem[]>([]);
   const [loading, setLoading] = useState(false);
