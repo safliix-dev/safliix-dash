@@ -9,37 +9,37 @@ import {
 
 export const episodeApi = {
   // Options (métadonnées pour les sélecteurs)
-  metaOptions: (accessToken?: string, seriesId?: string, seasonId?: string) =>
-    apiRequest<EpisodeMetaOptions>(`/series/seasons/${seasonId}/episodes/meta`, { accessToken }),
+  metaOptions: (, seriesId?: string, seasonId?: string) =>
+    apiRequest<EpisodeMetaOptions>(`/series/seasons/${seasonId}/episodes/meta`, {  }),
 
   // Liste des épisodes d'une saison
-  list: (seriesId: string, seasonId: string, params?: EpisodeListParams, accessToken?: string) =>
-    apiRequest<EpisodeDetail[]>(`/series/${seriesId}/seasons/${seasonId}/episodes`, { params, accessToken }),
+  list: (seriesId: string, seasonId: string, params?: EpisodeListParams, ) =>
+    apiRequest<EpisodeDetail[]>(`/series/${seriesId}/seasons/${seasonId}/episodes`, { params,  }),
 
   // Récupérer un épisode par son ID
-  get: (episodeId: string, accessToken?: string) => 
-    apiRequest<EpisodeDetail>(`/episodes/${episodeId}`, { accessToken }),
+  get: (episodeId: string, ) => 
+    apiRequest<EpisodeDetail>(`/episodes/${episodeId}`, {  }),
 
   // Créer un épisode (nécessite seriesId et seasonId dans le payload)
-  create: (payload: EpisodeMetadataPayload, accessToken?: string) =>
+  create: (payload: EpisodeMetadataPayload, ) =>
     apiRequest<EpisodeCreateOrUpdateResponse>(`/series/${payload.seriesId}/seasons/${payload.seasonId}/episodes`, {
       method: "POST",
       body: payload,
-      accessToken,
+      ,
     }),
 
   // Mettre à jour un épisode
-  update: (episodeId: string, payload: EpisodeMetadataPayload, accessToken?: string) =>
+  update: (episodeId: string, payload: EpisodeMetadataPayload, ) =>
     apiRequest<EpisodeCreateOrUpdateResponse>(`/episodes/${episodeId}`, { 
       method: "PUT", 
       body: payload, 
-      accessToken 
+       
     }),
 
   // Supprimer un épisode
-  delete: (episodeId: string, accessToken?: string) =>
+  delete: (episodeId: string, ) =>
     apiRequest<void>(`/episodes/${episodeId}`, { 
       method: "DELETE", 
-      accessToken 
+       
     }),
 };

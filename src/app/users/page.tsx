@@ -19,14 +19,14 @@ export default function Page() {
   const [personnes, setPersonnes] = useState<Person[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
   const toast = useToast();
   const router = useRouter();
 
   const deletePerson = useDeleteWithConfirmation<Person>({
       entityName: "le compte administrateur",
       getLabel: (p) => p.nom,
-      deleteFn: (id:string) => usersApi.delete(id, accessToken),
+      deleteFn: (id:string) => usersApi.delete(id, ),
       onDeleted: (id:string) => setPersonnes((prev) => prev.filter((a) => a.id !== id)),
         
     });
@@ -43,7 +43,7 @@ export default function Page() {
       setLoading(true);
       setError(null);
       try {
-        const res = await usersApi.list({ page: 1, pageSize: 20 }, accessToken);
+        const res = await usersApi.list({ page: 1, pageSize: 20 }, );
         if (cancelled) return;
         console.dir(res, {depth:2});
         const mapped: Person[] = res.items.map((u, idx) => ({
@@ -72,7 +72,7 @@ export default function Page() {
       cancelled = true;
       controller.abort();
     };
-  }, [accessToken, toast]);
+  }, [, toast]);
 
   return (
     <div className="">

@@ -11,7 +11,7 @@ import { usersApi } from "@/lib/api/users";
 export function useUserForm(id?: string) {
   const isEdit = !!id && id !== "new";
   const toast = useToast();
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
 
   const {
     control,
@@ -59,9 +59,9 @@ export function useUserForm(id?: string) {
 
     try {
       if (isEdit) {
-        await usersApi.update(id,pendingData,accessToken);
+        await usersApi.update(id,pendingData,);
       } else {
-        await usersApi.create(pendingData,accessToken);
+        await usersApi.create(pendingData,);
       }
 
       toast.success({
@@ -86,7 +86,7 @@ export function useUserForm(id?: string) {
   useEffect(() => {
     if (!isEdit) return;
 
-    usersApi.detail(id,accessToken)
+    usersApi.detail(id,)
       .then((data) => {
           reset({
           email: data.email,
@@ -102,7 +102,7 @@ export function useUserForm(id?: string) {
           description: "Impossible de charger l'utilisateur.",
         });
       });
-  }, [id,accessToken,isEdit,reset,toast]);
+  }, [id,,isEdit,reset,toast]);
 
   return {
     isEdit,

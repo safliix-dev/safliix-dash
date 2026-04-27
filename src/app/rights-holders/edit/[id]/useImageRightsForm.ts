@@ -12,7 +12,7 @@ import { ImageRightsFormState } from "@/types/api/imageRights";
 export function useImageRightsForm(id?: string) {
   const isEdit = !!id && id !== "new";
   const toast = useToast();
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
 
   const {
     control,
@@ -65,9 +65,9 @@ export function useImageRightsForm(id?: string) {
       };
 
       if (isEdit) {
-        await imageRightsApi.update(id!, payload, accessToken);
+        await imageRightsApi.update(id!, payload, );
       } else {
-        await imageRightsApi.create(payload, accessToken);
+        await imageRightsApi.create(payload, );
       }
 
       toast.success({
@@ -93,7 +93,7 @@ export function useImageRightsForm(id?: string) {
     if (!isEdit) return;
 
     imageRightsApi
-      .getById(id!, accessToken)
+      .getById(id!, )
       .then((data) => {
         reset({
           ...data,
@@ -106,7 +106,7 @@ export function useImageRightsForm(id?: string) {
           description: "Impossible de charger l'ayant droit.",
         });
       });
-  }, [id,reset,isEdit,accessToken,toast]);
+  }, [id,reset,isEdit,,toast]);
 
   return {
     isEdit,

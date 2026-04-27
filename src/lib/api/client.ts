@@ -18,7 +18,6 @@ export interface RequestOptions<TBody = unknown> {
   body?: TBody;
   headers?: Record<string, string>;
   auth?: boolean;
-  accessToken?: string;
   signal?: AbortSignal;
 }
 
@@ -81,7 +80,7 @@ const parseResponse = async <T>(response: Response): Promise<T> => {
 
 export async function apiRequest<TResponse = unknown, TBody = unknown>(
   path: string,
-  { method = "GET", params, body, headers, auth = true, accessToken, signal }: RequestOptions<TBody> = {},
+  { method = "GET", params, body, headers , signal }: RequestOptions<TBody> = {},
 ): Promise<TResponse> {
   const safeParams = serializeParams(params);
   const url = buildUrl(path, safeParams);
@@ -93,12 +92,7 @@ export async function apiRequest<TResponse = unknown, TBody = unknown>(
     body: body instanceof FormData ? "[FormData]" : body instanceof Blob ? "[Blob]" : body,
   };
 
-  if (auth) {
-    const token = accessToken;
-    if (token) {
-      finalHeaders.set("Authorization", `Bearer ${token}`);
-    }
-  }
+  
 
   let finalBody: BodyInit | undefined;
   if (body instanceof FormData || body instanceof Blob) {

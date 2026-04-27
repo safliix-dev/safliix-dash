@@ -25,7 +25,7 @@ export default function Page() {
   const [filter, setFilter] = useState<"all" | "film" | "serie">("all");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
   const toast = useToast();
 
   const [holder, setHolder] = useState(() => {
@@ -42,7 +42,7 @@ export default function Page() {
       setLoading(true);
       setError(null);
       try {
-        const res = await imageRightsApi.detail(holderId, accessToken);
+        const res = await imageRightsApi.detail(holderId, );
         if (cancelled) return;
         setHolder({
           ...res,
@@ -62,7 +62,7 @@ export default function Page() {
       cancelled = true;
       controller.abort();
     };
-  }, [holderId, accessToken, toast]);
+  }, [holderId, , toast]);
 
   const filteredContents = useMemo(() => {
     if (!holder) return [];

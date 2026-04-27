@@ -9,16 +9,16 @@ import { useSession } from "next-auth/react";
 
 export function useSeriesForm(initialId?: string) {
   const { data: session } = useSession();
-  const accessToken = session?.accessToken;
+  const  = session?.;
 
   /**
    * 1. Chargement des options (aligné film)
    */
   const loadMetaOptions = useCallback(() => {
     // même logique que film (tu peux réactiver le guard si besoin)
-    // if (!accessToken) return Promise.reject("No access token");
-    return seriesApi.metaOptions(accessToken);
-  }, [accessToken]);
+    // if (!) return Promise.reject("No access token");
+    return seriesApi.metaOptions();
+  }, []);
 
   const meta = useMetaOptions(loadMetaOptions);
 
@@ -69,6 +69,6 @@ export function useSeriesForm(initialId?: string) {
   return {
     ...engine,
     meta,
-    accessToken,
+    ,
   };
 }

@@ -9,15 +9,12 @@ interface TokenResponse {
 export const tokenApi = {
   /**
    * Récupère un token WebSocket depuis le backend
-   * @param accessToken - Token d'authentification du dashboard user
+   * @param  - Token d'authentification du dashboard user
    */
-  getToken: async (accessToken?: string): Promise<TokenResponse | null> => {
+  getToken: async (): Promise<TokenResponse | null> => {
     try {
       const response = await apiRequest<TokenResponse>("/secret/token", {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
+        method: 'POST'
       });
       
       console.log('✅ Token WebSocket récupéré avec succès');
@@ -31,15 +28,13 @@ export const tokenApi = {
 
   /**
    * Rafraîchit le token
-   * @param accessToken - Token d'authentification du dashboard user
+   * @param  - Token d'authentification du dashboard user
    */
-  refreshToken: async (accessToken: string): Promise<TokenResponse | null> => {
+  refreshToken: async (): Promise<TokenResponse | null> => {
     try {
       const response = await apiRequest<TokenResponse>("/secret/refresh", {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
+
       });
       
       console.log('🔄 Token WebSocket rafraîchi');
@@ -53,15 +48,12 @@ export const tokenApi = {
 
   /**
    * Déconnecte et invalide le token
-   * @param accessToken - Token d'authentification du dashboard user
+   * @param  - Token d'authentification du dashboard user
    */
-  logout: async (accessToken: string): Promise<boolean> => {
+  logout: async (): Promise<boolean> => {
     try {
       await apiRequest("/secret/logout", {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
       });
       
       console.log('🔓 Déconnexion du WebSocket');

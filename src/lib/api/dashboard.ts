@@ -8,12 +8,12 @@ import {
 } from "@/types/api/dashboard";
 
 export const dashboardApi = {
-  getMetrics: (params?: DashboardMetricsParams, signal?: AbortSignal, accessToken?: string) =>
-    apiRequest<DashboardMetricsResponse>("/dashboard/metrics", { params, signal, accessToken }),
+  getMetrics: (params?: DashboardMetricsParams, signal?: AbortSignal, ) =>
+    apiRequest<DashboardMetricsResponse>("/dashboard/metrics", { params, signal,  }),
 
-  getHighlights: (signal?: AbortSignal, accessToken?: string) =>
-    apiRequest<DashboardHighlightsResponse>("/dashboard/highlights", { signal, accessToken }),
+  getHighlights: (signal?: AbortSignal, ) =>
+    apiRequest<DashboardHighlightsResponse>("/dashboard/highlights", { signal,  }),
 
-  getRepartition: (params?: DashboardRepartitionParams, signal?: AbortSignal, accessToken?: string) =>
-    apiRequest<DashboardRepartitionResponse>("/dashboard/repartition", { params, signal, accessToken }),
+  getRepartition: (params?: DashboardRepartitionParams, signal?: AbortSignal, ) =>
+    apiRequest<DashboardRepartitionResponse>("/dashboard/repartition", { params, signal,  }),
 };

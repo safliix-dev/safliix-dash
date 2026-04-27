@@ -18,10 +18,10 @@ interface UseEpisodeFormProps {
 
 export function useEpisodeForm({ seriesId, seasonId, episodeId }: UseEpisodeFormProps) {
   const { data: session } = useSession();
-  const accessToken = session?.accessToken;
+  const  = session?.;
 
   // 1. Chargement des options
-  const loadMetaOptions = () => episodeApi.metaOptions(accessToken, seriesId, seasonId);
+  const loadMetaOptions = () => episodeApi.metaOptions(, seriesId, seasonId);
   const meta = useMetaOptions<EpisodeMetaOptions>(loadMetaOptions);
 
   // 2. Configuration du moteur (Engine)
@@ -57,7 +57,7 @@ export function useEpisodeForm({ seriesId, seasonId, episodeId }: UseEpisodeForm
   return {
     ...engine,
     meta,
-    accessToken,
+    ,
     seriesId,
     seasonId,
   };

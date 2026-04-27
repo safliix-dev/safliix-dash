@@ -18,14 +18,14 @@ export default function Page() {
   const [holders, setHolders] = useState<ImageRightsHolder[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
   const toast = useToast();
   const router = useRouter();
 
   const deleteHolder = useDeleteWithConfirmation<ImageRightsHolder>({
     entityName: "le compte administrateur",
     getLabel: (a) => a.fullName ?? `${a.firstName} ${a.lastName}`,
-    deleteFn: (id:string) => imageRightsApi.delete(id, accessToken),
+    deleteFn: (id:string) => imageRightsApi.delete(id, ),
     onDeleted: (id:string) => setHolders((prev) => prev.filter((a) => a.id !== id)),
       
   });
@@ -42,7 +42,7 @@ export default function Page() {
       setLoading(true);
       setError(null);
       try {
-        const res = await imageRightsApi.list({ page: 1, pageSize: 20 }, accessToken);
+        const res = await imageRightsApi.list({ page: 1, pageSize: 20 }, );
         if (cancelled) return;
         const items = res.items ?? [];
         const mapped = items.map((holder) => ({
@@ -66,7 +66,7 @@ export default function Page() {
       cancelled = true;
       controller.abort();
     };
-  }, [accessToken, toast]);
+  }, [, toast]);
 
   const stats = useMemo(
     () => ({

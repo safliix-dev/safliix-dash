@@ -7,7 +7,6 @@ import { Eye, MousePointerClick } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { adsApi } from "@/lib/api/ads";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { formatApiError } from "@/lib/api/errors";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { type AdsItem } from "@/types/api/ads";
@@ -110,7 +109,6 @@ export default function Page() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortFilter, setSortFilter] = useState<string>("best");
   const [periodFilter, setPeriodFilter] = useState<string>("dernier");
-  const accessToken = useAccessToken();
   const toast = useToast();
 
   useEffect(() => {
@@ -120,7 +118,7 @@ export default function Page() {
       setLoading(true);
       setError(null);
       try {
-        const res = await adsApi.list({ page: 1, pageSize: 20 }, accessToken, controller.signal);
+        const res = await adsApi.list({ page: 1, pageSize: 20 } , controller.signal);
         if (cancelled) return;
         const mapped = Array.isArray(res) ? res.map((ad, idx) => normalizeAd(ad, idx)) : [];
         setCampaigns(mapped);
@@ -138,7 +136,7 @@ export default function Page() {
       cancelled = true;
       controller.abort();
     };
-  }, [accessToken, toast]);
+  }, [, toast]);
 
   const latestCampaignTimestamp = useMemo(() => {
     if (!campaigns.length) return Date.now();

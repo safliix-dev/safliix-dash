@@ -42,7 +42,7 @@ export default function Page(){
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<SettingsForm | null>(null);
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
   const toast = useToast();
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export default function Page(){
       setLoading(true);
       setError(null);
       try {
-        const res = await withRetry(() => settingsApi.get(accessToken), { retries: 1 });
+        const res = await withRetry(() => settingsApi.get(), { retries: 1 });
         if (cancelled) return;
         const resObj = res as unknown as Record<string, unknown>;
         const defaults: SettingsForm = {
@@ -79,13 +79,13 @@ export default function Page(){
     return () => {
       cancelled = true;
     };
-  }, [accessToken, setValue, toast]);
+  }, [, setValue, toast]);
 
   const onSubmit = async (data: SettingsForm) => {
     setSaving(true);
     setError(null);
     try {
-      await withRetry(() => settingsApi.update(data, accessToken), { retries: 1 });
+      await withRetry(() => settingsApi.update(data, ), { retries: 1 });
       toast.success({ title: "Settings", description: "Paramètres enregistrés." });
       setProfile(data);
     } catch (err) {

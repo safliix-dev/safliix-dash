@@ -12,38 +12,38 @@ import {
 
 
 export const filmsApi = {
-  list: (params: FilmListParams, accessToken?: string) =>
+  list: (params: FilmListParams, ) =>
     apiRequest<FilmListResponse>("/admin/movies", {
       params,
-      accessToken,
+      ,
     }),
 
-  detail: (id: string, accessToken?: string) =>
-    apiRequest<FilmDetail>(`/admin/movies/${id}`, { accessToken }),
+  detail: (id: string, ) =>
+    apiRequest<FilmDetail>(`/admin/movies/${id}`, {  }),
 
-  create: (payload: FilmMetadataPayload, accessToken?: string) =>
+  create: (payload: FilmMetadataPayload, ) =>
     apiRequest<FilmCreateOrUpdateResponse>("/admin/movies", {
       method: "POST",
       body: payload,
-      accessToken,
+      ,
     }),
 
-  update: (id: string, payload: FilmMetadataPayload, accessToken?: string) =>
+  update: (id: string, payload: FilmMetadataPayload, ) =>
     apiRequest<FilmCreateOrUpdateResponse>(`/admin/movies/${id}`, {
       method: "PUT",
       body: payload,
-      accessToken,
+      ,
     }),
 
-  performAction: (id: string, payload: FilmActionPayload, accessToken?: string) =>
+  performAction: (id: string, payload: FilmActionPayload, ) =>
     apiRequest<FilmActionResponse>(`/admin/movies/${id}/actions`, {
       method: "POST",
       body: payload,
-      accessToken,
+      ,
     }),
 
   
 
-  metaOptions: (accessToken?: string) =>
-    apiRequest<FilmMetaOptions>("/admin/movies/meta/options", { accessToken }),
+  metaOptions: () =>
+    apiRequest<FilmMetaOptions>("/admin/movies/meta/options", {  }),
 };

@@ -17,7 +17,7 @@ export default function Page({ params }: Props) {
   // 👈 Utiliser use() pour résoudre la Promise
   const { id: planId } = use(params);
   
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
   const toast = useToast();
   const [plan, setPlan] = useState<PlanDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,7 +31,7 @@ export default function Page({ params }: Props) {
       setLoading(true);
       setError(null);
       try {
-        const res = await plansApi.detail(planId, accessToken, controller.signal);
+        const res = await plansApi.detail(planId, , controller.signal);
         if (cancelled) return;
         setPlan(res);
       } catch (err) {
@@ -50,7 +50,7 @@ export default function Page({ params }: Props) {
       cancelled = true;
       controller.abort();
     };
-  }, [accessToken, planId, toast]);
+  }, [, planId, toast]);
 
   const statsPreview = useMemo(
     () => [

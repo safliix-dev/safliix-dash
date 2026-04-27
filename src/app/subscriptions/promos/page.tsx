@@ -16,7 +16,7 @@ import ConfirmationDialog from "@/ui/components/confirmationDialog";
 
 
 export default function Page() {
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
   const toast = useToast();
   const [promos, setPromos] = useState<PromotionItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -26,7 +26,7 @@ export default function Page() {
   const deletePromo = useDeleteWithConfirmation<PromotionItem>({
     entityName: "la promotion",
     getLabel: (p) => p.name,
-    deleteFn: (id:string) => promosApi.delete(id, accessToken),
+    deleteFn: (id:string) => promosApi.delete(id, ),
     onDeleted: (id:string) => setPromos((prev) => prev.filter((a) => a.id !== id)),
       
   });
@@ -40,7 +40,7 @@ export default function Page() {
     setLoading(true);
     setError(null);
     try {
-      const res = await promosApi.list({ page: 1, pageSize: 20 },accessToken);
+      const res = await promosApi.list({ page: 1, pageSize: 20 },);
       setPromos(res);
     } catch (err) {
       const friendly = formatApiError(err);
@@ -54,7 +54,7 @@ export default function Page() {
   useEffect(() => {
     fetchPromos();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken]);
+  }, []);
 
   
 

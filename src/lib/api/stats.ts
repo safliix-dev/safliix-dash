@@ -9,18 +9,18 @@ import {
 } from "@/types/api/stats";
 
 export const statsApi = {
-  films: (params?: StatsQueryParams, accessToken?: string) =>
-    apiRequest<FilmsStatsResponse>("/dashboard/stats/films", { params, accessToken }),
+  films: (params?: StatsQueryParams, ) =>
+    apiRequest<FilmsStatsResponse>("/dashboard/stats/films", { params,  }),
 
-  revenue: (params?: StatsQueryParams, accessToken?: string) =>
-    apiRequest<RevenueStatsResponse>("/dashboard/stats/revenue", { params, accessToken }),
+  revenue: (params?: StatsQueryParams, ) =>
+    apiRequest<RevenueStatsResponse>("/dashboard/stats/revenue", { params,  }),
 
-  users: (params?: StatsQueryParams, accessToken?: string) =>
-    apiRequest<UsersStatsResponse>("/dashboard/stats/users", { params, accessToken }),
+  users: (params?: StatsQueryParams, ) =>
+    apiRequest<UsersStatsResponse>("/dashboard/stats/users", { params,  }),
 
-  pub: (params?: StatsQueryParams, accessToken?: string) =>
-    apiRequest<PubStatsResponse>("/dashboard/stats/pub", { params, accessToken }),
+  pub: (params?: StatsQueryParams, ) =>
+    apiRequest<PubStatsResponse>("/dashboard/stats/pub", { params,  }),
 
-  pubDetail: (id: string, accessToken?: string) =>
-    apiRequest<PubStatsDetail>(`/dashboard/stats/pub/${id}`, { accessToken }),
+  pubDetail: (id: string, ) =>
+    apiRequest<PubStatsDetail>(`/dashboard/stats/pub/${id}`, {  }),
 };

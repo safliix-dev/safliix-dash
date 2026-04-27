@@ -6,7 +6,6 @@ import Header from "@/ui/components/header";
 import { Ligature } from "lucide-react";
 import Link from "next/link";
 import { statsApi } from "@/lib/api/stats";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { formatApiError } from "@/lib/api/errors";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { type PubStatsItem } from "@/types/api/stats";
@@ -16,7 +15,6 @@ export default function Page(){
   const [pubs, setPubs] = useState<PubStatsItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const accessToken = useAccessToken();
   const toast = useToast();
 
   useEffect(() => {
@@ -25,7 +23,7 @@ export default function Page(){
       setLoading(true);
       setError(null);
       try {
-        const res = await statsApi.pub(undefined, accessToken);
+        const res = await statsApi.pub(undefined, );
         if (cancelled) return;
         setPubs(res.items);
       } catch (err) {
@@ -39,7 +37,7 @@ export default function Page(){
     };
     load();
     return () => { cancelled = true; };
-  }, [accessToken, toast]);
+  }, [, toast]);
 
   return (
     <div>

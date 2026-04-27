@@ -21,7 +21,7 @@ export const useEncodingJobs = ({
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
   const toast = useToast();
 
   const mapSocketStatus = (status: string): EncodingJob['status'] => {
@@ -71,10 +71,10 @@ export const useEncodingJobs = ({
 
   // 2. Refresh Jobs (API REST)
   const refreshJobs = useCallback(async () => {
-    if (!accessToken) return;
+    if (!) return;
     setIsLoading(true);
     try {
-      const res = await jobApi.list({ type: jobType }, accessToken);
+      const res = await jobApi.list({ type: jobType }, );
       if (Array.isArray(res)) {
         setJobs(res);
       }
@@ -83,7 +83,7 @@ export const useEncodingJobs = ({
     } finally {
       setIsLoading(false);
     }
-  }, [accessToken, jobType, toast]);
+  }, [, jobType, toast]);
 
   // 3. Actions (API TODO)
   // Note: Ici vous devriez normalement appeler jobApi.pause() etc.
@@ -104,8 +104,8 @@ export const useEncodingJobs = ({
   }, []);
 
   useEffect(() => {
-    if (autoLoad && accessToken) refreshJobs();
-  }, [autoLoad, accessToken, refreshJobs]);
+    if (autoLoad && ) refreshJobs();
+  }, [autoLoad, , refreshJobs]);
 
   return {
     jobs,

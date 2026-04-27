@@ -9,14 +9,14 @@
 
     export function useFilmForm(initialId?: string) {
       const { data: session } = useSession();
-      const accessToken = session?.accessToken;
+      const  = session?.;
 
       // 1. Chargement des options (Selects)
-      // On passe l'accessToken pour que l'API puisse valider la requête
+      // On passe l' pour que l'API puisse valider la requête
       const loadMetaOptions = useCallback(() => {
-        //if (!accessToken) return Promise.reject("No access token");
-        return filmsApi.metaOptions(accessToken);
-      }, [accessToken]);
+        //if (!) return Promise.reject("No access token");
+        return filmsApi.metaOptions();
+      }, []);
 
       const meta = useMetaOptions(loadMetaOptions);
 
@@ -68,6 +68,6 @@
       return {
         ...engine,
         meta,
-        accessToken, // Utile si tu as besoin du token ailleurs dans l'UI
+        , // Utile si tu as besoin du token ailleurs dans l'UI
       };
     }

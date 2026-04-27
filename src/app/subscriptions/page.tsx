@@ -27,7 +27,7 @@ export default function Page() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
   const toast = useToast();
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export default function Page() {
       setLoading(true);
       setError(null);
       try {
-        const res = await subscriptionsApi.list({ page: 1, pageSize: 20 }, accessToken);
+        const res = await subscriptionsApi.list({ page: 1, pageSize: 20 }, );
         if (cancelled) return;
         const mapped: Transaction[] = res.items.map((s) => ({
           id: s.id,
@@ -65,7 +65,7 @@ export default function Page() {
       cancelled = true;
       controller.abort();
     };
-  }, [accessToken, toast]);
+  }, [, toast]);
 
   return (
     <div>

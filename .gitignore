@@ -49,3 +49,5 @@ infra/templates/generated/
 # IDE
 .vscode/
 .idea/
+
+/src/generated/prisma

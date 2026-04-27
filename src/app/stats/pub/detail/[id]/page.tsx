@@ -21,7 +21,7 @@ export default function Page({ params }: Props) {
   const [pub, setPub] = useState<PubStatsDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
   const toast = useToast();
 
   // 👈 Résoudre la Promise params
@@ -41,7 +41,7 @@ export default function Page({ params }: Props) {
       setLoading(true);
       setError(null);
       try {
-        const res = await statsApi.pubDetail(id, accessToken);
+        const res = await statsApi.pubDetail(id, );
         if (cancelled) return;
         setPub(res);
       } catch (err) {
@@ -55,7 +55,7 @@ export default function Page({ params }: Props) {
     };
     load();
     return () => { cancelled = true; };
-  }, [accessToken, toast, id]);
+  }, [, toast, id]);
 
   return (
     <div className="space-y-5">

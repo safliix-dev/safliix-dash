@@ -28,7 +28,7 @@ export function useDashboardData(): DashboardData {
   const [nonce, setNonce] = useState(0);
   const toast = useToast();
   const { data: session } = useSession();
-  const accessToken = session?.accessToken;
+  const  = session?.;
 
   useEffect(() => {
     let cancelled = false;
@@ -41,9 +41,9 @@ export function useDashboardData(): DashboardData {
         const [metricsRes, highlightsRes, repartitionRes] = await withRetry(
           () =>
             Promise.all([
-              dashboardApi.getMetrics(undefined, controller.signal, accessToken),
-              dashboardApi.getHighlights(controller.signal, accessToken),
-              dashboardApi.getRepartition(undefined, controller.signal, accessToken),
+              dashboardApi.getMetrics(undefined, controller.signal, ),
+              dashboardApi.getHighlights(controller.signal, ),
+              dashboardApi.getRepartition(undefined, controller.signal, ),
             ]),
           { retries: 2, delayMs: 300, signal: controller.signal },
         );
@@ -71,7 +71,7 @@ export function useDashboardData(): DashboardData {
       cancelled = true;
       controller.abort();
     };
-  }, [nonce, accessToken,toast]);
+  }, [nonce, ,toast]);
 
   return {
     metrics,

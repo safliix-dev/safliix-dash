@@ -1,19 +1,15 @@
-// auth.config.ts
 import { DefaultSession, NextAuthOptions } from "next-auth";
 import KeycloakProvider from "next-auth/providers/keycloak";
-import { tokensApi } from "@/lib/api/kcToken";
+import { SessionService } from "@/services/session.service"; // Importe ton service
 
 /* =======================
-   TYPES NEXT-AUTH
+    TYPES NEXT-AUTH
 ======================= */
-
 declare module "next-auth" {
   interface Session {
     error?: string;
     user: {
       id?: string;
-      name?: string;
-      email?: string;
       roles?: string[];
     } & DefaultSession["user"];
   }
@@ -24,148 +20,95 @@ declare module "next-auth" {
     realm_access?: { roles: string[] };
     resource_access?: { [key: string]: { roles: string[] } };
     realm_roles?: string[];
-    email?: string;
-    name?: string;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     sub?: string;
-    accessTokenExpires?: number;
-    error?: string;
     roles?: string[];
-    user?: {
-      id?: string;
-      name?: string;
-      email?: string;
-    };
+    error?: string;
+    // On ne garde QUE l'expiration pour savoir quand le Proxy doit refresh
+    accessTokenExpires?: number; 
   }
 }
 
 /* =======================
-   ENV
+    ENV
 ======================= */
-
 const issuer = process.env.KEYCLOAK_ISSUER!;
 const clientId = process.env.KEYCLOAK_CLIENT_ID!;
 const clientSecret = process.env.KEYCLOAK_CLIENT_SECRET!;
 
 /* =======================
-   NEXT AUTH CONFIG
+    NEXT AUTH CONFIG
 ======================= */
-
 export const authConfig: NextAuthOptions = {
   providers: [
     KeycloakProvider({
       clientId,
       clientSecret,
       issuer,
-      authorization: {
-        params: {
-          scope: "openid profile email roles",
-        },
-      },
+      authorization: { params: { scope: "openid profile email roles" } },
       profile(profile) {
         return {
           id: profile.sub,
           name: profile.name ?? profile.preferred_username ?? null,
           email: profile.email ?? null,
-          realm_roles: profile.realm_roles || [],
         };
       },
     }),
   ],
-
-  session: {
-    strategy: "jwt",
-  },
-
-  debug: true,
-
+  session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, account, profile }) {
-      // 🔐 LOGIN INITIAL - Sauvegarde dans le backend Nest.js
+      // 1. SIGN-IN INITIAL
       if (account && profile) {
-        // Vérification que les tokens existent
-        if (!account.access_token || !account.refresh_token || !account.id_token) {
-          console.error("❌ Tokens manquants dans le compte Keycloak");
-          return token;
-        }
-
-        // Récupération des rôles
         const realmRoles = profile.realm_roles || profile.realm_access?.roles || [];
         const clientRoles = profile.resource_access?.[clientId]?.roles || [];
+        const allRoles = [...new Set([...realmRoles, ...clientRoles])];
+        const expires_in = (account.expires_in as number) ?? 300;
 
-        token.sub = profile.sub;
-        token.roles = [...new Set([...realmRoles, ...clientRoles])];
-        token.user = {
-          id: profile.sub,
-          name: profile.name ?? profile.preferred_username ?? profile.email ?? "Utilisateur",
-          email: profile.email ?? undefined,
+        // ⭐ MOVE CRUCIAL : On stocke les tokens lourds dans SQLite
+        await SessionService.saveTokens(profile.sub!, {
+          accessToken: account.access_token!,
+          refreshToken: account.refresh_token!,
+          expiresIn: expires_in,
+        });
+
+        // On retourne un JWT NextAuth ultra léger
+        return {
+          sub: profile.sub,
+          roles: allRoles,
+          accessTokenExpires: Date.now() + expires_in * 1000,
         };
+      }
 
-        // ⭐ SAUVEGARDE DES TOKENS VIA TON API
-        const expiresIn = typeof account.expires_in === 'number' 
-        ? account.expires_in 
-        : 300;
-        try {
-          await tokensApi.save({
-            userId: profile.sub!,
-            accessToken: account.access_token,
-            refreshToken: account.refresh_token,
-            idToken: account.id_token,
-            expiresIn: expiresIn,
-          });
-          
-          console.log(`✅ Tokens sauvegardés pour ${profile.sub}`);
-        } catch (error) {
-          console.error("❌ Erreur sauvegarde tokens:", error);
-        }
-
+      // 2. CHECK EXPIRATION (Optionnel ici, le Proxy pourra aussi le faire)
+      if (Date.now() < (token.accessTokenExpires as number)) {
         return token;
       }
 
-      // 🧠 GESTION EXPIRATION
-      if (token.sub && (!token.accessTokenExpires || Date.now() >= token.accessTokenExpires - 30000)) {
-        try {
-          // ⭐ RAFRAÎCHIR VIA TON API
-          const response = await tokensApi.refresh(token.sub);
-          
-          if (response.success && response.expiresIn) {
-            token.accessTokenExpires = Date.now() + response.expiresIn * 1000;
-            console.log(`✅ Tokens rafraîchis pour ${token.sub}`);
-          }
-        } catch (error) {
-          console.error("❌ Refresh error:", error);
-          token.error = "RefreshAccessTokenError";
-        }
-      }
-
-      return token;
+      // Si expiré, on peut marquer le token pour que le Proxy sache qu'il faut refresh
+      return { ...token, error: "AccessTokenExpired" };
     },
 
     async session({ session, token }) {
-      // Session LÉGÈRE - uniquement les infos nécessaires
       session.user.id = token.sub;
-      session.user.name = token.user?.name;
-      session.user.email = token.user?.email;
       session.user.roles = token.roles || [];
       session.error = token.error;
-
       return session;
     },
   },
-
   events: {
     async signOut({ token }) {
-      // ⭐ DÉCONNEXION VIA TON API
       if (token.sub) {
         try {
-          await tokensApi.delete(token.sub);
-          console.log(`✅ Logout backend pour ${token.sub}`);
+          // ⭐ NETTOYAGE : On supprime les tokens de SQLite au logout
+          await SessionService.deleteSession(token.sub);
+          console.log(`✅ SQLite : Session supprimée pour ${token.sub}`);
         } catch (error) {
-          console.error("❌ Logout error:", error);
+          console.error("❌ SQLite Logout error:", error);
         }
       }
     },

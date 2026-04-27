@@ -1,6 +1,5 @@
 // lib/hooks/useContentAction.ts
 import { useState } from "react";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { formatApiError } from "@/lib/api/errors";
 import type { ContentAction } from "@/types/api/common";
@@ -22,7 +21,6 @@ export function useContentAction({ contentType, onSuccess }: UseContentActionPar
     resultMessage: null as string | null,
   });
 
-  const accessToken = useAccessToken();
   const toast = useToast();
 
   const openConfirmation = (contentId: string, action: ContentAction) => {
@@ -69,7 +67,6 @@ export function useContentAction({ contentType, onSuccess }: UseContentActionPar
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ action: dialogState.action }),
       });

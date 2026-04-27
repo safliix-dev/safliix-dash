@@ -15,62 +15,61 @@ import {
  */
 export const imageRightsApi = {
   /** Liste des ayants droit */
-  list: (params: RightsHolderListParams, accessToken?: string, signal?: AbortSignal) =>
-    apiRequest<RightsHolderListResponse>("/rights-holders", { params, accessToken, signal }),
+  list: (params: RightsHolderListParams, signal?: AbortSignal) =>
+    apiRequest<RightsHolderListResponse>("/rights-holders", { params , signal }),
 
   /** Détail d’un ayant droit */
-  detail: (id: string, accessToken?: string, signal?: AbortSignal) =>
-    apiRequest<ImageRightsHolderDetail>(`/rights-holders/${id}`, { accessToken, signal }),
+  detail: (id: string, signal?: AbortSignal) =>
+    apiRequest<ImageRightsHolderDetail>(`/rights-holders/${id}`, { signal }),
 
-  getById: (id:string, accessToken?:string, signal?:AbortSignal) => 
-    apiRequest<ImageRightsHolder>(`/rights-holders/${id}`, {accessToken, signal}),
+  getById: (id:string, signal?:AbortSignal) => 
+    apiRequest<ImageRightsHolder>(`/rights-holders/${id}`, {signal}),
 
   /** Création */
-  create: (payload: CreateRightsHolderPayload, accessToken?: string, signal?: AbortSignal) =>
+  create: (payload: CreateRightsHolderPayload, signal?: AbortSignal) =>
     apiRequest<ImageRightsHolderDetail>("/rights-holders", {
       method: "POST",
       body: payload,
-      accessToken,
+      
       signal,
     }),
   
-  update: (id:string,payload: ImageRightsFormStateUpdate, accessToken?: string, signal?: AbortSignal) =>
+  update: (id:string,payload: ImageRightsFormStateUpdate,  signal?: AbortSignal) =>
     apiRequest<ImageRightsHolderDetail>(`/rights-holders/${id}`, {
       method: "PUT",
       body: payload,
-      accessToken,
       signal,
     }),
   
-  delete: (id:string, accessToken?:string, signal?:AbortSignal) => apiRequest<void>(`/rights-holders/${id}`,{
+  delete: (id:string, signal?:AbortSignal) => apiRequest<void>(`/rights-holders/${id}`,{
       method: "DELETE",
-      accessToken,
+      
       signal,
     }),  
   
   /** Récupérer les contenus d’un ayant droit */
-  contents: (id: string, type: RightsHolderContentType, accessToken?: string, signal?: AbortSignal) =>
+  contents: (id: string, type: RightsHolderContentType, signal?: AbortSignal) =>
     apiRequest<RightsHolderContentResponse>(`/api/rights-holders/${id}/contents`, {
       params: { type },
-      accessToken,
+      
       signal,
     }),
 
   /** Liste globale de contenus filtrés par type et période */
   contentsList: (
     type: RightsHolderContentType,
-    accessTokenOrOptions?: string | { accessToken?: string; signal?: AbortSignal; from?: string; to?: string },
+    accessTokenOrOptions?: string | { signal?: AbortSignal; from?: string; to?: string },
     signal?: AbortSignal,
   ) => {
     const options =
       typeof accessTokenOrOptions === "string"
-        ? { accessToken: accessTokenOrOptions, signal }
+        ? { accessTokenOrOptions, signal }
         : accessTokenOrOptions || {};
-    const { accessToken, from, to, signal: finalSignal } = options;
+    const { signal: finalSignal } = options;
 
     return apiRequest<RightsHolderContentResponse[]>(
       "/rights-holders/contents",
-      { params: { type, from, to }, accessToken, signal: finalSignal },
+      { params: { type }, signal: finalSignal },
     );
   },
 

@@ -7,7 +7,6 @@ export interface TokensSaveResponse {
 
 export interface TokensGetResponse {
   exists: boolean;
-  accessToken?: string;
   refreshToken?: string;
   expiresAt?: string;
   isExpired?: boolean;
@@ -16,7 +15,6 @@ export interface TokensGetResponse {
 
 export interface TokensRefreshResponse {
   success: boolean;
-  accessToken: string;
   refreshToken: string;
   expiresIn: number;
 }

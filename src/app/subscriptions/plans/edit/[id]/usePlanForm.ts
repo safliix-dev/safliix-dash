@@ -13,7 +13,7 @@ import { PlanForm } from "@/types/api/subscriptions";
 
 export function usePlanForm(id:string) {
   const toast = useToast();
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
   const isEdit = !!id && id !== "new";
 
   const {
@@ -44,7 +44,7 @@ export function usePlanForm(id:string) {
       if (!isEdit) return;
   
       plansApi
-        .getById(id!, accessToken)
+        .getById(id!, )
         .then((data) => {
           reset({
             name: data.name,
@@ -62,7 +62,7 @@ export function usePlanForm(id:string) {
             description: "Impossible de charger le plan d'abonnement.",
           });
         });
-    }, [id,accessToken,isEdit,reset,toast]);
+    }, [id,,isEdit,reset,toast]);
 
   const openConfirm = handleSubmit((data) => {
     setPendingPlan(data);
@@ -102,7 +102,7 @@ export function usePlanForm(id:string) {
             quality: pendingPlan.quality,
             currency: pendingPlan.currency,
           },
-          accessToken,
+          ,
         ),
       );
 
@@ -130,7 +130,7 @@ export function usePlanForm(id:string) {
             quality: pendingPlan.quality,
             currency: pendingPlan.currency,
           },
-          accessToken,
+          ,
         ),
       );
 

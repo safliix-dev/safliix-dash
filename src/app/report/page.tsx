@@ -28,7 +28,7 @@ const SAMPLE_ENTRIES = [
 const ReportSelectionCard = () => {
   const [selectedReports, setSelectedReports] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
   const toast = useToast();
 
   const toggleReport = (report: string) => {
@@ -45,7 +45,7 @@ const ReportSelectionCard = () => {
     try {
       // À adapter si l'API permet de télécharger plusieurs rapports en une requête.
       for (const reportId of selectedReports) {
-        await reportsApi.download(reportId, accessToken);
+        await reportsApi.download(reportId, );
       }
       toast.success({ title: "Rapports", description: "Téléchargement démarré." });
     } catch (err) {

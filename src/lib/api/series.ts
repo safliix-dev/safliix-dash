@@ -12,24 +12,24 @@ import {
 
 
 export const seriesApi = {
-  list: (params: SeriesListParams, accessToken?: string) =>
-    apiRequest<SeriesListResponse>("/series", { params, accessToken }),
+  list: (params: SeriesListParams, ) =>
+    apiRequest<SeriesListResponse>("/series", { params,  }),
 
-  detail: (id: string, accessToken?: string) => apiRequest<SeriesDetail>(`/series/${id}`, { accessToken }),
+  detail: (id: string, ) => apiRequest<SeriesDetail>(`/series/${id}`, {  }),
 
-  create: (payload: SeriesMetadataPayload, accessToken?: string) =>
-    apiRequest<SeriesCreateOrUpdateResponse>("/series", { method: "POST", body: payload, accessToken }),
+  create: (payload: SeriesMetadataPayload, ) =>
+    apiRequest<SeriesCreateOrUpdateResponse>("/series", { method: "POST", body: payload,  }),
 
-  update: (id: string, payload: SeriesMetadataPayload, accessToken?: string) =>
-    apiRequest<SeriesCreateOrUpdateResponse>(`/series/${id}`, { method: "PUT", body: payload, accessToken }),
+  update: (id: string, payload: SeriesMetadataPayload, ) =>
+    apiRequest<SeriesCreateOrUpdateResponse>(`/series/${id}`, { method: "PUT", body: payload,  }),
 
   
  
-  metaOptions: (accessToken?: string) => apiRequest<SeriesMetaOptions>("/series/meta/options", { accessToken }),
+  metaOptions: () => apiRequest<SeriesMetaOptions>("/series/meta/options", {  }),
 
   // Seasons
-  createSeason: (seriesId: string, payload: CreateSeasonPayload, accessToken?: string) =>
-    apiRequest<{ seasonId: string }>(`/series/${seriesId}/seasons`, { method: "POST", body: payload, accessToken }),
+  createSeason: (seriesId: string, payload: CreateSeasonPayload, ) =>
+    apiRequest<{ seasonId: string }>(`/series/${seriesId}/seasons`, { method: "POST", body: payload,  }),
 
  
   

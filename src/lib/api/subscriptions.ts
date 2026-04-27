@@ -16,48 +16,46 @@ import {
 } from "@/types/api/subscriptions";
 
 export const plansApi = {
-  list: (params: PlanListParams, accessToken?: string) =>
-    apiRequest<PlanListResponse>("/plans", { params, accessToken }),
+  list: (params: PlanListParams) => apiRequest<PlanListResponse>("/plans", { params }),
 
-  detail: (id: string, accessToken?: string, signal?: AbortSignal) =>
-    apiRequest<PlanDetail>(`/plans/${id}`, { accessToken, signal }),
+  detail: (id: string) =>
+    apiRequest<PlanDetail>(`/plans/${id}`),
 
-  getById: (id: string, accessToken?: string, signal?: AbortSignal) =>
-    apiRequest<PlanDetail>(`/plans/${id}`, { accessToken, signal }),
+  getById: (id: string) =>
+    apiRequest<PlanDetail>(`/plans/${id}`),
 
+  create: (payload: PlanPayload) =>
+    apiRequest<{ id: string }>("/plans", { method: "POST", body: payload }),
 
-  create: (payload: PlanPayload, accessToken?: string) =>
-    apiRequest<{ id: string }>("/plans", { method: "POST", body: payload, accessToken }),
+  update: (id: string, payload: PlanPayloadUpdate) =>
+    apiRequest<{ id: string }>(`/plans/${id}`, { method: "PUT", body: payload }),
 
-  update: (id: string, payload: PlanPayloadUpdate, accessToken?: string) =>
-    apiRequest<{ id: string }>(`/plans/${id}`, { method: "PUT", body: payload, accessToken }),
-
-  delete: (id: string, accessToken?: string) =>
-    apiRequest<void>(`/plans/${id}`, { method: "DELETE", accessToken }),
+  delete: (id: string) =>
+    apiRequest<void>(`/plans/${id}`, { method: "DELETE" }),
 };
 
 export const subscriptionsApi = {
-  list: (params: SubscriptionListParams, accessToken?: string) =>
-    apiRequest<SubscriptionListResponse>("/subscriptions", { params, accessToken }),
+  list: (params: SubscriptionListParams) =>
+    apiRequest<SubscriptionListResponse>("/subscriptions", { params }),
 
-  create: (payload: CreateSubscriptionPayload, accessToken?: string) =>
-    apiRequest<CreateSubscriptionResponse>("/subscriptions", { method: "POST", body: payload, accessToken }),
+  create: (payload: CreateSubscriptionPayload) =>
+    apiRequest<CreateSubscriptionResponse>("/subscriptions", { method: "POST", body: payload }),
 };
 
 export const promosApi = {
-  list: (params: PromoListParams, accessToken?: string) =>
-    apiRequest<PromotionItem[]>("/promotions", { params, accessToken }),
+  list: (params: PromoListParams) =>
+    apiRequest<PromotionItem[]>("/promotions", { params }),
 
-  create: (payload: PromotionPayload, accessToken?: string) =>
-    apiRequest<void>("/promotions", { method: "POST", body: payload, accessToken }),
+  create: (payload: PromotionPayload) =>
+    apiRequest<void>("/promotions", { method: "POST", body: payload }),
 
-  getById: (id:string, accessToken?:string, signal?:AbortSignal) =>
-    apiRequest<PromotionItem>(`/promotions/${id}`, {accessToken,signal}),
+  getById: (id: string, signal?: AbortSignal) =>
+    apiRequest<PromotionItem>(`/promotions/${id}`, { signal }),
 
-  update: (id:string, payload: PromotionPayloadUpdate, accessToken?:string, signal?:AbortSignal) =>
-    apiRequest<void>(`/promotions/${id}`,{method:"PUT", body:payload, accessToken, signal } ),
+  update: (id: string, payload: PromotionPayloadUpdate, signal?: AbortSignal) =>
+    apiRequest<void>(`/promotions/${id}`, { method: "PUT", body: payload, signal }),
 
-  delete: (id:string, accessToken?:string, signal?:AbortSignal) =>
-    apiRequest<void>(`/promotions/${id}`, { method:"DELETE", accessToken,signal}),
+  delete: (id: string, signal?: AbortSignal) =>
+    apiRequest<void>(`/promotions/${id}`, { method: "DELETE", signal }),
 
 };

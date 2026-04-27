@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from "react";
-import { useAccessToken } from "@/lib/auth/useAccessToken";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { formatApiError } from "@/lib/api/errors";
 import { seriesApi } from "@/lib/api/series";
@@ -31,7 +30,6 @@ export function useSeriesDetail(seriesId: string): UseSeriesDetailReturn {
   const [episodesBySeason, setEpisodesBySeason] = useState<Record<string, Episode[]>>({});
   const [expandedSeasons, setExpandedSeasons] = useState<Set<string>>(new Set());
 
-  const accessToken = useAccessToken();
   const toast = useToast();
 
   // Chargement des détails de la série
@@ -40,7 +38,7 @@ export function useSeriesDetail(seriesId: string): UseSeriesDetailReturn {
     
     setLoading(true);
     try {
-      const data = await seriesApi.detail(seriesId, accessToken);
+      const data = await seriesApi.detail(seriesId, );
       setDetail(data);
       
       // Initialiser les saisons expansées (toutes par défaut)
@@ -54,14 +52,14 @@ export function useSeriesDetail(seriesId: string): UseSeriesDetailReturn {
     } finally {
       setLoading(false);
     }
-  }, [seriesId, accessToken, toast]);
+  }, [seriesId, , toast]);
 
   // Chargement des épisodes d'une saison
   const loadEpisodes = useCallback(async (seasonId: string) => {
     if (!seriesId || !seasonId) return;
     
     try {
-      const episodes = await episodeApi.list(seriesId, seasonId, undefined, accessToken);
+      const episodes = await episodeApi.list(seriesId, seasonId, undefined, );
       const normalized = Array.isArray(episodes) ? episodes : [];
       setEpisodesBySeason(prev => ({ ...prev, [seasonId]: normalized }));
     } catch (error) {
@@ -69,7 +67,7 @@ export function useSeriesDetail(seriesId: string): UseSeriesDetailReturn {
       toast.error({ title: "Episodes", description: friendly.message });
       setEpisodesBySeason(prev => ({ ...prev, [seasonId]: [] }));
     }
-  }, [seriesId, accessToken, toast]);
+  }, [seriesId, , toast]);
 
   // Expansion/repliement d'une saison
   const toggleSeason = useCallback(async (seasonId: string) => {
@@ -99,7 +97,7 @@ export function useSeriesDetail(seriesId: string): UseSeriesDetailReturn {
   // Ajouter une saison
   const addSeason = useCallback(async (seasonMetaPyload: SeasonFormData) => {
     try {
-      await seasonsApi.create( seasonMetaPyload, accessToken);
+      await seasonsApi.create( seasonMetaPyload, );
       toast.success({ title: "Succès", description: "Saison ajoutée avec succès" });
       await refresh();
     } catch (error) {
@@ -107,12 +105,12 @@ export function useSeriesDetail(seriesId: string): UseSeriesDetailReturn {
       toast.error({ title: "Erreur", description: friendly.message });
       throw error;
     }
-  }, [ accessToken, toast, refresh]);
+  }, [ , toast, refresh]);
 
   // Ajouter un épisode
   const addEpisode = useCallback(async (episodeFormData:EpisodeMetadataPayload) => {
     try {
-      await episodeApi.create(episodeFormData, accessToken);
+      await episodeApi.create(episodeFormData, );
       toast.success({ title: "Succès", description: "Épisode ajouté avec succès" });
       // Recharger les épisodes de la saison concernée
       await loadEpisodes(episodeFormData.seasonId);
@@ -121,7 +119,7 @@ export function useSeriesDetail(seriesId: string): UseSeriesDetailReturn {
       toast.error({ title: "Erreur", description: friendly.message });
       throw error;
     }
-  }, [accessToken, toast, loadEpisodes]);
+  }, [, toast, loadEpisodes]);
 
   // Mettre à jour le statut de la série
   const updateStatus = useCallback(async (action: "publish" | "archive" | "restore") => {
@@ -130,7 +128,6 @@ export function useSeriesDetail(seriesId: string): UseSeriesDetailReturn {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ action }),
       });
@@ -146,7 +143,7 @@ export function useSeriesDetail(seriesId: string): UseSeriesDetailReturn {
       toast.error({ title: "Erreur", description: friendly.message });
       throw error;
     }
-  }, [seriesId, accessToken, toast, refresh]);
+  }, [seriesId, , toast, refresh]);
 
   // Chargement initial
   useEffect(() => {

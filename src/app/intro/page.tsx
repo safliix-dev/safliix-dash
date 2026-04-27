@@ -14,7 +14,7 @@ export default function Page(){
   const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
   const toast = useToast();
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export default function Page(){
       setLoading(true);
       setError(null);
       try {
-        const res = await introApi.resources(accessToken);
+        const res = await introApi.resources();
         if (cancelled) return;
         setResources(res.items);
         setSelected(res.items[0]?.id || null);
@@ -38,7 +38,7 @@ export default function Page(){
     };
     load();
     return () => { cancelled = true; };
-  }, [accessToken, toast]);
+  }, [, toast]);
 
   const current = resources.find((r) => r.id === selected);
 

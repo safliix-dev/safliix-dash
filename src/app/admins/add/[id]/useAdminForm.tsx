@@ -11,7 +11,7 @@ import type { DialogStatus } from "@/ui/components/confirmationDialog";
 
 export function useAdminForm(id?: string) {
   const toast = useToast();
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
 
   const isEditMode = Boolean(id && id !== "new");
 
@@ -38,7 +38,7 @@ export function useAdminForm(id?: string) {
 
     (async () => {
       try {
-        const admin = await adminsApi.getById(id, accessToken);
+        const admin = await adminsApi.getById(id, );
         reset({
           ...admin,
           password: "",
@@ -51,7 +51,7 @@ export function useAdminForm(id?: string) {
         });
       }
     })();
-  }, [id, isEditMode, accessToken, reset, toast]);
+  }, [id, isEditMode, , reset, toast]);
 
   /** 👉 Ouvrir la confirmation */
   const openConfirm = handleSubmit((data) => {
@@ -87,9 +87,9 @@ export function useAdminForm(id?: string) {
       : pendingAdmin;
 
       if (isEditMode && id) {
-        await adminsApi.update(id, payload, accessToken);
+        await adminsApi.update(id, payload, );
       } else {
-        await adminsApi.create(payload as AdminFormState, accessToken);
+        await adminsApi.create(payload as AdminFormState, );
       }
 
       setDialogStatus("success");

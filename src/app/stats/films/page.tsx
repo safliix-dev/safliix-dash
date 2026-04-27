@@ -31,7 +31,7 @@ export default function Page() {
   const [stats, setStats] = useState<FilmsStatsResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
   const toast = useToast();
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export default function Page() {
       setLoading(true);
       setError(null);
       try {
-        const res = await statsApi.films(undefined, accessToken);
+        const res = await statsApi.films(undefined, );
         if (cancelled) return;
         setStats(res);
       } catch (err) {
@@ -54,7 +54,7 @@ export default function Page() {
     };
     load();
     return () => { cancelled = true; };
-  }, [accessToken, toast]);
+  }, [, toast]);
 
   const { data: barData, keys: barKeys } = useMemo(
     () => toBarData(stats?.series ?? []),

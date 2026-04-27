@@ -24,7 +24,7 @@ export interface AdsPresignedSlot extends PresignedSlot<AdsSlot> {
 
 export function useAdsForm({ adsId }: UseadsFormProps = {}) {
   const { data: session } = useSession();
-  const accessToken = session?.accessToken;
+  const  = session?.;
 
   // 1. On définit les valeurs par défaut proprement
   const defaultValues: AdsFormData = {
@@ -63,6 +63,6 @@ export function useAdsForm({ adsId }: UseadsFormProps = {}) {
   return {
     ...engine,
     meta,
-    accessToken,
+    ,
   };
 }

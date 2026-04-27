@@ -2,7 +2,6 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo, u
 import { useGlobalSocket } from './SocketContext';
 import { videoSocket } from '@/lib/socket/socket-client';
 import { jobApi } from '@/lib/api/job';
-import { useAccessToken } from '@/lib/auth/useAccessToken';
 import type { EncodingJob } from '@/types/api/job';
 
 // ============================================================
@@ -105,7 +104,6 @@ const JobContext = createContext<JobContextValue | undefined>(undefined);
 
 export const JobProvider = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isConnected } = useGlobalSocket();
-  const accessToken = useAccessToken();
   
   const [jobs, setJobs] = useState<EncodingJob[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -148,14 +146,14 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const loadInitialJobs = useCallback(async (): Promise<void> => {
-    if (!accessToken) return;
+   
     if (isInitialized.current) return;
     
     console.log('🔄 [JobContext] Loading initial jobs...');
     setIsLoading(true);
     
     try {
-      const data = await jobApi.list({ accessToken });
+      const data = await jobApi.list({status:"Processing"});
       console.log(`✅ [JobContext] Loaded ${data.length} initial jobs`);
       setJobs(data);
       isInitialized.current = true;
@@ -165,16 +163,16 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [accessToken]);
+  }, []);
 
   const refreshAll = useCallback(async (): Promise<void> => {
-    if (!accessToken) return;
+    
     
     console.log('🔄 [JobContext] Manual refresh...');
     setIsLoading(true);
     
     try {
-      const data = await jobApi.list({ accessToken });
+      const data = await jobApi.list({  });
       upsertJobs(data);
     } catch (err) {
       const error = err as Error;
@@ -182,50 +180,48 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [accessToken, upsertJobs]);
+  }, [, upsertJobs]);
 
   // ============================================================
   // JOB ACTIONS
   // ============================================================
 
   const pauseJob = useCallback(async (jobId: string): Promise<void> => {
-    if (!accessToken) return;
+    
     
     try {
       console.log(`⏸️ [JobContext] Pausing job: ${jobId}`);
-      await jobApi.pause(jobId, accessToken);
+      await jobApi.pause(jobId, );
     } catch (err) {
       const error = err as Error;
       console.error(`❌ [JobContext] Error pausing job ${jobId}:`, error.message);
     }
-  }, [accessToken]);
+  }, []);
 
   const resumeJob = useCallback(async (jobId: string): Promise<void> => {
-    if (!accessToken) return;
-    
+   
     try {
       console.log(`▶️ [JobContext] Resuming job: ${jobId}`);
-      await jobApi.resume(jobId, accessToken);
+      await jobApi.resume(jobId, );
     } catch (err) {
       const error = err as Error;
       console.error(`❌ [JobContext] Error resuming job ${jobId}:`, error.message);
     }
-  }, [accessToken]);
+  }, []);
 
   const retryJob = useCallback(async (jobId: string): Promise<void> => {
-    if (!accessToken) return;
-    
+   
     try {
       console.log(`🔄 [JobContext] Retrying job: ${jobId}`);
       // Optimistic update
       upsertJobs({ id: jobId, status: 'processing' , progress: 0 });
-      await jobApi.retry(jobId, accessToken);
+      await jobApi.retry(jobId, );
     } catch (err) {
       const error = err as Error;
       console.error(`❌ [JobContext] Error retrying job ${jobId}:`, error.message);
       upsertJobs({ id: jobId, status: 'failed'  });
     }
-  }, [accessToken, upsertJobs]);
+  }, [, upsertJobs]);
 
   // ============================================================
   // SOCKET SETUP

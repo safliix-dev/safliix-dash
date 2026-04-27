@@ -2,18 +2,18 @@ import { apiRequest } from "./client";
 import { UserPayload, type UserListParams, type UserListResponse, type UserProfile, type UserUpdatePayload } from "@/types/api/users";
 
 export const usersApi = {
-  list: (params: UserListParams, accessToken?: string) =>
-    apiRequest<UserListResponse>("/users", { params, accessToken }),
+  list: (params: UserListParams) =>
+    apiRequest<UserListResponse>("/users", { params}),
 
-  create: (payload:UserPayload, accessToken?:string,signal?:AbortSignal) =>
-    apiRequest<void>("/users", {method:"POST", body:payload, accessToken, signal }),
+  create: (payload:UserPayload,signal?:AbortSignal) =>
+    apiRequest<void>("/users", {method:"POST", body:payload , signal }),
 
-  delete: (id:string, accessToken?:string, signal?:AbortSignal) =>
-    apiRequest<void>(`/users/${id}`,{ method:"DELETE", accessToken, signal}),
+  delete: (id:string, signal?:AbortSignal) =>
+    apiRequest<void>(`/users/${id}`,{ method:"DELETE",signal}),
 
-  detail: (id: string, accessToken?: string) =>
-    apiRequest<UserProfile>(`/users/${id}`, { accessToken }),
+  detail: (id: string, ) =>
+    apiRequest<UserProfile>(`/users/${id}`, {  }),
 
-  update: (id: string, payload: UserUpdatePayload, accessToken?: string) =>
-    apiRequest<UserProfile>(`/users/${id}`, { method: "PATCH", body: payload, accessToken })
+  update: (id: string, payload: UserUpdatePayload) =>
+    apiRequest<UserProfile>(`/users/${id}`, { method: "PATCH", body: payload,  })
 };

@@ -15,7 +15,7 @@ interface UseSeasonFormProps {
 
 export function useSeasonForm({ seriesId, seasonId }: UseSeasonFormProps) {
   const { data: session } = useSession();
-  const accessToken = session?.accessToken;
+  const  = session?.;
 
   // 1. Configuration du moteur (Engine)
   const engine = useMediaFormEngine(
@@ -47,6 +47,6 @@ export function useSeasonForm({ seriesId, seasonId }: UseSeasonFormProps) {
   return {
     ...engine,
     meta,
-    accessToken,
+    ,
   };
 }

@@ -53,13 +53,13 @@ export function useBaseContentManagement<T extends { status: ContentStatus; type
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortFilter, setSortFilter] = useState<SortOption>("none");
 
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
   const toast = useToast();
 
   const refreshData = useCallback(async () => {
   setLoading(true);
   try {
-    const res = await imageRightsApi.contentsList(contentType, { accessToken });
+    const res = await imageRightsApi.contentsList(contentType, {  });
     setRawContentByRightholder(res.filter((g) => getItemsFromGroup(g).length > 0));
   } catch (err) {
     const friendly = formatApiError(err);
@@ -67,7 +67,7 @@ export function useBaseContentManagement<T extends { status: ContentStatus; type
   } finally {
     setLoading(false);
   }
-}, [accessToken, contentType, getItemsFromGroup, toast]);
+}, [, contentType, getItemsFromGroup, toast]);
   // Chargement des données
   useEffect(() => {
     const controller = new AbortController();
@@ -75,7 +75,7 @@ export function useBaseContentManagement<T extends { status: ContentStatus; type
       setLoading(true);
       try {
         const res = await imageRightsApi.contentsList(contentType, { 
-          accessToken, 
+          , 
           signal: controller.signal 
         });
         setRawContentByRightholder(res.filter((g) => {
@@ -92,7 +92,7 @@ export function useBaseContentManagement<T extends { status: ContentStatus; type
     };
     load();
     return () => controller.abort();
-  }, [accessToken, toast, contentType, getItemsFromGroup]);
+  }, [, toast, contentType, getItemsFromGroup]);
 
   // Calcul des options du filtre statut (avec compteurs)
   const statusFilterOptions = useMemo<StatusFilterOption[]>(() => {

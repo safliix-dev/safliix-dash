@@ -20,7 +20,7 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
   const toast = useToast();
   const router = useRouter();
 
@@ -28,7 +28,7 @@ export default function Page() {
   const deleteAdmin = useDeleteWithConfirmation<Admin>({
     entityName: "le compte administrateur",
     getLabel: (a) => a.nom,
-    deleteFn: (id:string) => adminsApi.delete(id, accessToken),
+    deleteFn: (id:string) => adminsApi.delete(id, ),
     onDeleted: (id:string) =>
       setAdmins((prev) => prev.filter((a) => a.id !== id)),
   });
@@ -42,7 +42,7 @@ export default function Page() {
       setLoading(true);
       setError(null);
       try {
-        const res = await adminsApi.list({ page: 1, pageSize: 20 }, accessToken);
+        const res = await adminsApi.list({ page: 1, pageSize: 20 }, );
 
         const mapped: Admin[] = res.items.map((u, idx) => ({
           id: u.id,
@@ -68,7 +68,7 @@ export default function Page() {
     };
 
     load();
-  }, [accessToken, toast]);
+  }, [, toast]);
 
   return (
     <div>

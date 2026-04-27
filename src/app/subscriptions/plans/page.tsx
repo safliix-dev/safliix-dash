@@ -20,7 +20,7 @@ export default function Page() {
   const [plans, setPlans] = useState<PlanItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
   const toast = useToast();
   const router = useRouter();
 
@@ -28,7 +28,7 @@ export default function Page() {
   const deletePlan = useDeleteWithConfirmation<PlanItem>({
       entityName: "le plan d'abonnement",
       getLabel: (p) => p.name,
-      deleteFn: (id:string) => plansApi.delete(id, accessToken),
+      deleteFn: (id:string) => plansApi.delete(id, ),
       onDeleted: (id:string) => setPlans((prev) => prev.filter((a) => a.id !== id)),
         
     });
@@ -44,7 +44,7 @@ export default function Page() {
       setLoading(true);
       setError(null);
       try {
-        const res = await plansApi.list({ page: 1, pageSize: 20 }, accessToken);
+        const res = await plansApi.list({ page: 1, pageSize: 20 }, );
         if (cancelled) return;
         
         setPlans(res.items);
@@ -62,7 +62,7 @@ export default function Page() {
       cancelled = true;
       controller.abort();
     };
-  }, [accessToken, toast]);
+  }, [, toast]);
 
   return (
     <div className="space-y-5">

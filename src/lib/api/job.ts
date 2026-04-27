@@ -3,16 +3,16 @@ import { apiRequest } from "./client";
 import { EncodingJob,JobParams } from "@/types/api/job";
 
 export const jobApi = {
-  list: (params: JobParams, accessToken?: string) =>
-    apiRequest<EncodingJob[]>("/jobs/active", { params, accessToken }),
+  list: (params: JobParams) =>
+    apiRequest<EncodingJob[]>("/jobs/active", { params,  }),
 
-  resume:(jobId:string,accessToken?:string) =>
-    apiRequest<boolean>(`/jobs/resume/${jobId}`,{accessToken}),
+  resume:(jobId:string) =>
+    apiRequest<boolean>(`/jobs/resume/${jobId}`,{}),
 
-  pause:(jobId:string,accessToken?:string) =>
-    apiRequest<boolean>(`/jobs/resume/${jobId}`,{accessToken}),
+  pause:(jobId:string) =>
+    apiRequest<boolean>(`/jobs/resume/${jobId}`,{}),
 
-  retry:(jobId:string,accessToken?:string) =>
-    apiRequest<boolean>(`/jobs/resume/${jobId}`,{accessToken}),
+  retry:(jobId:string) =>
+    apiRequest<boolean>(`/jobs/resume/${jobId}`,{}),
 
 };

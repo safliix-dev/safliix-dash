@@ -4,18 +4,18 @@ import { type AdminListParams, type AdminListResponse, type AdminProfile, type A
 
 export const adminsApi = {
 
-  create: (payload: AdminFormState, accessToken?:string) => apiRequest<void>("/adminUser",{method:"POST",body:payload,accessToken}),
+  create: (payload: AdminFormState) => apiRequest<void>("/adminUser",{method:"POST",body:payload,}),
 
-  list: (params: AdminListParams, accessToken?: string) =>
-    apiRequest<AdminListResponse>("/adminUser", { params, accessToken }),
+  list: (params: AdminListParams, ) =>
+    apiRequest<AdminListResponse>("/adminUser", { params,  }),
 
-  detail: (id: string, accessToken?: string) =>
-    apiRequest<AdminProfile>(`/adminUser/${id}`, { accessToken }),
+  detail: (id: string, ) =>
+    apiRequest<AdminProfile>(`/adminUser/${id}`, {  }),
 
-  getById: (id:string, accessToken?:string) => apiRequest<AdminFormState>(`/adminUser/${id}`,{ accessToken }),
+  getById: (id:string) => apiRequest<AdminFormState>(`/adminUser/${id}`,{  }),
 
-  update: (id: string, payload: AdminUpdatePayload, accessToken?: string) =>
-    apiRequest<AdminProfile>(`/adminUser/${id}`, { method: "PUT", body: payload, accessToken }),
+  update: (id: string, payload: AdminUpdatePayload, ) =>
+    apiRequest<AdminProfile>(`/adminUser/${id}`, { method: "PUT", body: payload,  }),
 
-  delete: (id:string, accessToken?:string) => apiRequest<void>(`/adminUser/${id}`, {accessToken})
+  delete: (id:string) => apiRequest<void>(`/adminUser/${id}`, {})
 };

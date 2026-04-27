@@ -15,7 +15,7 @@ type PendingPromotionData = PromotionPayload | PromotionPayloadUpdate;
 export function usePromoForm(id?: string) {
   const isEdit = !!id && id !== "new";
   const toast = useToast();
-  const accessToken = useAccessToken();
+  const  = useAccessToken();
 
   /* ---------------- Form Configuration ---------------- */
   const {
@@ -71,10 +71,10 @@ export function usePromoForm(id?: string) {
     try {
       if (isEdit) {
         // TypeScript accepte ici car pendingData match PlanPayloadUpdate (Partial)
-        await promosApi.update(id!, pendingData as PromotionPayloadUpdate, accessToken);
+        await promosApi.update(id!, pendingData as PromotionPayloadUpdate, );
       } else {
         // En création, on cast vers le type complet
-        await promosApi.create(pendingData as PromotionPayload, accessToken);
+        await promosApi.create(pendingData as PromotionPayload, );
       }
 
       toast.success({
@@ -102,7 +102,7 @@ export function usePromoForm(id?: string) {
     let isMounted = true;
 
     promosApi
-      .getById(id!, accessToken)
+      .getById(id!, )
       .then((data) => {
         
         reset({
@@ -119,7 +119,7 @@ export function usePromoForm(id?: string) {
       });
 
     return () => { isMounted = false; };
-  }, [id, isEdit, accessToken, reset, formatDateForInput,toast]);
+  }, [id, isEdit, , reset, formatDateForInput,toast]);
 
   return {
     isEdit,
