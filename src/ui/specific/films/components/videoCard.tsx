@@ -1,9 +1,10 @@
 // ui/specific/films/components/videoCard.tsx
-import React, { useMemo } from "react";
-import { Gauge, Play, Star, TrendingUp } from "lucide-react";
+import React, { useMemo, useState, useEffect } from "react";
+import { Gauge, Play, Star, TrendingUp, X } from "lucide-react";
 import Image from "next/image";
 import { StatusBadge } from "@/ui/components/statusBadge";
-import type { ContentStatus,ContentAction } from "@/types/api/common";
+import type { ContentStatus, ContentAction } from "@/types/api/common";
+import VideoPlayer from "../../../components/videoPlayer";
 
 export type NormalizedStats = {
   locationsCount?: number;
@@ -25,7 +26,7 @@ const STATUS_ACTION_CONFIG: Record<
   { action: ContentAction; label: string } | null
 > = {
   DRAFT: { action: "publish", label: "Publier" },
-  PROCESSING: null, // Pas d'action
+  PROCESSING: null,
   PROCESSED: { action: "publish", label: "Publier" },
   PUBLISHED: { action: "archive", label: "Archiver" },
   ARCHIVED: { action: "restore", label: "Restaurer" },
@@ -43,9 +44,10 @@ type VideoCardProps = {
   stats: NormalizedStats;
   mode: "abonnement" | "location";
   detailHref?: string;
+  videoSrc?: string | null;
   onEdit?: () => void;
   onPlay?: () => void;
-  onAction?: (action: ContentAction) => void; // Nouveau callback
+  onAction?: (action: ContentAction) => void;
 };
 
 export default function VideoCard({
@@ -60,10 +62,13 @@ export default function VideoCard({
   stats,
   mode,
   detailHref,
+  videoSrc,
   onEdit,
   onPlay,
   onAction,
 }: VideoCardProps) {
+  const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+  
   const posterSrc = poster || "/image-icon.jpg";
 
   const {
@@ -75,17 +80,44 @@ export default function VideoCard({
     geo,
   } = stats;
 
-  // Récupérer la configuration d'action pour ce statut
   const actionConfig = STATUS_ACTION_CONFIG[status];
 
-  // Gestionnaire pour le bouton d'action contextuel
   const handleAction = () => {
     if (actionConfig && onAction) {
       onAction(actionConfig.action);
     }
   };
 
-  // Calcul du gradient pour le donut chart
+  const handleOpenPlayer = () => {
+    setIsPlayerOpen(true);
+    onPlay?.();
+  };
+
+  const handleClosePlayer = () => {
+    setIsPlayerOpen(false);
+  };
+
+  // 🎹 Gestion de la touche Échap
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isPlayerOpen) {
+        handleClosePlayer();
+      }
+    };
+
+    if (isPlayerOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+      // Empêcher le scroll du body quand la modal est ouverte
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      // Restaurer le scroll quand la modal est fermée
+      document.body.style.overflow = "";
+    };
+  }, [isPlayerOpen]);
+
   const conicGradient = useMemo(() => {
     const segments = [
       { color: "#16a34a", value: donutViewed },
@@ -104,180 +136,214 @@ export default function VideoCard({
       .join(", ");
   }, [donutCatalog, donutViewed]);
 
-  // Calcul du max pour les progress bars géographiques
   const geoMaxValue = useMemo(() => {
     if (geo.length === 0) return 100;
     return Math.max(...geo.map(g => g.value || 0));
   }, [geo]);
 
   return (
-    <div className="bg-neutral text-white p-4 rounded-xl shadow-lg flex flex-col gap-4 border border-base-300">
-      <div className="flex items-start gap-4">
-        {/* === LEFT === */}
-        <div className="flex flex-col items-center gap-2">
-          <Image
-            width={360}
-            height={360}
-            src={posterSrc}
-            alt="Video Poster"
-            className="w-40 h-28 object-cover rounded-md"
-          />
-          
-          {/* Bouton Modifier */}
-          <button 
-            className="btn btn-success btn-sm w-full rounded-full"
-            onClick={onEdit}
-          >
-            Modifier
-          </button>
-
-          {/* Bouton d'action contextuel (selon statut) */}
-          {actionConfig && (
-            <button
-              className="btn btn-primary btn-sm w-full rounded-full"
-              onClick={handleAction}
-            >
-              {actionConfig.label}
-            </button>
-          )}
-
-          {detailHref && (
-            <a
-              href={detailHref}
-              className="btn btn-ghost btn-xs text-primary border-primary/50 rounded-full w-full text-center"
-            >
-              Voir les détails
-            </a>
-          )}
-        </div>
-
-        {/* === INFO === */}
-        <div className="flex-1 flex flex-col gap-1">
-          <h2 className="text-2xl font-bold">{title}</h2>
-          <div className="flex items-center gap-2">
-            <StatusBadge status={status} size="sm" />
-          </div>
-          <p className="text-sm">Réalisé par {director}</p>
-          <p className="text-sm">DP : {dp}</p>
-          <p className="text-sm">Catégorie : {category}</p>
-        </div>
-
-        {/* === HERO === */}
-        <div className="flex items-start gap-4 flex-[1.2]">
-          <div className="relative">
+    <>
+      <div className="bg-neutral text-white p-4 rounded-xl shadow-lg flex flex-col gap-4 border border-base-300">
+        <div className="flex items-start gap-4">
+          {/* === LEFT === */}
+          <div className="flex flex-col items-center gap-2">
             <Image
               width={360}
               height={360}
-              src={hero ?? posterSrc}
-              alt="scene"
-              className="w-60 h-48 object-cover rounded-md"
+              src={posterSrc}
+              alt="Video Poster"
+              className="w-40 h-28 object-cover rounded-md"
             />
+            
             <button 
-              className="absolute inset-0 flex items-center justify-center"
-              onClick={onPlay}
+              className="btn btn-success btn-sm w-full rounded-full"
+              onClick={onEdit}
             >
-              <span className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-lg">
-                <Play className="w-6 h-6 text-black" />
-              </span>
+              Modifier
             </button>
-          </div>
 
-          {/* === STATS === */}
-          <div className="p-3 rounded-lg flex flex-col gap-2 min-w-[160px]">
-            <p className="text-sm text-white/70 font-semibold">Statistique:</p>
+            {actionConfig && (
+              <button
+                className="btn btn-primary btn-sm w-full rounded-full"
+                onClick={handleAction}
+              >
+                {actionConfig.label}
+              </button>
+            )}
 
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-primary" />
-              <div>
-                <h4 className="text-primary font-bold">{locationsCount ?? 0}</h4>
-                <p className="text-xs text-white/60">
-                  {mode === "location" ? "Locations" : "Abonnements"}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Gauge className="w-5 h-5 text-primary" />
-              <div>
-                <h4 className="text-primary font-bold">
-                  {revenue.toLocaleString()} FCFA
-                </h4>
-                <p className="text-xs text-white/60">Revenus</p>
-              </div>
-            </div>
-
-            <p className="text-sm mt-2">Notes / Avis</p>
-            <div className="flex gap-1">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`w-5 h-5 ${
-                    i < stars
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "text-yellow-400"
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* === GEO / DONUT === */}
-        {mode === "location" ? (
-          <div className="flex-1 space-y-2">
-            <h3 className="font-semibold">Revenu géographique</h3>
-
-            {geo.length > 0 ? (
-              <div className="space-y-2">
-                {geo.map((geoItem, index) => (
-                  <div key={index} className="space-y-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <p>{geoItem.label || "Pays"}</p>
-                      <p>{geoItem.value?.toLocaleString() || 0} FCFA</p>
-                    </div>
-                    <progress
-                      className="progress w-full"
-                      value={geoItem.value || 0}
-                      max={geoMaxValue}
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-sm text-white/40 italic text-center py-4">
-                Aucune donnée géographique disponible
-              </div>
+            {detailHref && (
+              <a
+                href={detailHref}
+                className="btn btn-ghost btn-xs text-primary border-primary/50 rounded-full w-full text-center"
+              >
+                Voir les détails
+              </a>
             )}
           </div>
-        ) : (
-          <div className="flex-1 flex items-center justify-center gap-4">
-            <div className="relative w-44 h-44">
-              <div
-                className="absolute inset-0 rounded-full"
-                style={{
-                  background: `conic-gradient(${conicGradient})`,
-                }}
+
+          {/* === INFO === */}
+          <div className="flex-1 flex flex-col gap-1">
+            <h2 className="text-2xl font-bold">{title}</h2>
+            <div className="flex items-center gap-2">
+              <StatusBadge status={status} size="sm" />
+            </div>
+            <p className="text-sm">Réalisé par {director}</p>
+            <p className="text-sm">DP : {dp}</p>
+            <p className="text-sm">Catégorie : {category}</p>
+          </div>
+
+          {/* === HERO AVEC PLAYER === */}
+          <div className="flex items-start gap-4 flex-[1.2]">
+            <div className="relative">
+              <Image
+                width={360}
+                height={360}
+                src={hero ?? posterSrc}
+                alt="scene"
+                className="w-60 h-48 object-cover rounded-md"
               />
-              <div className="absolute inset-3 rounded-full bg-base-100 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-primary">
-                    {donutViewed}%
-                  </div>
-                  <div className="text-xs text-white/60">min suivi</div>
+              <button 
+                className="absolute inset-0 flex items-center justify-center"
+                onClick={handleOpenPlayer}
+              >
+                <span className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
+                  <Play className="w-6 h-6 text-black" />
+                </span>
+              </button>
+            </div>
+
+            {/* === STATS === */}
+            <div className="p-3 rounded-lg flex flex-col gap-2 min-w-[160px]">
+              <p className="text-sm text-white/70 font-semibold">Statistique:</p>
+
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-primary" />
+                <div>
+                  <h4 className="text-primary font-bold">{locationsCount ?? 0}</h4>
+                  <p className="text-xs text-white/60">
+                    {mode === "location" ? "Locations" : "Abonnements"}
+                  </p>
                 </div>
               </div>
-            </div>
 
-            <div className="text-sm space-y-2">
-              <p>Temps total du catalogue</p>
-              <p className="text-white/60">{donutCatalog.toLocaleString()} minutes</p>
+              <div className="flex items-center gap-2">
+                <Gauge className="w-5 h-5 text-primary" />
+                <div>
+                  <h4 className="text-primary font-bold">
+                    {revenue.toLocaleString()} FCFA
+                  </h4>
+                  <p className="text-xs text-white/60">Revenus</p>
+                </div>
+              </div>
 
-              <p>Revenu généré</p>
-              <p className="text-white/60">{donutRevenue.toLocaleString()} FCFA</p>
+              <p className="text-sm mt-2">Notes / Avis</p>
+              <div className="flex gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-5 h-5 ${
+                      i < stars
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-yellow-400"
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
-        )}
+
+          {/* === GEO / DONUT === */}
+          {mode === "location" ? (
+            <div className="flex-1 space-y-2">
+              <h3 className="font-semibold">Revenu géographique</h3>
+
+              {geo.length > 0 ? (
+                <div className="space-y-2">
+                  {geo.map((geoItem, index) => (
+                    <div key={index} className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <p>{geoItem.label || "Pays"}</p>
+                        <p>{geoItem.value?.toLocaleString() || 0} FCFA</p>
+                      </div>
+                      <progress
+                        className="progress w-full"
+                        value={geoItem.value || 0}
+                        max={geoMaxValue}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-white/40 italic text-center py-4">
+                  Aucune donnée géographique disponible
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center gap-4">
+              <div className="relative w-44 h-44">
+                <div
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background: `conic-gradient(${conicGradient})`,
+                  }}
+                />
+                <div className="absolute inset-3 rounded-full bg-base-100 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-primary">
+                      {donutViewed}%
+                    </div>
+                    <div className="text-xs text-white/60">min suivi</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-sm space-y-2">
+                <p>Temps total du catalogue</p>
+                <p className="text-white/60">{donutCatalog.toLocaleString()} minutes</p>
+
+                <p>Revenu généré</p>
+                <p className="text-white/60">{donutRevenue.toLocaleString()} FCFA</p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* MODAL VIDEO PLAYER */}
+      {isPlayerOpen && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={handleClosePlayer}
+        >
+          <div 
+            className="relative w-full max-w-5xl bg-black rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Bouton fermeture */}
+            <button
+              onClick={handleClosePlayer}
+              className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-colors backdrop-blur-sm"
+              aria-label="Fermer (Échap)"
+            >
+              <X className="w-6 h-6 text-white" />
+            </button>
+
+            {/* Indicateur touche Échap (optionnel) */}
+            <div className="absolute bottom-4 right-4 z-10 text-xs text-white/40 bg-black/50 px-2 py-1 rounded-md backdrop-blur-sm">
+              Échap ✕
+            </div>
+
+            {/* Video Player */}
+            <VideoPlayer
+              src={videoSrc}
+              poster={poster}
+              title={title}
+              autoPlay={true}
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 }

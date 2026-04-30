@@ -6,59 +6,62 @@ async function proxyHandler(
   req: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
-  // ⭐ Attendre que params soit résolu
   const { path } = await params;
-  
   const token = await getToken({ req });
-  
-  if (!token?.sub) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
+
+  if (!token?.sub) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const accessToken = await TokenService.getValidToken(token.sub);
-  
-  if (!accessToken) {
-    return NextResponse.json({ error: "Session invalide ou expirée" }, { status: 401 });
-  }
+  if (!accessToken) return NextResponse.json({ error: "Session invalide" }, { status: 401 });
 
   const targetUrl = `${process.env.NEST_API_URL}/${path.join("/")}${req.nextUrl.search}`;
 
-  const headers = new Headers();
-  req.headers.forEach((value, key) => {
-    if (!["host", "connection", "content-length", "transfer-encoding"].includes(key.toLowerCase())) {
-      headers.set(key, value);
-    }
-  });
-  
-  headers.set("Authorization", `Bearer ${accessToken}`);
+  // --- LOGS DE DÉBUT ---
+  console.log(`\n🚀 [PROXY START] ${req.method} ${req.nextUrl.pathname}`);
+  console.log(`🔗 Target: ${targetUrl}`);
 
-  let body: BodyInit | null = null;
-  if (!["GET", "HEAD"].includes(req.method)) {
-    const contentType = req.headers.get("content-type") || "";
-    
-    if (contentType.includes("multipart/form-data")) {
-      body = await req.formData();
-      headers.delete("content-length");
-    } else {
-      body = await req.text();
-    }
-  }
+  const headers = new Headers();
+  req.headers.forEach((v, k) => {
+    if (!["host", "connection", "content-length"].includes(k.toLowerCase())) headers.set(k, v);
+  });
+  headers.set("Authorization", `Bearer ${accessToken}`);
 
   try {
     const response = await fetch(targetUrl, {
       method: req.method,
       headers,
-      body,
+      body: ["GET", "HEAD"].includes(req.method) ? null : await req.text(),
+      // 🚩 BLOQUE LES REDIRECTIONS AUTOMATIQUES
+      redirect: 'manual', 
     });
 
-    const responseHeaders = new Headers();
-    response.headers.forEach((value, key) => {
-      if (!["content-encoding", "transfer-encoding"].includes(key.toLowerCase())) {
-        responseHeaders.set(key, value);
-      }
-    });
+    // --- LOGS DE RÉPONSE ---
+    console.log(`📡 [BACKEND RESPONSE] Status: ${response.status}`);
+
+    // Si c'est une redirection (301, 302, 307, 308)
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get("location");
+      console.error(`🚨 REDIRECTION DÉTECTÉE ! Le backend veut aller ici : ${location}`);
+      
+      return NextResponse.json({
+        error: "Le backend a tenté une redirection interdite",
+        interceptedUrl: location
+      }, { status: 502 });
+    }
 
     const responseBody = await response.text();
+    
+    // Log en cas d'erreur backend pour voir le message réel
+    if (!response.ok) {
+      console.error(`❌ [BACKEND ERROR] Body: ${responseBody.substring(0, 200)}`);
+    }
+
+    const responseHeaders = new Headers();
+    response.headers.forEach((v, k) => {
+      if (!["content-encoding", "transfer-encoding"].includes(k.toLowerCase())) {
+        responseHeaders.set(k, v);
+      }
+    });
 
     return new NextResponse(responseBody, {
       status: response.status,
@@ -66,11 +69,8 @@ async function proxyHandler(
     });
 
   } catch (error) {
-    console.error("❌ Proxy error:", error);
-    return NextResponse.json(
-      { error: "Erreur de connexion au backend" },
-      { status: 502 }
-    );
+    console.error("🔥 [PROXY CRITICAL ERROR]:", error);
+    return NextResponse.json({ error: "Connexion backend échouée" }, { status: 502 });
   }
 }
 
