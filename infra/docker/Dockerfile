@@ -47,8 +47,9 @@ ENV NEXT_PUBLIC_KEYCLOAK_URL=$NEXT_PUBLIC_KEYCLOAK_URL
 ENV NEXT_PUBLIC_KEYCLOAK_REALM=$NEXT_PUBLIC_KEYCLOAK_REALM
 ENV NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=$NEXT_PUBLIC_KEYCLOAK_CLIENT_ID
 
-# Build Next.js in standalone mode
+# Generate Prisma client before build (required: src/generated/prisma/client)
 ENV NEXT_TELEMETRY_DISABLED=1
+RUN npx prisma generate
 RUN npm run build
 
 # ---------------------------------------------------------------------------
@@ -73,6 +74,17 @@ COPY --from=builder /app/.next/static ./.next/static
 # Copy public directory
 COPY --from=builder /app/public ./public
 
+# Copy Prisma migrations for migrate deploy at startup
+COPY --from=builder /app/prisma ./prisma
+
+# Copy Prisma CLI and adapters needed for migrate deploy at runtime
+COPY --from=builder /app/node_modules/.bin/prisma /app/node_modules/.bin/prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+
+# Persistent volume mount point for SQLite database file
+RUN mkdir -p /app/data
+
 # Set correct ownership
 RUN chown -R nextjs:nodejs /app
 
@@ -87,10 +99,11 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+ENV DATABASE_URL="file:/app/data/sessions.db"
 
 # Health check (aligned on INFRA-FAANG1)
-HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=2 \
+HEALTHCHECK --interval=15s --timeout=5s --start-period=15s --retries=2 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
-# Default command (no entrypoint — no migrations needed)
-CMD ["node", "server.js"]
+# Run migrations then start
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node server.js"]
