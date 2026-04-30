@@ -32,7 +32,7 @@ async function proxyHandler(
       method: req.method,
       headers,
       body: ["GET", "HEAD"].includes(req.method) ? null : await req.text(),
-      // 🚩 BLOQUE LES REDIRECTIONS AUTOMATIQUES
+      
       redirect: 'manual', 
     });
 
