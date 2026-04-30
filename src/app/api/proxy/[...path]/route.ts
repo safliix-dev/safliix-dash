@@ -12,8 +12,9 @@ async function proxyHandler(
   if (!token?.sub) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const accessToken = await TokenService.getValidToken(token.sub);
+  console.log(`\n🚀 [Token] ${accessToken} `);
   if (!accessToken) return NextResponse.json({ error: "Session invalide" }, { status: 401 });
-
+  
   const targetUrl = `${process.env.NEST_API_URL}/${path.join("/")}${req.nextUrl.search}`;
 
   // --- LOGS DE DÉBUT ---
