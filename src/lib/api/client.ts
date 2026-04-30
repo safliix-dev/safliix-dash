@@ -17,50 +17,66 @@ export interface RequestOptions<TBody = unknown> {
   params?: Record<string, unknown>;
   body?: TBody;
   headers?: Record<string, string>;
-  auth?: boolean;
   signal?: AbortSignal;
 }
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "/api/proxy").replace(/\/+$/, "");
-const test = process.env.NEXTAUTH_URL;
+/**
+ * 🔒 BFF STRICT MODE
+ * On force toutes les requêtes à passer par le proxy
+ */
+const API_BASE_URL = "/api/proxy";
 
-// 👈 Ajoutez ce log pour déboguer
-if (typeof window !== 'undefined') {
-  //console.log('🔍 API_BASE_URL:', API_BASE_URL);
-  console.log('🔍 Process env:', process.env.NEXT_PUBLIC_API_BASE_URL);
-  console.log("test", test);
+/**
+ * 🔒 Interdit toute URL absolue (anti-bypass proxy)
+ */
+function assertRelativePath(path: string) {
+  if (/^https?:\/\//i.test(path)) {
+    throw new Error(
+      `❌ Absolute URLs are forbidden in apiRequest: ${path}\nUse relative paths with BFF proxy.`
+    );
+  }
 }
 
-const buildUrl = (path: string, params?: RequestOptions["params"]) => {
-  const isAbsolute = /^https?:\/\//i.test(path);
-  const target = isAbsolute
-    ? path
-    : `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
-  const url = isAbsolute ? new URL(target) : new URL(target, "http://dummy");
+/**
+ * Construction URL safe
+ */
+function buildUrl(path: string, params?: Record<string, unknown>) {
+  assertRelativePath(path);
+
+  const url = new URL(
+    `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`,
+    "http://dummy"
+  );
+
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value === undefined || value === null) return;
       url.searchParams.set(key, String(value));
     });
   }
-  return isAbsolute ? url.href : url.href.replace("http://dummy", "");
-};
 
-const shouldSendBody = (method: HttpMethod) => !["GET", "HEAD"].includes(method);
+  return url.href.replace("http://dummy", "");
+}
 
-// utils/api.ts
-export function serializeParams(params?: Record<string, unknown>): Record<string, string | number | boolean> | undefined {
+function shouldSendBody(method: HttpMethod) {
+  return !["GET", "HEAD"].includes(method);
+}
+
+function serializeParams(params?: Record<string, unknown>) {
   if (!params) return undefined;
 
   const serialized: Record<string, string | number | boolean> = {};
 
   Object.entries(params).forEach(([key, value]) => {
-    if (value === undefined) return; // ignore undefined
-    if (value === null) return;      // ignore null, tu peux changer si tu veux garder "null" comme string
-    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    if (value === undefined || value === null) return;
+
+    if (
+      typeof value === "string" ||
+      typeof value === "number" ||
+      typeof value === "boolean"
+    ) {
       serialized[key] = value;
     } else {
-      // convertit enums ou autres objets en string
       serialized[key] = String(value);
     }
   });
@@ -68,33 +84,42 @@ export function serializeParams(params?: Record<string, unknown>): Record<string
   return serialized;
 }
 
-
-const parseResponse = async <T>(response: Response): Promise<T> => {
+async function parseResponse<T>(response: Response): Promise<T> {
   if (response.status === 204) return undefined as T;
+
   const contentType = response.headers.get("content-type") || "";
+
   if (contentType.includes("application/json")) {
     return (await response.json()) as T;
   }
-  return (await response.text()) as unknown as T;
-};
 
+  return (await response.text()) as unknown as T;
+}
+
+function isWrappedResponse<T>(
+  data: unknown
+): data is { data: T } {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "data" in data
+  );
+}
+
+/**
+ * 🚀 CLIENT API BFF
+ */
 export async function apiRequest<TResponse = unknown, TBody = unknown>(
   path: string,
-  { method = "GET", params, body, headers , signal }: RequestOptions<TBody> = {},
+  { method = "GET", params, body, headers, signal }: RequestOptions<TBody> = {}
 ): Promise<TResponse> {
   const safeParams = serializeParams(params);
   const url = buildUrl(path, safeParams);
-  const finalHeaders = new Headers(headers);
-  const requestLog = {
-    method,
-    url,
-    params,
-    body: body instanceof FormData ? "[FormData]" : body instanceof Blob ? "[Blob]" : body,
-  };
 
-  
+  const finalHeaders = new Headers(headers);
 
   let finalBody: BodyInit | undefined;
+
   if (body instanceof FormData || body instanceof Blob) {
     finalBody = body;
   } else if (body !== undefined && body !== null) {
@@ -107,10 +132,12 @@ export async function apiRequest<TResponse = unknown, TBody = unknown>(
     headers: finalHeaders,
     body: shouldSendBody(method) ? finalBody : undefined,
     signal,
+    credentials: "include", // 🔥 IMPORTANT pour cookies NextAuth
   });
 
   if (!response.ok) {
     let errorPayload: unknown;
+
     try {
       errorPayload = await response.clone().json();
     } catch {
@@ -119,19 +146,29 @@ export async function apiRequest<TResponse = unknown, TBody = unknown>(
       } catch {
         errorPayload = undefined;
       }
-    console.error("[api] request failed", { ...requestLog, status: response.status }, errorPayload);
     }
+
+    console.error("❌ API ERROR", {
+      method,
+      url,
+      status: response.status,
+      errorPayload,
+    });
+
     throw new ApiError("API request failed", response.status, errorPayload);
   }
 
   const rawData = await parseResponse<TResponse>(response);
-  const unwrappedData =
-    rawData && typeof rawData === "object" && "data" in (rawData as Record<string, unknown>)
-      ? (rawData as unknown as { data: TResponse }).data
-      : rawData;
-  console.info("[api] request succeeded", { ...requestLog, status: response.status }, unwrappedData);
+
+  const unwrappedData = isWrappedResponse<TResponse>(rawData)
+  ? rawData.data
+  : (rawData as TResponse);
   return unwrappedData;
 }
 
-export type Fetcher<T> = (url: string) => Promise<T>;
-export const swrFetcher: Fetcher<unknown> = (url: string) => apiRequest(url);
+
+
+/**
+ * SWR Fetcher
+ */
+export const swrFetcher = (url: string) => apiRequest(url);

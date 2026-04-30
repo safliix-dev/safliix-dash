@@ -1,78 +1,61 @@
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { TokenService } from "@/services/token.service";
-
-async function proxyHandler(
-  req: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
-) {
-  const { path } = await params;
+async function proxyHandler(req: NextRequest, { params }: { params: { path: string[] } }) {
   const token = await getToken({ req });
 
-  if (!token?.sub) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  if (!token?.sub) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
 
   const accessToken = await TokenService.getValidToken(token.sub);
-  console.log(`\n🚀 [Token] ${accessToken} `);
-  if (!accessToken) return NextResponse.json({ error: "Session invalide" }, { status: 401 });
-  
-  const targetUrl = `${process.env.NEST_API_URL}/${path.join("/")}${req.nextUrl.search}`;
 
-  // --- LOGS DE DÉBUT ---
-  console.log(`\n🚀 [PROXY START] ${req.method} ${req.nextUrl.pathname}`);
-  console.log(`🔗 Target: ${targetUrl}`);
+  if (!accessToken) {
+    return NextResponse.json({ error: "Session invalide" }, { status: 401 });
+  }
+
+  const baseUrl = process.env.NEST_API_URL;
+
+  if (!baseUrl) {
+    console.error("❌ NEST_API_URL manquant");
+    return NextResponse.json({ error: "Config serveur invalide" }, { status: 500 });
+  }
+
+  const targetUrl =
+    `${baseUrl.replace(/\/$/, "")}/${params.path.join("/")}${req.nextUrl.search}`;
+
+  console.log(`🚀 ${req.method} -> ${targetUrl}`);
 
   const headers = new Headers();
-  req.headers.forEach((v, k) => {
-    if (!["host", "connection", "content-length"].includes(k.toLowerCase())) headers.set(k, v);
+
+  // 🔒 whitelist headers uniquement
+  const allowedHeaders = [
+    "content-type",
+    "accept"
+  ];
+
+  req.headers.forEach((value, key) => {
+    if (allowedHeaders.includes(key.toLowerCase())) {
+      headers.set(key, value);
+    }
   });
+
   headers.set("Authorization", `Bearer ${accessToken}`);
 
-  try {
-    const response = await fetch(targetUrl, {
-      method: req.method,
-      headers,
-      body: ["GET", "HEAD"].includes(req.method) ? null : await req.text(),
-      
-      redirect: 'manual', 
-    });
+  const response = await fetch(targetUrl, {
+    method: req.method,
+    headers,
+    body: ["GET", "HEAD"].includes(req.method) ? undefined : await req.text(),
+  });
 
-    // --- LOGS DE RÉPONSE ---
-    console.log(`📡 [BACKEND RESPONSE] Status: ${response.status}`);
+  const contentType = response.headers.get("content-type") || "";
+  const body = contentType.includes("application/json")
+    ? await response.json()
+    : await response.text();
 
-    // Si c'est une redirection (301, 302, 307, 308)
-    if (response.status >= 300 && response.status < 400) {
-      const location = response.headers.get("location");
-      console.error(`🚨 REDIRECTION DÉTECTÉE ! Le backend veut aller ici : ${location}`);
-      
-      return NextResponse.json({
-        error: "Le backend a tenté une redirection interdite",
-        interceptedUrl: location
-      }, { status: 502 });
-    }
-
-    const responseBody = await response.text();
-    
-    // Log en cas d'erreur backend pour voir le message réel
-    if (!response.ok) {
-      console.error(`❌ [BACKEND ERROR] Body: ${responseBody.substring(0, 200)}`);
-    }
-
-    const responseHeaders = new Headers();
-    response.headers.forEach((v, k) => {
-      if (!["content-encoding", "transfer-encoding"].includes(k.toLowerCase())) {
-        responseHeaders.set(k, v);
-      }
-    });
-
-    return new NextResponse(responseBody, {
-      status: response.status,
-      headers: responseHeaders,
-    });
-
-  } catch (error) {
-    console.error("🔥 [PROXY CRITICAL ERROR]:", error);
-    return NextResponse.json({ error: "Connexion backend échouée" }, { status: 502 });
-  }
+  return NextResponse.json(body, {
+    status: response.status,
+  });
 }
 
 export const GET = proxyHandler;
