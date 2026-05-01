@@ -1,7 +1,7 @@
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { TokenService } from "@/services/token.service";
-async function proxyHandler(req: NextRequest, { params }: { params: { path: string[] } }) {
+async function proxyHandler(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const token = await getToken({ req });
 
   if (!token?.sub) {
@@ -21,8 +21,9 @@ async function proxyHandler(req: NextRequest, { params }: { params: { path: stri
     return NextResponse.json({ error: "Config serveur invalide" }, { status: 500 });
   }
 
+  const { path } = await params;
   const targetUrl =
-    `${baseUrl.replace(/\/$/, "")}/${params.path.join("/")}${req.nextUrl.search}`;
+    `${baseUrl.replace(/\/$/, "")}/${path.join("/")}${req.nextUrl.search}`;
 
   console.log(`🚀 ${req.method} -> ${targetUrl}`);
 
