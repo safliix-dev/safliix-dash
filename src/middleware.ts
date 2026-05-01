@@ -17,7 +17,7 @@ export default withAuth(
       return NextResponse.rewrite(new URL("/unauthorized", req.url));
     }
 
-    // 2. Protection /users et /settings (Admin ou Super Admin)
+    
     const isRestrictedPath = pathname.startsWith("/users") || pathname.startsWith("/settings");
     if (isRestrictedPath && !isAdmin && !isSuperAdmin) {
       return NextResponse.rewrite(new URL("/unauthorized", req.url));
