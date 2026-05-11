@@ -78,8 +78,8 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 
 # Copy Prisma CLI and adapters needed for migrate deploy at runtime
-COPY --from=builder /app/node_modules/.bin/prisma /app/node_modules/.bin/prisma
-COPY --from=builder /app/node_modules/.bin/prisma_schema_build_bg.wasm /app/node_modules/.bin/prisma_schema_build_bg.wasm
+# Ne pas copier .bin/prisma (symlink résolu par Docker → __dirname cassé, wasm introuvable)
+# On appelle directement node_modules/prisma/build/index.js dans le CMD
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
@@ -107,4 +107,4 @@ HEALTHCHECK --interval=15s --timeout=5s --start-period=15s --retries=2 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
 # Run migrations then start
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node server.js"]
+CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node server.js"]
