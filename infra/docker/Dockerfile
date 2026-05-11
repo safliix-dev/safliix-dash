@@ -79,6 +79,7 @@ COPY --from=builder /app/prisma ./prisma
 
 # Copy Prisma CLI and adapters needed for migrate deploy at runtime
 COPY --from=builder /app/node_modules/.bin/prisma /app/node_modules/.bin/prisma
+COPY --from=builder /app/node_modules/.bin/prisma_schema_build_bg.wasm /app/node_modules/.bin/prisma_schema_build_bg.wasm
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
