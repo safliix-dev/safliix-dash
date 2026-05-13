@@ -42,10 +42,20 @@ export const useEncodingJobs = ({
       if (data.jobId) {
         setJobs(prev => prev.map(job => {
           if (job.id === data.jobId) {
+            const incomingStatus = mapSocketStatus(data.status ?? job.status);
+            const isRunning = job.status === 'processing' && incomingStatus === 'processing';
+            const resolvedProgress =
+              isRunning &&
+              data.progress !== undefined &&
+              data.progress < job.progress
+                ? job.progress
+                : (data.progress ?? job.progress);
+
             const updatedJob = {
               ...job,
-              progress: data.progress ?? job.progress,
-              status: mapSocketStatus(data.status ?? job.status),
+              progress: resolvedProgress,
+              status: incomingStatus,
+              stage: data.stage ?? job.stage,
               message: data.message || '',
             };
             

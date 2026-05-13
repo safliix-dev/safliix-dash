@@ -187,7 +187,7 @@ const Field = ({
   type?: string;
 }) => (
   <div className="w-full">
-    <label className="label text-sm mb-2" htmlFor={name}>{label}</label>
+    <label className="label text-sm mb-2" htmlFor={name}>{label} <span className="text-red-500">*</span></label>
     <Controller
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       name={name as any}

@@ -6,6 +6,9 @@ export interface EncodingJob{
   progress:number;
   status:string;
   type:string;
+  stage?: string | null;
+  updatedAt?: string;
+  createdAt?: string;
 }
 
 export interface JobParams extends Record<string,unknown> {

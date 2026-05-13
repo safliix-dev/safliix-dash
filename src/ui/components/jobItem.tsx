@@ -49,7 +49,9 @@ export const JobItem = memo(({
       <div className="space-y-1">
         <div className="flex items-center justify-between text-[10px] mb-1">
           <span className="text-white/40 italic">
-            {job.status === 'processing' ? 'Calcul en cours...' : 'Statique'}
+            {job.status === 'processing'
+              ? (job.stage ? `étape : ${job.stage}` : 'Calcul en cours...')
+              : 'Statique'}
           </span>
           <span className="font-bold text-primary">{job.progress}%</span>
         </div>

@@ -25,7 +25,7 @@ export function SeasonMetadataStep({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Numéro de saison */}
         <div>
-          <label className="label text-sm mb-1">Numéro de saison</label>
+          <label className="label text-sm mb-1">Numéro de saison <span className="text-red-500">*</span></label>
           <Controller
             name="numero"
             control={control}

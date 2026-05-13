@@ -42,120 +42,150 @@ export default function CreateAdminPage() {
           >
             {/* Prénom / Nom */}
             <div className="flex gap-2">
+              <div className="flex-1">
+                <label className="label text-sm mb-1">Prénom{!isEditMode && <span className="text-red-500"> *</span>}</label>
+                <Controller
+                  name="firstName"
+                  control={control}
+                  rules={isEditMode ? {} : { required: "Prénom requis" }}
+                  render={({ field, fieldState }) => (
+                    <InputField {...field} placeholder="Prénom" error={fieldState.error?.message} />
+                  )}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="label text-sm mb-1">Nom{!isEditMode && <span className="text-red-500"> *</span>}</label>
+                <Controller
+                  name="lastName"
+                  control={control}
+                  rules={isEditMode ? {} : { required: "Nom requis" }}
+                  render={({ field, fieldState }) => (
+                    <InputField {...field} placeholder="Nom" error={fieldState.error?.message} />
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="label text-sm mb-1">Email{!isEditMode && <span className="text-red-500"> *</span>}</label>
               <Controller
-                name="firstName"
+                name="email"
                 control={control}
-                rules={isEditMode ? {} : { required: "Prénom requis" }}
+                rules={isEditMode ? {} : { required: "Email requis" }}
                 render={({ field, fieldState }) => (
-                  <InputField {...field} placeholder="Prénom" error={fieldState.error?.message} />
-                )}
-              />
-              <Controller
-                name="lastName"
-                control={control}
-                rules={isEditMode ? {} : { required: "Nom requis" }}
-                render={({ field, fieldState }) => (
-                  <InputField {...field} placeholder="Nom" error={fieldState.error?.message} />
+                  <InputField {...field} type="email" placeholder="Email" error={fieldState.error?.message} />
                 )}
               />
             </div>
 
-            {/* Email */}
-            <Controller
-              name="email"
-              control={control}
-              rules={isEditMode ? {} : { required: "Email requis" }}
-              render={({ field, fieldState }) => (
-                <InputField {...field} type="email" placeholder="Email" error={fieldState.error?.message} />
-              )}
-            />
-
             {/* Téléphone */}
-            <Controller
-              name="phone"
-              control={control}
-              render={({ field }) => (
-                <InputField {...field} placeholder="Téléphone" />
-              )}
-            />
+            <div>
+              <label className="label text-sm mb-1">Téléphone</label>
+              <Controller
+                name="phone"
+                control={control}
+                render={({ field }) => (
+                  <InputField {...field} placeholder="Téléphone" />
+                )}
+              />
+            </div>
 
             {/* Pays / Ville */}
             <div className="flex gap-2">
-              <Controller
-                name="country"
-                control={control}
-                rules={isEditMode ? {} : { required: "Pays requis" }}
-                render={({ field, fieldState }) => (
-                  <InputField {...field} placeholder="Pays" error={fieldState.error?.message} />
-                )}
-              />
-              <Controller
-                name="city"
-                control={control}
-                rules={isEditMode ? {} : { required: "Ville requise" }}
-                render={({ field, fieldState }) => (
-                  <InputField {...field} placeholder="Ville" error={fieldState.error?.message} />
-                )}
-              />
+              <div className="flex-1">
+                <label className="label text-sm mb-1">Pays{!isEditMode && <span className="text-red-500"> *</span>}</label>
+                <Controller
+                  name="country"
+                  control={control}
+                  rules={isEditMode ? {} : { required: "Pays requis" }}
+                  render={({ field, fieldState }) => (
+                    <InputField {...field} placeholder="Pays" error={fieldState.error?.message} />
+                  )}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="label text-sm mb-1">Ville{!isEditMode && <span className="text-red-500"> *</span>}</label>
+                <Controller
+                  name="city"
+                  control={control}
+                  rules={isEditMode ? {} : { required: "Ville requise" }}
+                  render={({ field, fieldState }) => (
+                    <InputField {...field} placeholder="Ville" error={fieldState.error?.message} />
+                  )}
+                />
+              </div>
             </div>
 
             {/* Password */}
             <div className="flex gap-2">
-              <Controller
-                name="password"
-                control={control}
-                rules={isEditMode ? {} : { required: "Mot de passe requis" }}
-                render={({ field, fieldState }) => (
-                  <InputField
-                    {...field}
-                    type="password"
-                    placeholder="Mot de passe"
-                    error={fieldState.error?.message}
-                  />
-                )}
-              />
-              <Controller
-                name="confirmPassword"
-                control={control}
-                rules={{
-                  validate: (value, formValues) => {
-                    if (!formValues.password) return true;
-                    return value === formValues.password || "Les mots de passe ne correspondent pas";
-                  },
-                }}
-                render={({ field, fieldState }) => (
-                  <InputField
-                    {...field}
-                    type="password"
-                    placeholder="Confirmation"
-                    error={fieldState.error?.message}
-                  />
-                )}
-              />
+              <div className="flex-1">
+                <label className="label text-sm mb-1">Mot de passe{!isEditMode && <span className="text-red-500"> *</span>}</label>
+                <Controller
+                  name="password"
+                  control={control}
+                  rules={isEditMode ? {} : { required: "Mot de passe requis" }}
+                  render={({ field, fieldState }) => (
+                    <InputField
+                      {...field}
+                      type="password"
+                      placeholder="Mot de passe"
+                      error={fieldState.error?.message}
+                    />
+                  )}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="label text-sm mb-1">Confirmation</label>
+                <Controller
+                  name="confirmPassword"
+                  control={control}
+                  rules={{
+                    validate: (value, formValues) => {
+                      if (!formValues.password) return true;
+                      return value === formValues.password || "Les mots de passe ne correspondent pas";
+                    },
+                  }}
+                  render={({ field, fieldState }) => (
+                    <InputField
+                      {...field}
+                      type="password"
+                      placeholder="Confirmation"
+                      error={fieldState.error?.message}
+                    />
+                  )}
+                />
+              </div>
             </div>
 
             {/* Status / Role */}
             <div className="flex gap-2">
-              <Controller
-                name="status"
-                control={control}
-                render={({ field }) => (
-                  <select {...field} className="select select-bordered w-full">
-                    <option value="actif">Actif</option>
-                    <option value="inactif">Inactif</option>
-                  </select>
-                )}
-              />
-              <Controller
-                name="role"
-                control={control}
-                render={({ field }) => (
-                  <select {...field} className="select select-bordered w-full">
-                    <option value="ADMIN">Admin</option>
-                    <option value="SUPER_ADMIN">Super Admin</option>
-                  </select>
-                )}
-              />
+              <div className="flex-1">
+                <label className="label text-sm mb-1">Statut</label>
+                <Controller
+                  name="status"
+                  control={control}
+                  render={({ field }) => (
+                    <select {...field} className="select select-bordered w-full">
+                      <option value="actif">Actif</option>
+                      <option value="inactif">Inactif</option>
+                    </select>
+                  )}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="label text-sm mb-1">Rôle</label>
+                <Controller
+                  name="role"
+                  control={control}
+                  render={({ field }) => (
+                    <select {...field} className="select select-bordered w-full">
+                      <option value="ADMIN">Admin</option>
+                      <option value="SUPER_ADMIN">Super Admin</option>
+                    </select>
+                  )}
+                />
+              </div>
             </div>
 
             <div className="flex justify-end pt-4">

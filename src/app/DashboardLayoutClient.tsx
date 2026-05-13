@@ -89,7 +89,7 @@ export default function DashboardLayoutClient({ children }: DashboardLayoutClien
             </aside>
 
             {/* Main */}
-            <main className="min-h-screen">
+            <main className="h-screen flex flex-col">
 
               {/* Topbar */}
               <div className="sticky top-0 z-10 bg-gray-900/80 backdrop-blur-md border-b border-gray-700">
@@ -178,7 +178,7 @@ export default function DashboardLayoutClient({ children }: DashboardLayoutClien
               </div>
 
               {/* Content */}
-              <div className="p-6">
+              <div className="p-6 flex-1 overflow-y-auto">
                 {children}
               </div>
             </main>

@@ -41,114 +41,145 @@ export default function Page() {
           className="bg-neutral border border-base-300 rounded-2xl p-5 space-y-5"
         >
           <div className="grid grid-cols-2 gap-4">
-            <Controller
-              name="firstName"
-              control={control}
-              rules={{ required: "Nom requis" }}
-              render={({ field, fieldState }) => (
-                <InputField
-                  {...field}
-                  placeholder="Prénom"
-                  error={fieldState.error?.message}
-                />
-              )}
-            />
+            <div>
+              <label className="label text-sm mb-1">Prénom <span className="text-red-500">*</span></label>
+              <Controller
+                name="firstName"
+                control={control}
+                rules={{ required: "Nom requis" }}
+                render={({ field, fieldState }) => (
+                  <InputField
+                    {...field}
+                    placeholder="Prénom"
+                    error={fieldState.error?.message}
+                  />
+                )}
+              />
+            </div>
 
-            <Controller
-              name="lastName"
-              control={control}
-              rules={{ required: "Nom requis" }}
-              render={({ field, fieldState }) => (
-                <InputField
-                  {...field}
-                  placeholder="Nom"
-                  error={fieldState.error?.message}
-                />
-              )}
-            />
+            <div>
+              <label className="label text-sm mb-1">Nom <span className="text-red-500">*</span></label>
+              <Controller
+                name="lastName"
+                control={control}
+                rules={{ required: "Nom requis" }}
+                render={({ field, fieldState }) => (
+                  <InputField
+                    {...field}
+                    placeholder="Nom"
+                    error={fieldState.error?.message}
+                  />
+                )}
+              />
+            </div>
 
-            <Controller
-              name="phone"
-              control={control}
-              rules={{required:false}}
-              render={({ field }) => <InputField {...field} placeholder="Téléphone" />}
-            />
+            <div>
+              <label className="label text-sm mb-1">Téléphone</label>
+              <Controller
+                name="phone"
+                control={control}
+                rules={{required:false}}
+                render={({ field }) => <InputField {...field} placeholder="Téléphone" />}
+              />
+            </div>
 
-            <Controller
-              name="email"
-              control={control}
-              rules={{ required: "Email requis" }}
-              render={({ field, fieldState }) => (
-                <InputField
-                  {...field}
-                  type="email"
-                  placeholder="Email"
-                  error={fieldState.error?.message}
-                />
-              )}
-            />
+            <div>
+              <label className="label text-sm mb-1">Email <span className="text-red-500">*</span></label>
+              <Controller
+                name="email"
+                control={control}
+                rules={{ required: "Email requis" }}
+                render={({ field, fieldState }) => (
+                  <InputField
+                    {...field}
+                    type="email"
+                    placeholder="Email"
+                    error={fieldState.error?.message}
+                  />
+                )}
+              />
+            </div>
 
-            <Controller
-              name="password"
-              control={control}
-              rules={!isEdit ? { required: "Mot de passe requis" } : undefined}
-              render={({ field, fieldState }) => (
-                <InputField
-                  {...field}
-                  type="password"
-                  placeholder={isEdit ? "Nouveau mot de passe (optionnel)" : "Mot de passe"}
-                  error={fieldState.error?.message}
-                />
-              )}
-            />
+            <div>
+              <label className="label text-sm mb-1">
+                {isEdit ? "Nouveau mot de passe" : "Mot de passe"}{!isEdit && <span className="text-red-500"> *</span>}
+              </label>
+              <Controller
+                name="password"
+                control={control}
+                rules={!isEdit ? { required: "Mot de passe requis" } : undefined}
+                render={({ field, fieldState }) => (
+                  <InputField
+                    {...field}
+                    type="password"
+                    placeholder={isEdit ? "Nouveau mot de passe (optionnel)" : "Mot de passe"}
+                    error={fieldState.error?.message}
+                  />
+                )}
+              />
+            </div>
 
-            <Controller
-              name="confirmPassword"
-              control={control}
-              rules={!isEdit ? { required: "Mot de passe requis" } : undefined}
-              render={({ field, fieldState }) => (
-                <InputField
-                  {...field}
-                  type="password"
-                  placeholder={isEdit ? "Nouveau mot de passe (optionnel)" : "Confirmez le mot de passe"}
-                  error={fieldState.error?.message}
-                />
-              )}
-            />
+            <div>
+              <label className="label text-sm mb-1">
+                {isEdit ? "Confirmer le nouveau mot de passe" : "Confirmer le mot de passe"}{!isEdit && <span className="text-red-500"> *</span>}
+              </label>
+              <Controller
+                name="confirmPassword"
+                control={control}
+                rules={!isEdit ? { required: "Mot de passe requis" } : undefined}
+                render={({ field, fieldState }) => (
+                  <InputField
+                    {...field}
+                    type="password"
+                    placeholder={isEdit ? "Nouveau mot de passe (optionnel)" : "Confirmez le mot de passe"}
+                    error={fieldState.error?.message}
+                  />
+                )}
+              />
+            </div>
 
-            <Controller
-              name="role"
-              control={control}
-              render={({ field }) => (
-                <select {...field} className="select select-bordered w-full">
-                  <option value="user">Utilisateur</option>
-                  <option value="collaborator">Collaborateur</option>
-                </select>
-              )}
-            />
+            <div>
+              <label className="label text-sm mb-1">Rôle</label>
+              <Controller
+                name="role"
+                control={control}
+                render={({ field }) => (
+                  <select {...field} className="select select-bordered w-full">
+                    <option value="user">Utilisateur</option>
+                    <option value="collaborator">Collaborateur</option>
+                  </select>
+                )}
+              />
+            </div>
 
-            <Controller
-              name="status"
-              control={control}
-              render={({ field }) => (
-                <select {...field} className="select select-bordered w-full">
-                  <option value="actif">Actif</option>
-                  <option value="en attente">En attente</option>
-                  <option value="inactif">Inactif</option>
-                </select>
-              )}
-            />
+            <div>
+              <label className="label text-sm mb-1">Statut</label>
+              <Controller
+                name="status"
+                control={control}
+                render={({ field }) => (
+                  <select {...field} className="select select-bordered w-full">
+                    <option value="actif">Actif</option>
+                    <option value="en attente">En attente</option>
+                    <option value="inactif">Inactif</option>
+                  </select>
+                )}
+              />
+            </div>
 
-            <Controller
-              name="avatarUrl"
-              control={control}
-              render={({ field }) => (
-                <InputField
-                  {...field}
-                  placeholder="URL de l’avatar"
-                />
-              )}
-            />
+            <div>
+              <label className="label text-sm mb-1">URL de l&apos;avatar</label>
+              <Controller
+                name="avatarUrl"
+                control={control}
+                render={({ field }) => (
+                  <InputField
+                    {...field}
+                    placeholder="URL de l’avatar"
+                  />
+                )}
+              />
+            </div>
           </div>
 
           <div className="flex justify-end">

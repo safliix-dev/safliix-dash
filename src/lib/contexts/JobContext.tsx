@@ -131,12 +131,25 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
       // Merger les mises à jour
       for (const update of updatesArray) {
         const existing = jobMap.get(update.id);
-        
+
         if (existing) {
-          // Merge : conserver toutes les propriétés existantes
-          jobMap.set(update.id, { ...existing, ...update });
+          // Règle monotone : pour un job en traitement, le progress ne recule jamais.
+          // Ceci évite les régressions visuelles quand le pipeline passe à une nouvelle étape.
+          const incomingStatus = update.status ?? existing.status;
+          const isRunning = existing.status === 'processing' && incomingStatus === 'processing';
+          const resolvedProgress =
+            isRunning &&
+            update.progress !== undefined &&
+            update.progress < (existing.progress ?? 0)
+              ? existing.progress
+              : update.progress;
+
+          jobMap.set(update.id, {
+            ...existing,
+            ...update,
+            ...(resolvedProgress !== undefined ? { progress: resolvedProgress } : {}),
+          });
         } else {
-          // Nouveau job
           jobMap.set(update.id, createMinimalJob(update));
         }
       }
@@ -264,12 +277,13 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const handleJobProgress = (data: RawJobProgressEvent): void => {
-      const { jobId, progress, status } = data;
+      const { jobId, progress, status, stage } = data;
       if (jobId) {
-        upsertJobs({ 
-          id: jobId, 
-          progress, 
-          status: (status?.toLowerCase() ) ?? 'processing'
+        upsertJobs({
+          id: jobId,
+          progress,
+          status: (status?.toLowerCase()) ?? 'processing',
+          stage: stage || undefined,
         });
       }
     };
@@ -350,10 +364,12 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
       videoSocket.off('job_resumed', handleJobResumed);
       videoSocket.off('job_deleted', handleJobDeleted);
       
-      // Quitter les rooms
+      // Quitter les rooms uniquement si le socket est encore connecté
       for (const room of currentRooms) {
-        console.log(`👋 [JobContext] Leaving room: ${room}`);
-        videoSocket.emit("leave_room", { room });
+        if (videoSocket.connected) {
+          console.log(`👋 [JobContext] Leaving room: ${room}`);
+          videoSocket.emit("leave_room", { room });
+        }
       }
       currentRooms.clear();
       

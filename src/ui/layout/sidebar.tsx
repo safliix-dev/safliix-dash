@@ -75,7 +75,7 @@ export default function Sidebar() {
         Menu
       </div>
 
-      <nav className="px-2 flex-1">
+      <nav className="px-2 flex-1 overflow-y-auto">
         <ul className="flex flex-col gap-1">
           {items.map((item, index) => (
             <SidebarItem

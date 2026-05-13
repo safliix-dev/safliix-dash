@@ -52,10 +52,17 @@ export function useUploadWorkflow<TSlot extends string>() {
     lastTime: Date.now(),
     speeds: []
   });
+  const fileSizesRef = useRef<Map<string, number>>(new Map());
+  const uploadedBytesPerFileRef = useRef<Map<string, number>>(new Map());
 
-  const globalProgress = Object.keys(progress).length > 0
-    ? Math.round(Object.values(progress).reduce((a, b) => a + b, 0) / Object.keys(progress).length)
-    : 0;
+  const globalProgress = (() => {
+    const totalBytes = Array.from(fileSizesRef.current.values()).reduce((a, b) => a + b, 0);
+    if (totalBytes === 0 || Object.keys(progress).length === 0) return 0;
+    const weighted = Object.entries(progress).reduce((acc, [key, p]) => {
+      return acc + (p / 100) * (fileSizesRef.current.get(key) ?? 0);
+    }, 0);
+    return Math.round((weighted / totalBytes) * 100);
+  })();
 
   const reset = useCallback(() => {
     setStep("idle");
@@ -79,6 +86,8 @@ export function useUploadWorkflow<TSlot extends string>() {
       lastTime: Date.now(),
       speeds: []
     };
+    fileSizesRef.current = new Map();
+    uploadedBytesPerFileRef.current = new Map();
   }, []);
 
   const hasFailures = useCallback((): boolean => {
@@ -181,6 +190,8 @@ export function useUploadWorkflow<TSlot extends string>() {
       setFailedKeys([]);
       setSuccessfulKeys([]);
       setFailedAtStage(new Map());
+      fileSizesRef.current = new Map(filesToProcess.map(f => [f.key, f.file.size]));
+      uploadedBytesPerFileRef.current = new Map();
     }
 
     const filesWithExistingSlots = options.existingSlots 
@@ -245,8 +256,9 @@ export function useUploadWorkflow<TSlot extends string>() {
           await attemptWithRetry(slot.key, async (signal) => {
             let uploadPromise = handlers.uploadToUrl(slot.uploadUrl, fileDesc.file, (p) => {
               setProgress(prev => ({ ...prev, [slot.key]: p }));
-              const fileBytes = (p / 100) * fileDesc.file.size;
-              updateSpeed(fileBytes);
+              uploadedBytesPerFileRef.current.set(slot.key, (p / 100) * fileDesc.file.size);
+              const totalUploaded = Array.from(uploadedBytesPerFileRef.current.values()).reduce((a, b) => a + b, 0);
+              updateSpeed(totalUploaded);
             }, signal);
 
             if (handlers.timeouts?.upload) {

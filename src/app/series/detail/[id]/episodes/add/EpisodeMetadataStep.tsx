@@ -31,7 +31,7 @@ export function EpisodeMetadataStep({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Titre de l'épisode */}
         <div>
-          <label className="label text-sm mb-1">Nom de l&apos;épisode</label>
+          <label className="label text-sm mb-1">Nom de l&apos;épisode <span className="text-red-500">*</span></label>
           <Controller
             name="title"
             control={control}
@@ -49,7 +49,7 @@ export function EpisodeMetadataStep({
 
         {/* Numéro d'épisode */}
         <div>
-          <label className="label text-sm mb-1">Numéro d&apos;épisode</label>
+          <label className="label text-sm mb-1">Numéro d&apos;épisode <span className="text-red-500">*</span></label>
           <Controller
             name="episodeNumber"
             control={control}
@@ -69,7 +69,7 @@ export function EpisodeMetadataStep({
 
         {/* Date de sortie */}
         <div>
-          <label className="label text-sm mb-1">Date de sortie</label>
+          <label className="label text-sm mb-1">Date de sortie <span className="text-red-500">*</span></label>
           <Controller
             name="releaseDate"
             control={control}
@@ -88,7 +88,7 @@ export function EpisodeMetadataStep({
 
         {/* Publication sur SaFLIX */}
         <div>
-          <label className="label text-sm mb-1">Publication sur SaFLIX</label>
+          <label className="label text-sm mb-1">Publication sur SaFLIX <span className="text-red-500">*</span></label>
           <Controller
             name="publishDate"
             control={control}
@@ -107,7 +107,7 @@ export function EpisodeMetadataStep({
 
         {/* Réalisateur */}
         <div>
-          <label className="label text-sm mb-1">Réalisateur</label>
+          <label className="label text-sm mb-1">Réalisateur <span className="text-red-500">*</span></label>
           <Controller
             name="director"
             control={control}
@@ -125,7 +125,7 @@ export function EpisodeMetadataStep({
 
         {/* Durée */}
         <div>
-          <label className="label text-sm mb-1">Durée (minutes)</label>
+          <label className="label text-sm mb-1">Durée (minutes) <span className="text-red-500">*</span></label>
           <Controller
             name="duration"
             control={control}
@@ -168,7 +168,7 @@ export function EpisodeMetadataStep({
 
         {/* Statut */}
         <div>
-          <label className="label text-sm mb-1">Statut</label>
+          <label className="label text-sm mb-1">Statut <span className="text-red-500">*</span></label>
           <Controller
             name="status"
             control={control}
@@ -192,7 +192,7 @@ export function EpisodeMetadataStep({
 
       {/* Description */}
       <div className="space-y-2">
-        <label className="label text-sm mb-1">Description de l&apos;épisode (synopsis)</label>
+        <label className="label text-sm mb-1">Description de l&apos;épisode (synopsis) <span className="text-red-500">*</span></label>
         <Controller
           name="description"
           control={control}
@@ -211,7 +211,7 @@ export function EpisodeMetadataStep({
 
       {/* Acteurs avec ActorsSelector */}
       <div className="space-y-2">
-        <label className="label text-sm mb-1">Acteurs principaux</label>
+        <label className="label text-sm mb-1">Acteurs principaux <span className="text-red-500">*</span></label>
         <Controller
           name="actors"
           control={control}

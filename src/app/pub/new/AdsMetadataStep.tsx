@@ -30,7 +30,7 @@ export function AdsMetadataStep({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Nom de la pub */}
         <div>
-          <label className="label text-sm mb-1">Nom de la pub</label>
+          <label className="label text-sm mb-1">Nom de la pub <span className="text-red-500">*</span></label>
           <Controller
             name="title"
             control={control}
@@ -48,7 +48,7 @@ export function AdsMetadataStep({
 
         {/* Ligne */}
         <div>
-          <label className="label text-sm mb-1">Lien</label>
+          <label className="label text-sm mb-1">Lien <span className="text-red-500">*</span></label>
           <Controller
             name="line"
             control={control}
@@ -67,7 +67,7 @@ export function AdsMetadataStep({
 
         {/* Date de mise en ligne */}
         <div>
-          <label className="label text-sm mb-1">Mise en ligne</label>
+          <label className="label text-sm mb-1">Mise en ligne <span className="text-red-500">*</span></label>
           <Controller
             name="startDate"
             control={control}
@@ -86,7 +86,7 @@ export function AdsMetadataStep({
 
         {/* Date de mise hors ligne */}
         <div>
-          <label className="label text-sm mb-1">Mise hors ligne</label>
+          <label className="label text-sm mb-1">Mise hors ligne <span className="text-red-500">*</span></label>
           <Controller
             name="endDate"
             control={control}
@@ -105,7 +105,7 @@ export function AdsMetadataStep({
 
         {/* Statut */}
         <div>
-          <label className="label text-sm mb-1">Statut</label>
+          <label className="label text-sm mb-1">Statut <span className="text-red-500">*</span></label>
           <Controller
             name="status"
             control={control}
@@ -129,7 +129,7 @@ export function AdsMetadataStep({
 
       {/* Description */}
       <div className="space-y-2">
-        <label className="label text-sm mb-1">Description</label>
+        <label className="label text-sm mb-1">Description <span className="text-red-500">*</span></label>
         <Controller
           name="description"
           control={control}

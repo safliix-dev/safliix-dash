@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   infoCellLabel: { fontStyle: "italic" },
-  infoCellLast: { borderRight: "0 solid transparent" },
+  infoCellLast: { borderRightWidth: 0 },
   table: {
     marginTop: 12,
     border: "0.8 solid #9e9e9e",
@@ -70,6 +70,12 @@ const styles = StyleSheet.create({
   footerLine: { marginTop: 8, fontSize: 9, textAlign: "right", fontStyle: "italic" },
 });
 
+const formatValue = (value: string | number | null | undefined): string => {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "number") return Number.isFinite(value) ? value.toString() : "";
+  return value;
+};
+
 export function ReportPdf({ rightsholder, periodStart, periodEnd, entries }: Props) {
   const rows = [...entries];
   while (rows.length < 10) {
@@ -90,7 +96,7 @@ export function ReportPdf({ rightsholder, periodStart, periodEnd, entries }: Pro
           <Text style={styles.infoCell}></Text>
           <Text style={styles.infoCell}></Text>
           <Text style={[styles.infoCell, { textAlign: "right" }, styles.infoCellLast]}>
-            <Text style={styles.infoCellLabel}>Période</Text> {periodStart}
+            <Text style={styles.infoCellLabel}>Période</Text> {periodStart} - {periodEnd}
           </Text>
         </View>
 
@@ -104,11 +110,11 @@ export function ReportPdf({ rightsholder, periodStart, periodEnd, entries }: Pro
           </View>
           {rows.map((row, idx) => (
             <View key={idx} style={[styles.row, idx === rows.length - 1 ? { borderBottomWidth: 0 } : {}]}>
-              <Text style={styles.colOrder}>{row.order}</Text>
-              <Text style={styles.colTitle}>{row.title}</Text>
-              <Text style={styles.colCategory}>{row.category}</Text>
-              <Text style={styles.colFormat}>{row.format}</Text>
-              <Text style={styles.colRentals}>{row.rentals}</Text>
+              <Text style={[styles.colOrder, styles.rowText]}>{formatValue(row.order)}</Text>
+              <Text style={[styles.colTitle, styles.rowText]}>{formatValue(row.title)}</Text>
+              <Text style={[styles.colCategory, styles.rowText]}>{formatValue(row.category)}</Text>
+              <Text style={[styles.colFormat, styles.rowText]}>{formatValue(row.format)}</Text>
+              <Text style={[styles.colRentals, styles.rowText]}>{formatValue(row.rentals)}</Text>
             </View>
           ))}
         </View>

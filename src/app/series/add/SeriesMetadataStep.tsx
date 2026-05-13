@@ -36,7 +36,7 @@ export function SeriesMetadataStep({
     <div className="flex flex-col gap-3">
       {/* Titre */}
       <div>
-        <label className="label text-sm mb-1">Nom de la série</label>
+        <label className="label text-sm mb-1">Nom de la série <span className="text-red-500">*</span></label>
         <Controller
           name="title"
           control={control}
@@ -58,7 +58,7 @@ export function SeriesMetadataStep({
       {/* Maison de production et Pays */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="label text-sm mb-1">Maison de production</label>
+          <label className="label text-sm mb-1">Maison de production <span className="text-red-500">*</span></label>
           <Controller
             name="productionHouse"
             control={control}
@@ -78,7 +78,7 @@ export function SeriesMetadataStep({
           {errors.productionHouse && <p className="text-red-600 text-sm">{errors.productionHouse.message as string}</p>}
         </div>
         <div>
-          <label className="label text-sm mb-1">Pays de production</label>
+          <label className="label text-sm mb-1">Pays de production <span className="text-red-500">*</span></label>
           <Controller
             name="country"
             control={control}
@@ -102,7 +102,7 @@ export function SeriesMetadataStep({
       {/* Catégorie et Genre */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="label text-sm mb-1">Catégorie</label>
+          <label className="label text-sm mb-1">Catégorie <span className="text-red-500">*</span></label>
           <Controller
             name="category"
             control={control}
@@ -122,7 +122,7 @@ export function SeriesMetadataStep({
           {errors.category && <p className="text-red-600 text-sm">{errors.category.message as string}</p>}
         </div>
         <div>
-          <label className="label text-sm mb-1">Genre</label>
+          <label className="label text-sm mb-1">Genre <span className="text-red-500">*</span></label>
           <Controller
             name="genre"
             control={control}
@@ -146,7 +146,7 @@ export function SeriesMetadataStep({
       {/* Dates */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="label text-sm mb-1">Date de sortie</label>
+          <label className="label text-sm mb-1">Date de sortie <span className="text-red-500">*</span></label>
           <Controller
             name="releaseDate"
             control={control}
@@ -163,7 +163,7 @@ export function SeriesMetadataStep({
           {errors.releaseDate && <p className="text-red-600 text-sm">{errors.releaseDate.message as string}</p>}
         </div>
         <div>
-          <label className="label text-sm mb-1">Date de publication SaFLIX</label>
+          <label className="label text-sm mb-1">Date de publication SaFLIX <span className="text-red-500">*</span></label>
           <Controller
             name="publishDate"
             control={control}
@@ -184,7 +184,7 @@ export function SeriesMetadataStep({
       {/* Nombre de saisons et Réalisateur */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="label text-sm mb-1">Nombre de saisons</label>
+          <label className="label text-sm mb-1">Nombre de saisons <span className="text-red-500">*</span></label>
           <Controller
             name="seasonCount"
             control={control}
@@ -202,7 +202,7 @@ export function SeriesMetadataStep({
           {errors.seasonCount && <p className="text-red-600 text-sm">{errors.seasonCount.message as string}</p>}
         </div>
         <div>
-          <label className="label text-sm mb-1">Réalisateur</label>
+          <label className="label text-sm mb-1">Réalisateur <span className="text-red-500">*</span></label>
           <Controller
             name="director"
             control={control}
@@ -222,7 +222,7 @@ export function SeriesMetadataStep({
       {/* Acteurs et Ayant droit */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="label text-sm mb-1">Acteurs principaux</label>
+          <label className="label text-sm mb-1">Acteurs principaux <span className="text-red-500">*</span></label>
           <Controller
             name="actors"
             control={control}
@@ -303,7 +303,7 @@ export function SeriesMetadataStep({
 
       {/* Description */}
       <div className="space-y-2">
-        <label className="label text-sm mb-1">Synopsis</label>
+        <label className="label text-sm mb-1">Synopsis <span className="text-red-500">*</span></label>
         <Controller
           name="description"
           control={control}
@@ -357,7 +357,7 @@ export function SeriesMetadataStep({
       {/* Langue et Classification */}
       <div className="grid grid-cols-3 gap-3 items-end">
         <div>
-          <label className="label text-sm mb-1">Langue</label>
+          <label className="label text-sm mb-1">Langue <span className="text-red-500">*</span></label>
           <Controller
             name="language"
             control={control}

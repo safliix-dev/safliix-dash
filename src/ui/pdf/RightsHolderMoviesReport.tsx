@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   infoCellLabel: { fontStyle: "italic" },
-  infoCellLast: { borderRight: "0 solid transparent" },
+  infoCellLast: { borderRightWidth: 0 },
   table: {
     marginTop: 12,
     border: "0.8 solid #9e9e9e",
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   footerLine: { marginTop: 8, fontSize: 9, textAlign: "right", fontStyle: "italic" },
 });
 
-const formatValue = (value: string | number) => {
+const formatValue = (value: string | number | null | undefined): string => {
   if (value === null || value === undefined) return "";
   if (typeof value === "number") return Number.isFinite(value) ? value.toString() : "";
   return value;

@@ -46,7 +46,7 @@ export default function Page() {
               rules={{ required: "Nom requis" }}
               render={({ field, fieldState }) => (
                 <label className="form-control">
-                  <span className="label-text text-white/70 text-sm">Nom</span>
+                  <span className="label-text text-white/70 text-sm">Nom <span className="text-red-500">*</span></span>
                   <InputField
                     type="text"
                     className="input input-bordered bg-neutral text-white"
@@ -85,7 +85,7 @@ export default function Page() {
               rules={{ required: "Date de début requise" }}
               render={({ field, fieldState }) => (
                 <label className="form-control">
-                  <span className="label-text text-white/70 text-sm">Date de début</span>
+                  <span className="label-text text-white/70 text-sm">Date de début <span className="text-red-500">*</span></span>
                   <InputField
                     type="date"
                     className="input input-bordered bg-neutral text-white"
@@ -104,7 +104,7 @@ export default function Page() {
               rules={{ required: "Date de fin requise" }}
               render={({ field, fieldState }) => (
                 <label className="form-control">
-                  <span className="label-text text-white/70 text-sm">Date de fin</span>
+                  <span className="label-text text-white/70 text-sm">Date de fin <span className="text-red-500">*</span></span>
                   <InputField
                     type="date"
                     className="input input-bordered bg-neutral text-white"

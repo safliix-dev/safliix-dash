@@ -33,8 +33,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     error: null,
   });
 
-  // Utilisation d'une Ref pour initSocket afin d'éviter de reconstruire le useEffect
   const isInitializing = useRef(false);
+  const isRefreshingToken = useRef(false);
 
   const disconnect = useCallback(() => {
     console.log('🔌 [SocketContext] Manual disconnect');
@@ -43,6 +43,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
   const reconnect = useCallback(async () => {
     console.log('🔄 [SocketContext] Manual reconnect');
+    if (videoSocket.connected) return;
     const token = await websocketAuth.getValidToken();
     if (token) {
       videoSocket.auth = { token };
@@ -78,17 +79,23 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     const onConnectError = async (err: SocketError) => {
       console.error('❌ [SocketContext] Connection Error:', err.message);
-      
-      // GESTION DU TOKEN EXPIRÉ : Si erreur d'auth, on refresh et on retente
+
       if (err.message === "unauthorized" || err.data?.code === 401) {
+        // Verrou : un seul refresh à la fois pour éviter les appels concurrents
+        if (isRefreshingToken.current) return;
+        isRefreshingToken.current = true;
         console.log('🔑 [SocketContext] Auth error, refreshing token...');
-        const wsToken = await websocketAuth.getValidToken();
-        if (wsToken && isMounted) {
-          videoSocket.auth = { token: wsToken };
-          videoSocket.connect();
+        try {
+          const wsToken = await websocketAuth.getValidToken();
+          if (wsToken && isMounted) {
+            videoSocket.auth = { token: wsToken };
+            videoSocket.connect();
+          }
+        } finally {
+          isRefreshingToken.current = false;
         }
       }
-      
+
       if (isMounted) setState(prev => ({ ...prev, error: err.message }));
     };
 

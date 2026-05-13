@@ -45,7 +45,7 @@ export default function Page() {
           {/* Nom / prix */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="label text-sm mb-1">Nom du plan</label>
+              <label className="label text-sm mb-1">Nom du plan{!isEdit && <span className="text-red-500"> *</span>}</label>
               <Controller
                 name="name"
                 control={control}
@@ -60,7 +60,7 @@ export default function Page() {
             </div>
 
             <div>
-                <label className="label text-sm mb-1">Prix</label>
+                <label className="label text-sm mb-1">Prix{!isEdit && <span className="text-red-500"> *</span>}</label>
                 <Controller
                   name={`price`}
                   control={control}
@@ -135,7 +135,7 @@ export default function Page() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="label text-sm mb-1">Appareils</label>
+                <label className="label text-sm mb-1">Appareils{!isEdit && <span className="text-red-500"> *</span>}</label>
                 <Controller
                   name="maxSharedAccounts"
                   control={control}

@@ -40,106 +40,142 @@ export default function Page() {
         <form onSubmit={openConfirm} className="bg-neutral border border-base-300 rounded-2xl p-5 space-y-5">
           {/* Identité */}
           <div className="grid grid-cols-2 gap-4">
-            <Controller
-              name="firstName"
-              control={control}
-              rules={{ required: isEdit ? false : "Prénom requis"  }}
-              render={({ field, fieldState }) => (
-                <InputField {...field} placeholder="Prénom" error={fieldState.error?.message} />
-              )}
-            />
-            <Controller
-              name="lastName"
-              control={control}
-              rules={{ required: isEdit ? false : "Nom requis" }}
-              render={({ field, fieldState }) => (
-                <InputField {...field} placeholder="Nom" error={fieldState.error?.message} />
-              )}
-            />
-            <Controller
-              name="role"
-              control={control}
-              rules={{ required: false }}
-              render={({ field, fieldState }) => (
-                <InputField {...field} placeholder="Rôle / fonction" error={fieldState.error?.message} />
-              )}
-            />
-            <Controller
-              name="email"
-              control={control}
-              rules={{ required: false }}
-              render={({ field, fieldState }) => (
-                <InputField {...field} type="email" placeholder="Email" error={fieldState.error?.message} />
-              )}
-            />
-            <Controller
-              name="phone"
-              control={control}
-              rules={{ required: isEdit ? false : "Téléphone requis"}}
-              render={({ field }) => <InputField {...field} placeholder="Téléphone" />}
-            />
-            <Controller
-              name="scope"
-              control={control}
-              rules={{ required: false }}
-              render={({ field, fieldState }) => (
-                <InputField {...field} placeholder="Périmètre d'usage" error={fieldState.error?.message} />
-              )}
-            />
-            <Controller
-              name="sharePercentage"
-              control={control}
-              rules={{required: isEdit ? false : "Part requis",  min: { value: 0, message: "Min 0%" } }}
-              render={({ field, fieldState }) => (
-                <InputField
-                  {...field}
-                  type="number"
-                  placeholder="Part (%)"
-                  error={fieldState.error?.message}
-                  value={String(field.value)}
-                />
-              )}
-            />
-            <Controller
-              name="status"
-              control={control}
-              render={({ field }) => (
-                <select {...field} className="select select-bordered w-full">
-                  <option value="actif">Actif</option>
-                  <option value="en attente">En attente</option>
-                  <option value="expiré">Expiré</option>
-                </select>
-              )}
-            />
-            <Controller
-              name="startDate"
-              control={control}
-              render={({ field }) => <input {...field} type="date" className="input input-bordered w-full" />}
-            />
-            <Controller
-              name="endDate"
-              control={control}
-              render={({ field }) => <input {...field} type="date" className="input input-bordered w-full" />}
-            />
+            <div>
+              <label className="label text-sm mb-1">Prénom{!isEdit && <span className="text-red-500"> *</span>}</label>
+              <Controller
+                name="firstName"
+                control={control}
+                rules={{ required: isEdit ? false : "Prénom requis"  }}
+                render={({ field, fieldState }) => (
+                  <InputField {...field} placeholder="Prénom" error={fieldState.error?.message} />
+                )}
+              />
+            </div>
+            <div>
+              <label className="label text-sm mb-1">Nom{!isEdit && <span className="text-red-500"> *</span>}</label>
+              <Controller
+                name="lastName"
+                control={control}
+                rules={{ required: isEdit ? false : "Nom requis" }}
+                render={({ field, fieldState }) => (
+                  <InputField {...field} placeholder="Nom" error={fieldState.error?.message} />
+                )}
+              />
+            </div>
+            <div>
+              <label className="label text-sm mb-1">Rôle / fonction</label>
+              <Controller
+                name="role"
+                control={control}
+                rules={{ required: false }}
+                render={({ field, fieldState }) => (
+                  <InputField {...field} placeholder="Rôle / fonction" error={fieldState.error?.message} />
+                )}
+              />
+            </div>
+            <div>
+              <label className="label text-sm mb-1">Email</label>
+              <Controller
+                name="email"
+                control={control}
+                rules={{ required: false }}
+                render={({ field, fieldState }) => (
+                  <InputField {...field} type="email" placeholder="Email" error={fieldState.error?.message} />
+                )}
+              />
+            </div>
+            <div>
+              <label className="label text-sm mb-1">Téléphone{!isEdit && <span className="text-red-500"> *</span>}</label>
+              <Controller
+                name="phone"
+                control={control}
+                rules={{ required: isEdit ? false : "Téléphone requis"}}
+                render={({ field }) => <InputField {...field} placeholder="Téléphone" />}
+              />
+            </div>
+            <div>
+              <label className="label text-sm mb-1">Périmètre d&apos;usage</label>
+              <Controller
+                name="scope"
+                control={control}
+                rules={{ required: false }}
+                render={({ field, fieldState }) => (
+                  <InputField {...field} placeholder="Périmètre d'usage" error={fieldState.error?.message} />
+                )}
+              />
+            </div>
+            <div>
+              <label className="label text-sm mb-1">Part (%){!isEdit && <span className="text-red-500"> *</span>}</label>
+              <Controller
+                name="sharePercentage"
+                control={control}
+                rules={{required: isEdit ? false : "Part requis",  min: { value: 0, message: "Min 0%" } }}
+                render={({ field, fieldState }) => (
+                  <InputField
+                    {...field}
+                    type="number"
+                    placeholder="Part (%)"
+                    error={fieldState.error?.message}
+                    value={String(field.value)}
+                  />
+                )}
+              />
+            </div>
+            <div>
+              <label className="label text-sm mb-1">Statut</label>
+              <Controller
+                name="status"
+                control={control}
+                render={({ field }) => (
+                  <select {...field} className="select select-bordered w-full">
+                    <option value="actif">Actif</option>
+                    <option value="en attente">En attente</option>
+                    <option value="expiré">Expiré</option>
+                  </select>
+                )}
+              />
+            </div>
+            <div>
+              <label className="label text-sm mb-1">Date de début</label>
+              <Controller
+                name="startDate"
+                control={control}
+                render={({ field }) => <input {...field} type="date" className="input input-bordered w-full" />}
+              />
+            </div>
+            <div>
+              <label className="label text-sm mb-1">Date de fin</label>
+              <Controller
+                name="endDate"
+                control={control}
+                render={({ field }) => <input {...field} type="date" className="input input-bordered w-full" />}
+              />
+            </div>
           </div>
 
           {/* Mentions légales et notes */}
           <div className="grid grid-cols-2 gap-4">
-            <Controller
-              name="legal"
-              control={control}
-              rules={{ required: false }}
-              render={({ field }) => (
-                <textarea {...field} className="textarea textarea-bordered w-full" placeholder="Mentions légales" />
-              )}
-            />
-            <Controller
-              name="notes"
-              control={control}
-              render={({ field }) => (
-                <textarea {...field} className="textarea textarea-bordered w-full" placeholder="Notes internes" />
-              )}
-            />
+            <div>
+              <label className="label text-sm mb-1">Mentions légales</label>
+              <Controller
+                name="legal"
+                control={control}
+                rules={{ required: false }}
+                render={({ field }) => (
+                  <textarea {...field} className="textarea textarea-bordered w-full" placeholder="Mentions légales" />
+                )}
+              />
+            </div>
+            <div>
+              <label className="label text-sm mb-1">Notes internes</label>
+              <Controller
+                name="notes"
+                control={control}
+                render={({ field }) => (
+                  <textarea {...field} className="textarea textarea-bordered w-full" placeholder="Notes internes" />
+                )}
+              />
+            </div>
           </div>
 
           
