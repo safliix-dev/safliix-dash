@@ -88,47 +88,20 @@ export function usePlanForm(id:string) {
     console.dir(pendingPlan, { depth: 2});
 
     try {
+      const discount = typeof pendingPlan.yearlyDiscount === "number" && isFinite(pendingPlan.yearlyDiscount) ? pendingPlan.yearlyDiscount : 0;
+
       if(!isEdit){
         await withRetry(() =>
         plansApi.create(
           {
             name: pendingPlan.name,
             price: pendingPlan.price,
-            yearlyDiscount: pendingPlan.yearlyDiscount,
+            yearlyDiscount: discount,
             status: "active",
             maxSharedAccounts: pendingPlan.maxSharedAccounts,
             quality: pendingPlan.quality,
             currency: pendingPlan.currency,
           },
-          
-        ),
-      );
-
-        setDialogStatus("success");
-        setDialogResult("Plan mis à jour avec succès.");
-
-        toast.success({
-          title: "Plan",
-          description: "Plan mis à jour avec succès.",
-        });
-
-        reset(pendingPlan);
-        setTimeout(closeDialog, 800);
-      }else{
-        await withRetry(() =>
-        plansApi.update(
-          id,
-          {
-            
-            name: pendingPlan.name,
-            price: pendingPlan.price,
-            yearlyDiscount: pendingPlan.yearlyDiscount,
-            status: "active",
-            maxSharedAccounts: pendingPlan.maxSharedAccounts,
-            quality: pendingPlan.quality,
-            currency: pendingPlan.currency,
-          },
-          
         ),
       );
 
@@ -138,6 +111,32 @@ export function usePlanForm(id:string) {
         toast.success({
           title: "Plan",
           description: "Plan créé avec succès.",
+        });
+
+        reset(pendingPlan);
+        setTimeout(closeDialog, 800);
+      }else{
+        await withRetry(() =>
+        plansApi.update(
+          id,
+          {
+            name: pendingPlan.name,
+            price: pendingPlan.price,
+            yearlyDiscount: discount,
+            status: "active",
+            maxSharedAccounts: pendingPlan.maxSharedAccounts,
+            quality: pendingPlan.quality,
+            currency: pendingPlan.currency,
+          },
+        ),
+      );
+
+        setDialogStatus("success");
+        setDialogResult("Plan mis à jour avec succès.");
+
+        toast.success({
+          title: "Plan",
+          description: "Plan mis à jour avec succès.",
         });
 
         reset(pendingPlan);

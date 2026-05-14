@@ -42,6 +42,11 @@ export default function Page() {
           onSubmit={openConfirm}
           className="bg-neutral rounded-2xl border border-base-300 p-5 space-y-5"
         >
+          {!isEdit && (
+            <p className="text-xs text-white/50">
+              Les champs marqués d&apos;un <span className="text-red-500">*</span> sont obligatoires.
+            </p>
+          )}
           {/* Nom / prix */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -244,7 +249,25 @@ export default function Page() {
               <span>{pendingPlan.maxSharedAccounts}</span>
             </div>
 
-            <p>{`L'abonnement annuel s'élèvera à ${Math.round(pendingPlan.price * 12 * (1 - pendingPlan.yearlyDiscount / 100))} ${pendingPlan.currency ?? "XOF"}`}</p>
+            {(() => {
+              const discount =
+                typeof pendingPlan.yearlyDiscount === "number" &&
+                isFinite(pendingPlan.yearlyDiscount) &&
+                pendingPlan.yearlyDiscount > 0 &&
+                pendingPlan.yearlyDiscount <= 100
+                  ? pendingPlan.yearlyDiscount
+                  : 0;
+              const annual = Math.round(pendingPlan.price * 12 * (1 - discount / 100));
+              return (
+                <div className="flex justify-between">
+                  <span className="text-white/60">Tarif annuel</span>
+                  <span>
+                    {annual} {pendingPlan.currency ?? "XOF"}
+                    {discount > 0 && <span className="text-green-400 ml-1">(-{discount}%)</span>}
+                  </span>
+                </div>
+              );
+            })()}
           </div>
         )}
       </ConfirmationDialog>

@@ -22,11 +22,9 @@ export const formatApiError = (error: unknown): FriendlyError => {
 
     return {
       message:
-        error.status === 401
-          ? "Session expirée : reconnecte-toi pour continuer."
-          : error.status === 403
-            ? "Accès refusé pour cette action."
-            : baseMessage,
+        error.status === 403
+          ? "Accès refusé pour cette action."
+          : baseMessage,
       status: error.status,
       cause: error.data,
     };

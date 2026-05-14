@@ -4,7 +4,7 @@ import { type PaginatedResponse } from "./common";
 export type PlanForm = {
   name: string;
   price: number;
-  yearlyDiscount: number; // %
+  yearlyDiscount?: number; // % — optionnel
   currency: "XOF" | "EUR" | "USD";
   maxSharedAccounts: number;
   quality: string;
