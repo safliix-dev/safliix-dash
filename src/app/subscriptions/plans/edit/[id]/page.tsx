@@ -188,7 +188,7 @@ export default function Page() {
                     
                     {...field}
                     onChange={(e) => field.onChange(e.target.value)}
-                    className="textarea bg-base-200 border-base-300 w-full min-h-[100px]"
+                    className="textarea bg-base-200 border-base-300 w-full min-h-25"
                   />
                 )}
               />
