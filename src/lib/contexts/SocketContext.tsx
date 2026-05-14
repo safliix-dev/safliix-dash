@@ -35,6 +35,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
   const isInitializing = useRef(false);
   const isRefreshingToken = useRef(false);
+  const wasAuthenticated = useRef(false);
 
   const disconnect = useCallback(() => {
     console.log('🔌 [SocketContext] Manual disconnect');
@@ -65,15 +66,19 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const onDisconnect = (reason: string) => {
       console.log('🔌 [SocketContext] ❌ Disconnected:', reason);
       if (isMounted) setState(prev => ({ ...prev, isConnected: false, isAuthenticated: false }));
-      
-      // Si déconnexion par le serveur (token expiré par ex), on tente de reconnecter
-      if (reason === "io server disconnect") {
-        videoSocket.connect();
+
+      // Ne reconnecter que si on était déjà authentifié (session expirée en cours d'utilisation).
+      // Si on n'était pas encore authentifié, c'est un rejet auth → on ne boucle pas.
+      if (reason === "io server disconnect" && wasAuthenticated.current) {
+        wasAuthenticated.current = false;
+        websocketAuth.invalidateToken();
+        reconnect();
       }
     };
 
     const onAuthenticated = (data: AuthenticatedEvent) => {
       console.log('👤 [SocketContext] Authenticated:', data.userId);
+      wasAuthenticated.current = true;
       if (isMounted) setState(prev => ({ ...prev, isAuthenticated: true }));
     };
 

@@ -12,4 +12,5 @@ export const videoSocket: Socket = io(`${PROCESSOR_SOCKET_URL}/processing`, {
   autoConnect: false,
   transports: ["websocket"],
   withCredentials: true,
+  reconnection: false, // reconnexion gérée manuellement dans SocketContext
 });
