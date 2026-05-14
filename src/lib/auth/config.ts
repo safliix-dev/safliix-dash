@@ -69,7 +69,6 @@ export const authConfig: NextAuthOptions = {
         const allRoles = [...new Set([...realmRoles, ...clientRoles])];
         const expires_in = (account.expires_in as number) ?? 300;
 
-        // ⭐ MOVE CRUCIAL : On stocke les tokens lourds dans SQLite
         await SessionService.saveTokens(profile.sub!, {
           accessToken: account.access_token!,
           refreshToken: account.refresh_token!,
@@ -104,9 +103,7 @@ export const authConfig: NextAuthOptions = {
     async signOut({ token }) {
       if (token.sub) {
         try {
-          // ⭐ NETTOYAGE : On supprime les tokens de SQLite au logout
           await SessionService.deleteSession(token.sub);
-          console.log(`✅ SQLite : Session supprimée pour ${token.sub}`);
         } catch (error) {
           console.error("❌ SQLite Logout error:", error);
         }

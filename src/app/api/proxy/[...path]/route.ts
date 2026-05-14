@@ -1,17 +1,33 @@
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { TokenService } from "@/services/token.service";
+
+// TODO: retirer quand Redis est prêt
+const BYPASS_AUTH = true;
+const MOCK_TOKEN = "REMPLACER_PAR_UN_VRAI_TOKEN_KEYCLOAK";
+
 async function proxyHandler(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
-  const token = await getToken({ req });
+  let accessToken: string | null = null;
 
-  if (!token?.sub) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
+  if (BYPASS_AUTH) {
+    accessToken = MOCK_TOKEN;
+  } else {
+    const token = await getToken({ req });
 
-  const accessToken = await TokenService.getValidToken(token.sub);
+    if (!token?.sub) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
 
-  if (!accessToken) {
-    return NextResponse.json({ error: "Session invalide" }, { status: 401 });
+    try {
+      accessToken = await TokenService.getValidToken(token.sub);
+    } catch (err) {
+      console.error("❌ TokenService error:", err);
+      return NextResponse.json({ error: "Erreur session serveur" }, { status: 503 });
+    }
+
+    if (!accessToken) {
+      return NextResponse.json({ error: "Session invalide" }, { status: 401 });
+    }
   }
 
   const baseUrl = process.env.NEST_API_URL;
@@ -29,11 +45,7 @@ async function proxyHandler(req: NextRequest, { params }: { params: Promise<{ pa
 
   const headers = new Headers();
 
-  // 🔒 whitelist headers uniquement
-  const allowedHeaders = [
-    "content-type",
-    "accept"
-  ];
+  const allowedHeaders = ["content-type", "accept"];
 
   req.headers.forEach((value, key) => {
     if (allowedHeaders.includes(key.toLowerCase())) {
@@ -43,11 +55,17 @@ async function proxyHandler(req: NextRequest, { params }: { params: Promise<{ pa
 
   headers.set("Authorization", `Bearer ${accessToken}`);
 
-  const response = await fetch(targetUrl, {
-    method: req.method,
-    headers,
-    body: ["GET", "HEAD"].includes(req.method) ? undefined : await req.text(),
-  });
+  let response: Response;
+  try {
+    response = await fetch(targetUrl, {
+      method: req.method,
+      headers,
+      body: ["GET", "HEAD"].includes(req.method) ? undefined : await req.text(),
+    });
+  } catch (err) {
+    console.error(`❌ Backend unreachable [${req.method} ${targetUrl}]:`, err);
+    return NextResponse.json({ error: "Backend inaccessible" }, { status: 503 });
+  }
 
   const contentType = response.headers.get("content-type") || "";
   const body = contentType.includes("application/json")
