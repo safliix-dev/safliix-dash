@@ -9,7 +9,11 @@
 # ---------------------------------------------------------------------------
 FROM node:20-alpine AS deps
 
-RUN apk add --no-cache libc6-compat
+# Installation des dépendances système pour better-sqlite3 (node-gyp)
+# - python3 : requis par node-gyp
+# - build-base : gcc, g++, make (compilateur C++)
+# - libc6-compat : déjà présent, on le garde
+RUN apk add --no-cache python3 build-base libc6-compat
 
 WORKDIR /app
 
