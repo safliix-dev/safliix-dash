@@ -63,6 +63,7 @@ export interface PlanPayload {
   maxSharedAccounts: number;
   quality?: string;
   currency?: string;
+  description?: string;
 }
 
 export type PlanPayloadUpdate = Partial<PlanPayload>;

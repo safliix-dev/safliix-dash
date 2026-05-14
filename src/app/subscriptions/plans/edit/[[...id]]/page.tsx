@@ -105,7 +105,8 @@ export default function Page() {
                     <InputField
                       type="number"
                       {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}    
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
                       className="input bg-base-200 border-base-300"
                     />
                   )}

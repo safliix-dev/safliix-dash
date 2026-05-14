@@ -60,7 +60,7 @@ export function usePlanForm(id:string) {
             description: "Impossible de charger le plan d'abonnement.",
           });
         });
-    }, [id,,isEdit,reset,toast]);
+    }, [id, isEdit, reset, toast]);
 
   const openConfirm = handleSubmit((data) => {
     setPendingPlan(data);
@@ -101,6 +101,7 @@ export function usePlanForm(id:string) {
             maxSharedAccounts: pendingPlan.maxSharedAccounts,
             quality: pendingPlan.quality,
             currency: pendingPlan.currency,
+            description: pendingPlan.description,
           },
         ),
       );
@@ -123,10 +124,10 @@ export function usePlanForm(id:string) {
             name: pendingPlan.name,
             price: pendingPlan.price,
             yearlyDiscount: discount,
-            status: "active",
             maxSharedAccounts: pendingPlan.maxSharedAccounts,
             quality: pendingPlan.quality,
             currency: pendingPlan.currency,
+            description: pendingPlan.description,
           },
         ),
       );
