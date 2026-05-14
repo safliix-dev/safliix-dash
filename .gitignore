@@ -51,3 +51,5 @@ infra/templates/generated/
 .idea/
 
 /src/generated/prisma
+
+/src/generated/prisma
