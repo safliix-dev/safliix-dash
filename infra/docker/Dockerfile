@@ -83,6 +83,10 @@ COPY --from=builder /app/public ./public
 # Copy Prisma migrations for migrate deploy at startup
 COPY --from=builder /app/prisma ./prisma
 
+
+# ⭐ AJOUT : Copier le fichier de configuration Prisma (racine)
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+
 # Copie complète des node_modules — inclut toutes les dépendances transitives
 # de Prisma CLI (valibot, effect, fast-check, etc.)
 # Solution temporaire en attendant le stage migrator dédié
