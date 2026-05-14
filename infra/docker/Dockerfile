@@ -2,6 +2,8 @@
 # Dockerfile — safliix-dash (Next.js 15 standalone)
 # Multi-stage build: deps -> builder -> runtime
 # Calque sur sachrist
+# NOTE: node_modules complet copié en runtime (solution temporaire)
+# → Migration vers stage migrator dédié prévue (voir DEVOPS_PRISMA_MIGRATIONS.md)
 # =============================================================================
 
 # ---------------------------------------------------------------------------
@@ -81,11 +83,10 @@ COPY --from=builder /app/public ./public
 # Copy Prisma migrations for migrate deploy at startup
 COPY --from=builder /app/prisma ./prisma
 
-# Copy Prisma CLI and adapters needed for migrate deploy at runtime
-# Ne pas copier .bin/prisma (symlink résolu par Docker → __dirname cassé, wasm introuvable)
-# On appelle directement node_modules/prisma/build/index.js dans le CMD
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+# Copie complète des node_modules — inclut toutes les dépendances transitives
+# de Prisma CLI (valibot, effect, fast-check, etc.)
+# Solution temporaire en attendant le stage migrator dédié
+COPY --from=deps /app/node_modules ./node_modules
 
 # Persistent volume mount point for SQLite database file
 RUN mkdir -p /app/data
