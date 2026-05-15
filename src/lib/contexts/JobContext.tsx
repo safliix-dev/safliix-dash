@@ -244,6 +244,13 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     console.log('✅ [JobContext] Setting up socket handlers...');
+    console.log(`🔌 [JobContext] Socket id=${videoSocket.id} connected=${videoSocket.connected}`);
+
+    // ── Catch-all : log every event received on this socket ──
+    const onAnyHandler = (event: string, ...args: unknown[]): void => {
+      console.log(`📨 [JobContext][RAW EVENT] "${event}"`, args);
+    };
+    videoSocket.onAny(onAnyHandler);
 
     const ROOMS = ["movies", "episodes", "series"] as const;
 
@@ -261,6 +268,7 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const handleJobProgress = (data: RawJobProgressEvent): void => {
+      console.log(`📊 [JobContext] Job progress: jobId=${data.jobId} progress=${data.progress}% stage=${data.stage} status=${data.status}`);
       const { jobId, progress, status, stage } = data;
       if (jobId) {
         upsertJobs({
@@ -320,6 +328,7 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
     return (): void => {
       console.log('🧹 [JobContext] Cleaning up socket handlers...');
 
+      videoSocket.offAny(onAnyHandler);
       videoSocket.off('connect', joinRooms);
       videoSocket.off('job_created', handleJobCreated);
       videoSocket.off('job_progress', handleJobProgress);
