@@ -211,17 +211,18 @@ export default function FilmsPage() {
                   {group.items.map((film) => {
                     const stats = extractFilmStats(film);
                     return (
-                      <VideoCard 
+                      <VideoCard
                         key={film.id}
                         title={film.title}
                         director={film.director}
                         poster={film.posterUrl}
+                        hero={film.heroUrl}
                         dp={film.dp}
                         videoSrc={film.movieUrl}
                         category={film.category}
                         stats={stats}
                         status={film.status}
-                        mode={mode} 
+                        mode={mode}
                         detailHref={`/films/detail/${film.id}`}
                         onAction={(action) => handleFilmAction(film.id, action)}
                       />

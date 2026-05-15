@@ -27,6 +27,7 @@ const VideoPlayer = ({ src, poster, title, onProgress, autoPlay = false }: Video
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
+  const qualitiesRef = useRef<number[]>([]);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -89,9 +90,10 @@ const VideoPlayer = ({ src, poster, title, onProgress, autoPlay = false }: Video
 
       hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
         const levels = data.levels.map((l: Level) => l.height).filter(Boolean);
+        qualitiesRef.current = levels;
         setQualities(levels);
         setIsHLSReady(true);
-        
+
         // Restaurer la qualité sauvegardée
         const savedQuality = localStorage.getItem(`video-quality-${effectiveSrc}`);
         if (savedQuality && parseInt(savedQuality) >= -1) {
@@ -101,11 +103,18 @@ const VideoPlayer = ({ src, poster, title, onProgress, autoPlay = false }: Video
             setCurrentQuality(qualityIndex);
           }
         }
+
+        // Déclencher l'autoPlay ici : le manifeste est parsé, la source est prête
+        if (autoPlay) {
+          video.play()
+            .then(() => setIsPlaying(true))
+            .catch(() => setIsPlaying(false));
+        }
       });
 
       hls.on(Hls.Events.LEVEL_SWITCHED, (_, data) => {
         setCurrentQuality(data.level);
-        if (data.level >= 0 && qualities[data.level]) {
+        if (data.level >= 0 && qualitiesRef.current[data.level]) {
           localStorage.setItem(`video-quality-${effectiveSrc}`, data.level.toString());
         }
       });
@@ -121,6 +130,7 @@ const VideoPlayer = ({ src, poster, title, onProgress, autoPlay = false }: Video
 
       hlsRef.current = hls;
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // Safari : lecture HLS native
       video.src = effectiveSrc;
       setIsHLSReady(true);
     } else {
@@ -131,27 +141,19 @@ const VideoPlayer = ({ src, poster, title, onProgress, autoPlay = false }: Video
     return () => {
       hlsRef.current?.destroy();
     };
-  }, [effectiveSrc, qualities]);
+  }, [effectiveSrc, autoPlay]);
 
-  // Auto-play et sauvegarde progression
+  // Restaurer la progression sauvegardée
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !mounted) return;
 
-    // Restaurer la progression
     const savedProgress = localStorage.getItem(`video-progress-${effectiveSrc}`);
     if (savedProgress && !autoPlay) {
       const savedTime = parseFloat(savedProgress);
       if (savedTime > 5 && savedTime < (duration || Infinity) - 5) {
         video.currentTime = savedTime;
       }
-    }
-
-    if (autoPlay) {
-      video.play().catch(() => {
-        // Auto-play bloqué par navigateur
-        setIsPlaying(false);
-      });
     }
   }, [effectiveSrc, duration, autoPlay, mounted]);
 
@@ -188,7 +190,17 @@ const VideoPlayer = ({ src, poster, title, onProgress, autoPlay = false }: Video
     
     const handleWaiting = () => setIsBuffering(true);
     const handlePlaying = () => setIsBuffering(false);
-    const handleCanPlay = () => setError(null);
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+    const handleCanPlay = () => {
+      setError(null);
+      // AutoPlay pour les sources non-HLS (HLS déclenche via MANIFEST_PARSED)
+      if (autoPlay && !effectiveSrc?.endsWith('.m3u8') && video.paused) {
+        video.play()
+          .then(() => setIsPlaying(true))
+          .catch(() => setIsPlaying(false));
+      }
+    };
 
     video.addEventListener('timeupdate', handleTimeUpdate);
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
@@ -196,6 +208,8 @@ const VideoPlayer = ({ src, poster, title, onProgress, autoPlay = false }: Video
     video.addEventListener('error', handleError);
     video.addEventListener('waiting', handleWaiting);
     video.addEventListener('playing', handlePlaying);
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
     video.addEventListener('canplay', handleCanPlay);
 
     return () => {
@@ -205,9 +219,11 @@ const VideoPlayer = ({ src, poster, title, onProgress, autoPlay = false }: Video
       video.removeEventListener('error', handleError);
       video.removeEventListener('waiting', handleWaiting);
       video.removeEventListener('playing', handlePlaying);
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
       video.removeEventListener('canplay', handleCanPlay);
     };
-  }, [effectiveSrc, onProgress, isDragging]);
+  }, [effectiveSrc, onProgress, isDragging, autoPlay]);
 
   // 🎮 KEYBOARD
   const togglePlay = useCallback(async () => {

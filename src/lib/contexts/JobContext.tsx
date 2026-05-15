@@ -108,10 +108,7 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
   const [jobs, setJobs] = useState<EncodingJob[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   
-  // Refs pour éviter les cycles
-  const isSetupComplete = useRef<boolean>(false);
   const isInitialized = useRef<boolean>(false);
-  const roomsJoined = useRef<Set<string>>(new Set());
 
   // ============================================================
   // JOB MANAGEMENT
@@ -241,39 +238,26 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
   // ============================================================
 
   useEffect(() => {
-    // Attendre que la socket soit authentifiée
     if (!isAuthenticated || !isConnected) {
       console.log('⏳ [JobContext] Waiting for socket authentication...');
       return;
     }
-    
-    // Éviter les doubles setups
-    if (isSetupComplete.current) {
-      console.log('✅ [JobContext] Already setup, skipping...');
-      return;
-    }
-    
+
     console.log('✅ [JobContext] Setting up socket handlers...');
-    isSetupComplete.current = true;
-    
-    const rooms: readonly string[] = ["movies", "episodes", "series"] as const;
-    const currentRooms = roomsJoined.current;
-    
-    // Rejoindre les rooms
-    for (const room of rooms) {
-      if (!currentRooms.has(room)) {
+
+    const ROOMS = ["movies", "episodes", "series"] as const;
+
+    // Rejoindre toutes les rooms. Appelé à chaque (re)connexion.
+    const joinRooms = (): void => {
+      for (const room of ROOMS) {
         console.log(`📡 [JobContext] Joining room: ${room}`);
         videoSocket.emit("join_room", { room });
-        currentRooms.add(room);
       }
-    }
+    };
 
-    // Handlers socket
     const handleJobCreated = (data: JobCreatedEvent): void => {
       console.log("🆕 [JobContext] Job created:", data.job?.id);
-      if (data.job) {
-        upsertJobs(data.job);
-      }
+      if (data.job) upsertJobs(data.job);
     };
 
     const handleJobProgress = (data: RawJobProgressEvent): void => {
@@ -290,56 +274,37 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
 
     const handleJobCompleted = (data: JobCompletedEvent): void => {
       console.log("✅ [JobContext] Job completed:", data.jobId);
-      if (data.jobId) {
-        upsertJobs({ 
-          id: data.jobId, 
-          progress: 100, 
-          status: 'completed' 
-        });
-      }
+      if (data.jobId) upsertJobs({ id: data.jobId, progress: 100, status: 'completed' });
     };
 
     const handleJobFailed = (data: JobFailedEvent): void => {
       console.log("❌ [JobContext] Job failed:", data.jobId);
-      if (data.jobId) {
-        upsertJobs({ 
-          id: data.jobId, 
-          status: 'failed' 
-          
-        });
-      }
+      if (data.jobId) upsertJobs({ id: data.jobId, status: 'failed' });
     };
 
     const handleJobPaused = (data: JobPausedEvent): void => {
       console.log("⏸️ [JobContext] Job paused:", data.jobId);
-      if (data.jobId) {
-        upsertJobs({ 
-          id: data.jobId, 
-          status: 'paused' 
-        });
-      }
+      if (data.jobId) upsertJobs({ id: data.jobId, status: 'paused' });
     };
 
     const handleJobResumed = (data: JobResumedEvent): void => {
       console.log("▶️ [JobContext] Job resumed:", data.jobId);
-      if (data.jobId) {
-        upsertJobs({ 
-          id: data.jobId, 
-          status: 'processing'
-        });
-      }
+      if (data.jobId) upsertJobs({ id: data.jobId, status: 'processing' });
     };
 
     const handleJobDeleted = (data: JobDeletedEvent): void => {
       console.log("🗑️ [JobContext] Job deleted:", data.jobId);
       if (data.jobId) {
-        setJobs((prev: EncodingJob[]): EncodingJob[] => 
+        setJobs((prev: EncodingJob[]): EncodingJob[] =>
           prev.filter((job: EncodingJob): boolean => job.id !== data.jobId)
         );
       }
     };
 
-    // Enregistrement des handlers
+    // Re-join rooms on every reconnect (fixes React-18 batching where state
+    // goes false→true in one render so the effect never re-fires).
+    videoSocket.on('connect', joinRooms);
+
     videoSocket.on('job_created', handleJobCreated);
     videoSocket.on('job_progress', handleJobProgress);
     videoSocket.on('job_completed', handleJobCompleted);
@@ -348,14 +313,14 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
     videoSocket.on('job_resumed', handleJobResumed);
     videoSocket.on('job_deleted', handleJobDeleted);
 
-    // Chargement initial
+    // Rejoindre les rooms dès maintenant (connexion déjà active)
+    joinRooms();
     loadInitialJobs();
 
-    // Cleanup - uniquement au démontage
     return (): void => {
-      console.log('🧹 [JobContext] Component unmounting, cleaning up...');
-      
-      // Retirer les handlers
+      console.log('🧹 [JobContext] Cleaning up socket handlers...');
+
+      videoSocket.off('connect', joinRooms);
       videoSocket.off('job_created', handleJobCreated);
       videoSocket.off('job_progress', handleJobProgress);
       videoSocket.off('job_completed', handleJobCompleted);
@@ -363,17 +328,14 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
       videoSocket.off('job_paused', handleJobPaused);
       videoSocket.off('job_resumed', handleJobResumed);
       videoSocket.off('job_deleted', handleJobDeleted);
-      
-      // Quitter les rooms uniquement si le socket est encore connecté
-      for (const room of currentRooms) {
-        if (videoSocket.connected) {
+
+      if (videoSocket.connected) {
+        for (const room of ROOMS) {
           console.log(`👋 [JobContext] Leaving room: ${room}`);
           videoSocket.emit("leave_room", { room });
         }
       }
-      currentRooms.clear();
-      
-      isSetupComplete.current = false;
+
       isInitialized.current = false;
     };
   }, [isAuthenticated, isConnected, upsertJobs, loadInitialJobs]);
