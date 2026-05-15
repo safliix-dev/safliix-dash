@@ -5,7 +5,6 @@ import Hls, { Level } from 'hls.js';
 
 type VideoPlayerProps = {
   src?: string | null;
-  poster?: string;
   title?: string;
   onProgress?: (progress: number) => void;
   autoPlay?: boolean;
@@ -16,14 +15,14 @@ const formatTime = (seconds: number) => {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
-  
+
   if (hours > 0) {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
   return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
 
-const VideoPlayer = ({ src, poster, title, onProgress, autoPlay = false }: VideoPlayerProps) => {
+const VideoPlayer = ({ src, title, onProgress, autoPlay = false }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -141,7 +140,7 @@ const VideoPlayer = ({ src, poster, title, onProgress, autoPlay = false }: Video
     return () => {
       hlsRef.current?.destroy();
     };
-  }, [effectiveSrc, autoPlay]);
+  }, [effectiveSrc, autoPlay, mounted]);
 
   // Restaurer la progression sauvegardée
   useEffect(() => {
@@ -223,7 +222,7 @@ const VideoPlayer = ({ src, poster, title, onProgress, autoPlay = false }: Video
       video.removeEventListener('pause', handlePause);
       video.removeEventListener('canplay', handleCanPlay);
     };
-  }, [effectiveSrc, onProgress, isDragging, autoPlay]);
+  }, [effectiveSrc, onProgress, isDragging, autoPlay, mounted]);
 
   // 🎮 KEYBOARD
   const togglePlay = useCallback(async () => {
@@ -485,7 +484,6 @@ const VideoPlayer = ({ src, poster, title, onProgress, autoPlay = false }: Video
       <video
         ref={videoRef}
         className="w-full h-[500px] object-contain cursor-pointer"
-        poster={poster}
         preload="metadata"
         playsInline
         onClick={togglePlay}

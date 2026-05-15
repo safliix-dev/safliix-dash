@@ -337,7 +337,6 @@ export default function VideoCard({
             {/* Video Player */}
             <VideoPlayer
               src={videoSrc}
-              poster={poster}
               title={title}
               autoPlay={true}
             />
