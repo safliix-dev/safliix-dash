@@ -6,7 +6,7 @@ import { type UploadFileDescriptor,
 
 export const uploadApi = {
   
-  // 👈 Ajouter le générique TKey
+  
   presignUploads: <TKey extends string = string>(
     entityId: string, 
     entityType: string, 
@@ -31,5 +31,11 @@ export const uploadApi = {
     apiRequest<{ ok: boolean }>(`/uploads/confirm-upload`, {
       method: "POST",
       body: payload,
-    })
+    }),
+
+  changeStatus: (id: string,type:string, status: string) =>
+    apiRequest<{ ok: boolean }>(`/uploads/update/status`, {
+      method: "POST",
+      body: { id, type,status },
+    }),
 };

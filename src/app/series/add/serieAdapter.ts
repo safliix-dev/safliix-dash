@@ -106,7 +106,7 @@ export const seriesAdapter: MediaFormEngineConfig<
       file:f.file
     }));
 
-    const slots = await uploadApi.presignUploads(id, "series", descriptors);
+    const slots = await uploadApi.presignUploads(id, "serie", descriptors);
 
     return slots.map(slot => ({
       uploadUrl: slot.uploadUrl,

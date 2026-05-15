@@ -1,6 +1,7 @@
 // lib/hooks/useContentAction.ts
 import { useState } from "react";
 import { useToast } from "@/ui/components/toast/ToastProvider";
+import { uploadApi } from "../api/uploads";
 import { formatApiError } from "@/lib/api/errors";
 import type { ContentAction } from "@/types/api/common";
 import type { ContentType } from "./useBaseContentManagement";
@@ -63,13 +64,11 @@ export function useContentAction({ contentType, onSuccess }: UseContentActionPar
 
     try {
       // Appel API à définir selon ton backend
-      const response = await fetch(`/api/content/${contentType}/${dialogState.contentId}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ action: dialogState.action }),
-      });
+      const response = await uploadApi.changeStatus(
+        dialogState.contentId, 
+        contentType, 
+        dialogState.action === "publish" ? "published" : dialogState.action === "archive" ? "archived" : "restored"
+      );
 
       if (!response.ok) {
         throw new Error("Erreur lors de l'action");

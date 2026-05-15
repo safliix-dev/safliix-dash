@@ -50,7 +50,14 @@ const VideoPlayer = ({ src, title, onProgress, autoPlay = false }: VideoPlayerPr
   const [currentQuality, setCurrentQuality] = useState<number>(-1);
   const [isHLSReady, setIsHLSReady] = useState(false);
 
-  const effectiveSrc = useMemo(() => src ?? null, [src]);
+  const effectiveSrc = useMemo(() => {
+    if (!src) return null;
+    // Passer par le proxy HLS pour éviter les erreurs CORS du CDN
+    if (src.startsWith('https://cdn.safliix.com')) {
+      return `/api/hls-proxy?url=${encodeURIComponent(src)}`;
+    }
+    return src;
+  }, [src]);
 
   // Montage component
   useEffect(() => {
