@@ -97,7 +97,7 @@ export function useSeriesDetail(seriesId: string): UseSeriesDetailReturn {
   // Ajouter une saison
   const addSeason = useCallback(async (seasonMetaPyload: SeasonFormData) => {
     try {
-      await seasonsApi.create( seasonMetaPyload, );
+      await seasonsApi.create( {...seasonMetaPyload, serieId: detail?.id || "" }, detail?.id || "" );
       toast.success({ title: "Succès", description: "Saison ajoutée avec succès" });
       await refresh();
     } catch (error) {
