@@ -64,10 +64,16 @@ export function useContentAction({ contentType, onSuccess }: UseContentActionPar
 
     try {
       // Appel API à définir selon ton backend
+      const statusMap: Record<ContentAction, string> = {
+        publish: "PUBLISHED",
+        archive: "ARCHIVED",
+        restore: "DRAFT",
+      };
+
       const response = await uploadApi.changeStatus(
-        dialogState.contentId, 
-        contentType, 
-        dialogState.action === "publish" ? "published" : dialogState.action === "archive" ? "archived" : "restored"
+        dialogState.contentId,
+        contentType,
+        statusMap[dialogState.action]
       );
 
       if (!response.ok) {
