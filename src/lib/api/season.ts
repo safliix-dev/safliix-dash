@@ -5,16 +5,16 @@ import { SeasonMetadataPayload,SeasonSummary } from "@/types/api/season";
 
 export const seasonsApi = {
   // Créer une saison
-  create: (payload: SeasonMetadataPayload, ) =>
-    apiRequest<{ id: string }>(`/seasons`, {
+  create: (payload: SeasonMetadataPayload, seriesId: string) =>
+    apiRequest<{ id: string }>(`series/${seriesId}/seasons`, {
       method: "POST",
       body: payload,
     
     }),
 
   // Mettre à jour une saison
-  update: (id: string, payload: SeasonMetadataPayload, ) =>
-    apiRequest<{ id: string }>(`/seasons/${id}`, {
+  update: (id: string, payload: SeasonMetadataPayload) =>
+    apiRequest<{ id: string }>(`series/seasons/${id}`, {
       method: "PUT",
       body: payload,
       

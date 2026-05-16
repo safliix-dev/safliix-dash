@@ -18,11 +18,11 @@ export const episodeApi = {
 
   // Récupérer un épisode par son ID
   get: (episodeId: string, ) => 
-    apiRequest<EpisodeDetail>(`/episodes/${episodeId}`, {  }),
+    apiRequest<EpisodeDetail>(`/series/episodes/${episodeId}`, {  }),
 
   // Créer un épisode (nécessite seriesId et seasonId dans le payload)
   create: (payload: EpisodeMetadataPayload, ) =>
-    apiRequest<EpisodeCreateOrUpdateResponse>(`/series/${payload.seriesId}/seasons/${payload.seasonId}/episodes`, {
+    apiRequest<EpisodeCreateOrUpdateResponse>(`/series/seasons/${payload.seasonId}/episodes`, {
       method: "POST",
       body: payload,
       
@@ -30,7 +30,7 @@ export const episodeApi = {
 
   // Mettre à jour un épisode
   update: (episodeId: string, payload: EpisodeMetadataPayload, ) =>
-    apiRequest<EpisodeCreateOrUpdateResponse>(`/episodes/${episodeId}`, { 
+    apiRequest<EpisodeCreateOrUpdateResponse>(`/series/episodes/${episodeId}`, { 
       method: "PUT", 
       body: payload, 
        
