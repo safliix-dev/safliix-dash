@@ -121,13 +121,12 @@ export default function SeriesPage() {
         </div>
       </Header>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-base-200 border border-base-300 rounded-2xl px-4 py-2.5">
         <StatusFilter
           selectedStatus={statusFilter}
           onStatusChange={setStatusFilter}
           options={statusFilterOptions}
         />
-        
         <FilterBtn
           title="Tri"
           selected={sortFilter}

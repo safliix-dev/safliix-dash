@@ -1,33 +1,32 @@
-// ui/components/filterBtn.tsx
 type Option<T extends string> = { label: string; value: T };
-type Props<T extends string> = { 
-  title: string; 
-  options: Option<T>[]; 
-  onSelect?: (value: T) => void; 
-  selected?: T 
+type Props<T extends string> = {
+  title: string;
+  options: Option<T>[];
+  onSelect?: (value: T) => void;
+  selected?: T;
 };
 
 const FilterBtn = <T extends string>({ title, options, onSelect, selected }: Props<T>) => {
   return (
-    <details className="dropdown bg-neutral">
-      <summary className="btn m-1 bg-neutral">
-        {title}
-        <svg className="fill-current ml-1" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
-      </summary>
-      <ul className="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-white/40 font-medium shrink-0">{title}</span>
+      <div className="flex items-center bg-base-300/60 rounded-full p-0.5">
         {options.map((item) => (
-          <li key={item.value}>
-            <button
-              type="button"
-              className={selected === item.value ? "active" : ""}
-              onClick={() => onSelect?.(item.value)}
-            >
-              {item.label}
-            </button>
-          </li>
+          <button
+            key={item.value}
+            type="button"
+            onClick={() => onSelect?.(item.value)}
+            className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all duration-150
+              ${selected === item.value
+                ? 'bg-primary text-primary-content shadow-sm'
+                : 'text-white/50 hover:text-white'
+              }`}
+          >
+            {item.label}
+          </button>
         ))}
-      </ul>
-    </details>
+      </div>
+    </div>
   );
 };
 

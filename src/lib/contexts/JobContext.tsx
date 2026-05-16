@@ -247,8 +247,11 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
 
     const handleJobCreated = (data: JobCreatedEvent): void => {
       console.log("🆕 [JobContext] Job created:", data.job?.id);
-      if (data.job) upsertJobs(data.job);
+      if (data.job) upsertJobs({ ...data.job, status: normalizeStatus(data.job.status) });
     };
+
+    const normalizeStatus = (status: string | undefined): string =>
+      status?.toLowerCase() === 'running' ? 'processing' : (status?.toLowerCase() ?? 'processing');
 
     const handleJobProgress = (data: RawJobProgressEvent): void => {
       console.log(`📊 [JobContext] Job progress: jobId=${data.jobId} progress=${data.progress}% stage=${data.stage} status=${data.status}`);
@@ -257,7 +260,7 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
         upsertJobs({
           id: jobId,
           progress,
-          status: (status?.toLowerCase()) ?? 'processing',
+          status: normalizeStatus(status),
           stage: stage || undefined,
         });
       }

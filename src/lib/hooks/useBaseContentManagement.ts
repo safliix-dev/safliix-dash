@@ -127,7 +127,7 @@ export function useBaseContentManagement<T extends { status: ContentStatus; type
       .map(group => {
         const items = getItemsFromGroup(group);
         const filteredItems = items.filter(item => {
-          const typeMatch = mode === item.type;
+          const typeMatch = item.type === undefined || mode === item.type;
           const statusMatch = statusFilter === "all" || item.status === statusFilter;
           return typeMatch && statusMatch;
         });

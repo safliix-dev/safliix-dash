@@ -1,10 +1,10 @@
-// ui/components/EncodingJobsMonitor.tsx
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useGlobalJobs } from '@/lib/contexts/JobContext'; // Utilisation directe du context
+import { RefreshCw } from 'lucide-react';
+import { useGlobalJobs } from '@/lib/contexts/JobContext';
 import { JobItem } from './jobItem';
-import { EncodingJob } from '@/types/api/job';
+import type { EncodingJob } from '@/types/api/job';
 
 interface EncodingJobsMonitorProps {
   title?: string;
@@ -15,122 +15,144 @@ interface EncodingJobsMonitorProps {
   onJobClick?: (job: EncodingJob) => void;
 }
 
-export const EncodingJobsMonitor = (props: EncodingJobsMonitorProps) => {
-  const {
-    title = "Flux global d'encodage", showHeader = true,
-    showFilters = false, maxHeight = "max-h-96", className = "", onJobClick
-  } = props;
+const FILTERS = [
+  { key: 'all',        label: 'Tous'      },
+  { key: 'processing', label: 'En cours'  },
+  { key: 'completed',  label: 'Terminés'  },
+  { key: 'failed',     label: 'Échecs'    },
+] as const;
 
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  
-  // On récupère TOUT sans filtre de type
-  const {
-    jobs, isLoading, activeCount,
-    refreshAll, pauseJob, resumeJob, retryJob // Assure-toi que ces méthodes existent dans useGlobalJobs
-  } = useGlobalJobs();
+type FilterKey = typeof FILTERS[number]['key'];
+
+export const EncodingJobsMonitor = ({
+  title = "Flux global d'encodage",
+  showHeader = true,
+  showFilters = false,
+  maxHeight = 'max-h-96',
+  className = '',
+  onJobClick,
+}: EncodingJobsMonitorProps) => {
+  const [statusFilter, setStatusFilter] = useState<FilterKey>('all');
+
+  const { jobs, isLoading, activeCount, completedCount, failedCount, refreshAll, pauseJob, resumeJob, retryJob } = useGlobalJobs();
 
   const filteredJobs = useMemo(() => {
-    // Tri : On met les jobs en cours et les erreurs en haut
-    const sorted = [...jobs].sort((a) => {
-      if (a.status === 'processing' || a.status === 'failed') return -1;
-      return 1;
+    const sorted = [...jobs].sort((a, b) => {
+      const priority: Record<string, number> = { processing: 0, paused: 1, failed: 2, completed: 3 };
+      return (priority[a.status] ?? 4) - (priority[b.status] ?? 4);
     });
-
     if (statusFilter === 'all') return sorted;
-    return sorted.filter(job => job.status === statusFilter);
+    return sorted.filter(j => j.status === statusFilter);
   }, [jobs, statusFilter]);
 
-  const hasNoJobs = useMemo(() => 
-    filteredJobs.length === 0 && !isLoading, 
-    [filteredJobs.length, isLoading]
-  );
-
-  // ✅ Helpers (statiques ou mémorisés)
-  const getJobStatusColor = (status: string) => {
-    switch (status) {
-      case 'processing': return 'border-primary/30 bg-primary/5';
-      case 'completed': return 'border-success/30 bg-success/5';
-      case 'failed': return 'border-error/30 bg-error/5';
-      case 'paused': return 'border-warning/30 bg-warning/5';
-      default: return 'border-base-300/60 bg-base-200/40';
-    }
-  };
-
-  const getProgressColor = (status: string) => {
-    switch (status) {
-      case 'failed': return 'progress-error';
-      case 'completed': return 'progress-success';
-      case 'paused': return 'progress-warning';
-      default: return 'progress-primary';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'processing': return 'Encodage en cours';
-      case 'completed': return 'Terminé';
-      case 'failed': return 'Échec';
-      case 'paused': return 'En pause';
-      default: return 'En attente';
-    }
+  const countFor = (key: FilterKey) => {
+    if (key === 'all')        return jobs.length;
+    if (key === 'processing') return activeCount;
+    if (key === 'completed')  return completedCount;
+    if (key === 'failed')     return failedCount;
+    return 0;
   };
 
   return (
-    <div className={`bg-neutral flex flex-col ${className}`}>
+    <div className={`flex flex-col ${className}`}>
       {showHeader && (
-        <div className="p-4 border-b border-white/5 flex flex-col gap-3">
+        <div className="px-5 py-4 space-y-3">
+          {/* Title + refresh */}
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white uppercase tracking-widest">{title}</h3>
-            <div className="flex gap-1.5">
-               {activeCount > 0 && <span className="badge badge-primary badge-xs font-bold p-2">{activeCount}</span>}
-               <input type="checkbox" className="toggle toggle-primary toggle-xs" checked={isExpanded} onChange={() => setIsExpanded(!isExpanded)} />
-            </div>
+            <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
+              {title}
+            </h3>
+            <button
+              onClick={refreshAll}
+              className="p-1 rounded-md text-white/20 hover:text-white/60 hover:bg-white/5 transition-all"
+              title="Actualiser"
+            >
+              <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
+            </button>
           </div>
 
+          {/* Stats row */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <span className="text-[10px] font-bold text-primary tabular-nums">{activeCount}</span>
+              <span className="text-[9px] text-primary/60 uppercase tracking-widest">actifs</span>
+            </div>
+            {completedCount > 0 && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-success/10 border border-success/20">
+                <span className="text-[10px] font-bold text-success tabular-nums">{completedCount}</span>
+                <span className="text-[9px] text-success/60 uppercase tracking-widest">finis</span>
+              </div>
+            )}
+            {failedCount > 0 && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-error/10 border border-error/20">
+                <span className="text-[10px] font-bold text-error tabular-nums">{failedCount}</span>
+                <span className="text-[9px] text-error/60 uppercase tracking-widest">échecs</span>
+              </div>
+            )}
+          </div>
+
+          {/* Filter tabs */}
           {showFilters && (
-            <div className="flex gap-2">
-              <select 
-                className="select select-xs select-bordered bg-base-300 text-[10px] flex-1"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="all">Tous</option>
-                <option value="processing">En cours</option>
-                <option value="failed">Échecs</option>
-                <option value="completed">Finis</option>
-              </select>
-              <button onClick={refreshAll} className="btn btn-xs btn-ghost text-[9px]">Actualiser</button>
+            <div className="flex gap-1">
+              {FILTERS.map(f => {
+                const count = countFor(f.key);
+                const isActive = statusFilter === f.key;
+                return (
+                  <button
+                    key={f.key}
+                    onClick={() => setStatusFilter(f.key)}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all duration-200 border ${
+                      isActive
+                        ? 'bg-white/8 text-white/80 border-white/15'
+                        : 'text-white/25 border-transparent hover:text-white/45 hover:bg-white/4'
+                    }`}
+                  >
+                    {f.label}
+                    {count > 0 && (
+                      <span className={`px-1 rounded text-[8px] tabular-nums ${
+                        isActive ? 'bg-white/15 text-white/70' : 'bg-white/8 text-white/30'
+                      }`}>
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
       )}
 
-      {isExpanded && (
-        <div className={`p-3 space-y-3 ${maxHeight} overflow-y-auto custom-scrollbar`}>
-          {isLoading && jobs.length === 0 ? (
-            <div className="flex justify-center py-6"><span className="loading loading-spinner text-primary"></span></div>
-          ) : hasNoJobs ? (
-            <div className="text-center py-10 text-white/20 text-[10px] uppercase font-bold tracking-widest">
-               Aucun flux actif
+      {/* Job list */}
+      <div className={`px-4 pb-4 space-y-2 ${maxHeight} overflow-y-auto custom-scrollbar`}>
+        {isLoading && jobs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-3">
+            <div className="w-6 h-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+            <span className="text-[9px] text-white/20 uppercase tracking-widest">Chargement…</span>
+          </div>
+        ) : filteredJobs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-2">
+            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
+              <span className="text-white/15 text-lg">∅</span>
             </div>
-          ) : (
-            filteredJobs.map((job) => (
-              <JobItem 
-                key={job.id} 
-                job={job}
-                onJobClick={onJobClick}
-                onRetry={() => retryJob?.(job.id)}
-                onPause={() => pauseJob?.(job.id)}
-                onResume={() => resumeJob?.(job.id)}
-                getStatusText={getStatusText}
-                getJobStatusColor={getJobStatusColor}
-                getProgressColor={getProgressColor}
-              />
-            ))
-          )}
-        </div>
-      )}
+            <span className="text-[9px] text-white/20 uppercase tracking-widest font-bold">
+              Aucun flux actif
+            </span>
+          </div>
+        ) : (
+          filteredJobs.map(job => (
+            <JobItem
+              key={job.id}
+              job={job}
+              onJobClick={onJobClick}
+              onRetry={() => retryJob?.(job.id)}
+              onPause={() => pauseJob?.(job.id)}
+              onResume={() => resumeJob?.(job.id)}
+            />
+          ))
+        )}
+      </div>
     </div>
   );
 };

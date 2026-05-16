@@ -145,22 +145,21 @@ export default function FilmsPage() {
           ))}
         </div>
         
-        <div className="flex flex-wrap gap-2">
-          <StatusFilter 
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-base-200 border border-base-300 rounded-2xl px-4 py-2.5">
+          <StatusFilter
             selectedStatus={statusFilter}
             onStatusChange={setStatusFilter}
             options={statusFilterOptions}
           />
-          
-          <FilterBtn 
-            title="Tri" 
-            selected={sortFilter} 
-            onSelect={(val) => setSortFilter(val)} 
+          <FilterBtn
+            title="Tri"
+            selected={sortFilter}
+            onSelect={(val) => setSortFilter(val)}
             options={[
-              {label: "Par défaut", value: "none"}, 
+              {label: "Par défaut", value: "none"},
               {label: "Meilleures ventes", value: "best"},
               {label: "Dernier ajout", value: "latest"}
-            ]} 
+            ]}
           />
         </div>
       </div>
