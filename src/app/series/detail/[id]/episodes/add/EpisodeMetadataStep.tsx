@@ -6,25 +6,19 @@ import React from "react";
 import { Controller } from "react-hook-form";
 import { Control, FieldErrors, UseFormSetValue } from "react-hook-form";
 import InputField, { MultipleInputField } from "@/ui/components/inputField";
-import { ActorsSelector } from "@/ui/components/form/ActorSelector";
-import type { EpisodeFormData, EpisodeMetaOptions } from "@/types/api/episode";
+import type { EpisodeFormData } from "@/types/api/episode";
+
+const STATUS_OPTIONS = ["DRAFT", "PROCESSING", "PUBLISHED", "ARCHIVED"] as const;
 
 interface EpisodeMetadataStepProps {
   control: Control<EpisodeFormData>;
   errors: FieldErrors<EpisodeFormData>;
-  meta: {
-    options: EpisodeMetaOptions | null;
-    loading: boolean;
-    error: string | null;
-    refresh: () => Promise<void>;
-  };
   setValue: UseFormSetValue<EpisodeFormData>;
 }
 
 export function EpisodeMetadataStep({
   control,
   errors,
-  meta
 }: EpisodeMetadataStepProps) {
   return (
     <>
@@ -180,7 +174,7 @@ export function EpisodeMetadataStep({
                 onChange={(e) => field.onChange(e.target.value)}
                 className="input bg-base-200 border-base-300 w-full"
               >
-                {meta.options?.statusOptions?.map((status) => (
+                {STATUS_OPTIONS.map((status) => (
                   <option key={status} value={status}>{status}</option>
                 ))}
               </select>
@@ -209,26 +203,6 @@ export function EpisodeMetadataStep({
         {errors.description && <p className="text-red-600 text-sm">{errors.description.message as string}</p>}
       </div>
 
-      {/* Acteurs avec ActorsSelector */}
-      <div className="space-y-2">
-        <label className="label text-sm mb-1">Acteurs principaux <span className="text-red-500">*</span></label>
-        <Controller
-          name="actors"
-          control={control}
-          rules={{ required: "Les acteurs sont obligatoires" }}
-          render={({ field }) => (
-            <ActorsSelector
-              value={field.value ?? []}
-              onChange={(val) => field.onChange(val)}
-              options={(meta.options?.actors ?? []).map((item: { id: string; name: string }) => ({
-                label: item.name,
-                value: item.id
-              }))}
-            />
-          )}
-        />
-        {errors.actors && <p className="text-red-600 text-sm">{errors.actors.message as string}</p>}
-      </div>
     </>
   );
 }

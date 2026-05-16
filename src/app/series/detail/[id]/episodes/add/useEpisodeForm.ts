@@ -2,53 +2,43 @@
 
 'use client';
 
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { useMediaFormEngine } from "@/lib/hooks/form/useMediaFormEngine";
-import { useMetaOptions } from "@/lib/hooks/form/useMetaOptions";
-import { episodeApi } from "@/lib/api/episode";
 import { episodeAdapter } from "./episodeAdapter";
-import { EpisodeFormData, EpisodeMetaOptions } from "@/types/api/episode";
+import { EpisodeFormData } from "@/types/api/episode";
 
 interface UseEpisodeFormProps {
-  seriesId: string;      
-  seasonId: string;      
-  episodeId?: string;   
+  seriesId: string;
+  seasonId: string;
+  episodeId?: string;
 }
 
 export function useEpisodeForm({ seriesId, seasonId, episodeId }: UseEpisodeFormProps) {
-  
 
-  // 1. Chargement des options
-  const loadMetaOptions = useCallback(
-    () => episodeApi.metaOptions(seriesId, seasonId),
-    [seriesId, seasonId]
-  );
-  const meta = useMetaOptions<EpisodeMetaOptions>(loadMetaOptions);
+  const meta = { options: null, loading: false, error: null, refresh: async () => {} };
 
-  // 2. Configuration du moteur (Engine)
   const engine = useMediaFormEngine(
-    episodeAdapter, 
+    episodeAdapter,
     {
       title: "",
       description: "",
       isCustomProduction: true,
       status: "DRAFT",
-      duration: null as number | null,  // 👈 Type explicite
+      duration: null as number | null,
       releaseDate: "",
       publishDate: "",
       director: "",
-      episodeNumber: null as number | null,  // 👈 Type explicite
-      actors: [] as Array<{ actorId?: string; name: string }>,  // 👈 Type explicite
+      episodeNumber: null as number | null,
       seriesId,
       seasonId,
       mainImage: null,
       movieFile: null,
       trailerFile: null,
       subtitleFile: null,
-    } as EpisodeFormData  // 👈 Cast explicite
+    } as EpisodeFormData
   );
 
-  // 3. Gestion de l'ID (Si on est en mode édition)
+  // Gestion de l'ID en mode édition
   useEffect(() => {
     if (episodeId && !engine.entityId) {
       engine.setEntityId(episodeId);

@@ -35,7 +35,6 @@ export const episodeAdapter: MediaFormEngineConfig<
       plateformDate: form.publishDate,
       director: form.director,
       episodeNumber: form.episodeNumber ?? 0,
-      actors: form.actors.join(","),
       seriesId: form.seriesId,
       seasonId: form.seasonId,
     };

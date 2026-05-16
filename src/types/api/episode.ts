@@ -11,8 +11,7 @@ export type EpisodeFormData = {
   releaseDate: string;
   publishDate: string;
   director: string;
-  episodeNumber: number | null;  // 👈 Peut être number ou null
-  actors: Array<{ actorId?: string; name: string }>;
+  episodeNumber: number | null;
   seriesId: string;
   seasonId: string;
   mainImage?: File | null;
@@ -31,7 +30,6 @@ export interface EpisodeMetadataPayload {
   plateformDate: string;
   director: string;
   episodeNumber: number;
-  actors: string;
   seriesId: string;      // 👈 Ajouté
   seasonId: string;      // 👈 Ajouté
 }
