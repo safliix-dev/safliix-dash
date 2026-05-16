@@ -12,6 +12,7 @@ export interface SeasonMetadataPayload {
   numero: number;
   title?: string;
   description?: string;
+  serieId: string;
 }
 
 export interface SeasonMetaOptions {

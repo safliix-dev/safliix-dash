@@ -28,6 +28,7 @@ export const seasonAdapter: MediaFormEngineConfig<
       numero: form.numero ?? 0,
       title: form.title,
       description: form.description,
+      serieId: form.seriesId,
     };
   },
 
@@ -42,7 +43,7 @@ export const seasonAdapter: MediaFormEngineConfig<
   submitMetadata: async (payload, id) => {
     const res = id 
       ? await seasonsApi.update(id, payload) 
-      : await seasonsApi.create(payload);
+      : await seasonsApi.create(payload, payload.serieId);
     
     if (!res?.id) {
       throw new Error("Format de réponse invalide");
