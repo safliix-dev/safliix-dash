@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Règle absolue — Ne jamais modifier sans permission explicite
+
+Ne **jamais** modifier un fichier (code, configuration, `.env`, `CLAUDE.md`, etc.) sans que l'utilisateur ait explicitement demandé la modification. Proposer, analyser, suggérer : oui. Modifier : uniquement sur instruction directe.
+
 ## Commands
 
 ```bash

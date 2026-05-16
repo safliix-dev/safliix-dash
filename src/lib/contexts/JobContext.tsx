@@ -244,23 +244,6 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     console.log('✅ [JobContext] Setting up socket handlers...');
-    console.log(`🔌 [JobContext] Socket id=${videoSocket.id} connected=${videoSocket.connected}`);
-
-    // ── Catch-all : log every event received on this socket ──
-    const onAnyHandler = (event: string, ...args: unknown[]): void => {
-      console.log(`📨 [JobContext][RAW EVENT] "${event}"`, args);
-    };
-    videoSocket.onAny(onAnyHandler);
-
-    const ROOMS = ["movies", "episodes", "series"] as const;
-
-    // Rejoindre toutes les rooms. Appelé à chaque (re)connexion.
-    const joinRooms = (): void => {
-      for (const room of ROOMS) {
-        console.log(`📡 [JobContext] Joining room: ${room}`);
-        videoSocket.emit("join_room", { room });
-      }
-    };
 
     const handleJobCreated = (data: JobCreatedEvent): void => {
       console.log("🆕 [JobContext] Job created:", data.job?.id);
@@ -309,10 +292,6 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    // Re-join rooms on every reconnect (fixes React-18 batching where state
-    // goes false→true in one render so the effect never re-fires).
-    videoSocket.on('connect', joinRooms);
-
     videoSocket.on('job_created', handleJobCreated);
     videoSocket.on('job_progress', handleJobProgress);
     videoSocket.on('job_completed', handleJobCompleted);
@@ -321,15 +300,11 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
     videoSocket.on('job_resumed', handleJobResumed);
     videoSocket.on('job_deleted', handleJobDeleted);
 
-    // Rejoindre les rooms dès maintenant (connexion déjà active)
-    joinRooms();
     loadInitialJobs();
 
     return (): void => {
       console.log('🧹 [JobContext] Cleaning up socket handlers...');
 
-      videoSocket.offAny(onAnyHandler);
-      videoSocket.off('connect', joinRooms);
       videoSocket.off('job_created', handleJobCreated);
       videoSocket.off('job_progress', handleJobProgress);
       videoSocket.off('job_completed', handleJobCompleted);
@@ -337,13 +312,6 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
       videoSocket.off('job_paused', handleJobPaused);
       videoSocket.off('job_resumed', handleJobResumed);
       videoSocket.off('job_deleted', handleJobDeleted);
-
-      if (videoSocket.connected) {
-        for (const room of ROOMS) {
-          console.log(`👋 [JobContext] Leaving room: ${room}`);
-          videoSocket.emit("leave_room", { room });
-        }
-      }
 
       isInitialized.current = false;
     };
