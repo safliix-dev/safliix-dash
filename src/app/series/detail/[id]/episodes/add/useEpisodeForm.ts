@@ -22,12 +22,9 @@ export function useEpisodeForm({ seriesId, seasonId, episodeId }: UseEpisodeForm
     {
       title: "",
       description: "",
-      isCustomProduction: true,
-      status: "DRAFT",
       duration: null as number | null,
       releaseDate: "",
       publishDate: "",
-      director: "",
       episodeNumber: null as number | null,
       seriesId,
       seasonId,

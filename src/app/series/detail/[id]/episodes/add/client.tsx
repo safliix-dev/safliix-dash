@@ -15,7 +15,6 @@ interface EpisodeFormClientProps {
 }
 
 export function EpisodeFormClient({ seriesId, seasonId }: EpisodeFormClientProps) {
-  // 👈 Récupérer le hook
   const formHook = useEpisodeForm({ seriesId, seasonId });
 
   return (
@@ -25,7 +24,6 @@ export function EpisodeFormClient({ seriesId, seasonId }: EpisodeFormClientProps
         <EpisodeMetadataStep
           control={control}
           errors={errors}
-          setValue={formHook.setValue}
         />
       )}
       FilesComponent={({ control, setValue, onPreview, dialogStatus }) => (
@@ -34,13 +32,11 @@ export function EpisodeFormClient({ seriesId, seasonId }: EpisodeFormClientProps
           setValue={setValue}
           onPreview={onPreview}
           dialogStatus={dialogStatus}
-          // 👈 Supprimer metaLoading et onOpenConfirm
         />
       )}
       title="Ajouter un épisode"
       metaFields={[
-        "title", "episodeNumber", "releaseDate", "publishDate",
-        "director", "duration", "description", "status"
+        "title", "episodeNumber", "releaseDate", "publishDate", "duration", "description"
       ]}
       sidebar={{
         showDefaultLogo: true,
