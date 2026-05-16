@@ -34,6 +34,7 @@ export default function Page() {
       <div className="space-y-5">
         <Header
           title={title}
+          backHref="/subscriptions/plans"
           className="rounded-2xl border border-base-300 px-5 py-3"
         />
 

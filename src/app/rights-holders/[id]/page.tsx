@@ -71,7 +71,7 @@ export default function Page() {
   if (!holder) {
     return (
       <div className="space-y-3">
-        <Header title="Ayant droit introuvable" />
+        <Header title="Ayant droit introuvable" backHref="/rights-holders" />
         <p className="text-white/70 text-sm">Aucun ayant droit avec cet identifiant.</p>
         <Link href="/rights-holders" className="btn btn-primary btn-sm rounded-full w-fit">
           Retour à la liste
@@ -124,7 +124,7 @@ export default function Page() {
 
   return (
       <div className="space-y-4">
-        <Header title={`Ayant droit · ${holder.fullName}`} className="rounded-2xl border border-base-300 shadow-sm px-5">
+        <Header title={`Ayant droit · ${holder.fullName}`} backHref="/rights-holders" className="rounded-2xl border border-base-300 shadow-sm px-5">
           <div className="flex items-center gap-3 text-sm text-white/80">
             <span className={`badge ${statusBadge[holder.status] || "badge-ghost"}`}>{holder.status}</span>
             <span className="w-[1px] h-4 bg-base-300" />

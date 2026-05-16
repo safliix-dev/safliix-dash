@@ -24,6 +24,7 @@ export function useSeasonForm({ seriesId, seasonId }: UseSeasonFormProps) {
       title: "",
       description: "",
       seriesId,
+      addPoster: false,
       poster: null,
     } as SeasonFormData
   );
@@ -33,7 +34,7 @@ export function useSeasonForm({ seriesId, seasonId }: UseSeasonFormProps) {
     if (seasonId && !engine.entityId) {
       engine.setEntityId(seasonId);
     }
-  }, [seasonId, engine.entityId, engine.setEntityId,engine]);
+  }, [seasonId, engine.entityId, engine.setEntityId]);
 
   // 3. Meta options (pas d'API, juste un objet vide)
   const meta = {

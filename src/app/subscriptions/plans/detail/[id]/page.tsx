@@ -61,7 +61,7 @@ export default function Page({ params }: Props) {
 
   return (
     <div className="space-y-5">
-      <Header title="Détail plan" className="rounded-2xl border border-base-300 px-5 py-3">
+      <Header title="Détail plan" backHref="/subscriptions/plans" className="rounded-2xl border border-base-300 px-5 py-3">
         <div className="flex items-center gap-2 text-sm text-white/80">
           <span className="badge badge-outline border-primary/50 text-primary">ID {planId}</span>
           {plan?.status && <span className="badge badge-success badge-outline">{plan.status}</span>}

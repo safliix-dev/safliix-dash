@@ -5,6 +5,7 @@ export type SeasonFormData = {
   title?: string;
   description?: string;
   seriesId: string;
+  addPoster: boolean;
   poster?: File | null;
 }
 

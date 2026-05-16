@@ -100,6 +100,7 @@ interface MediaPageProps<
   FilesComponent: React.ComponentType<FilesComponentProps<TFormData>>;
   title: string;
   metaFields: (keyof TFormData)[];
+  shouldSkipFilesStep?: (data: TFormData) => boolean;
   sidebar?: {
     component?: React.ComponentType<SidebarProps>;
     showDefaultLogo?: boolean;
@@ -118,6 +119,7 @@ export function MediaPage<
   FilesComponent,
   title,
   metaFields,
+  shouldSkipFilesStep,
   sidebar = {
     showDefaultLogo: true,
     defaultLogoUrl: "/ICONE_SFLIX.png",
@@ -144,9 +146,9 @@ export function MediaPage<
     retryFailedUploads,
   } = useFormHook();
 
-  
-// ✅ En cas de succès partiel, on reste sur l'étape 1
-// L'utilisateur clique sur "Réessayer" qui appelle retryFailedUploads
+  const hasFilesToUpload = shouldSkipFilesStep && pendingData
+    ? !shouldSkipFilesStep(pendingData as TFormData)
+    : true;
 
   const [currentStep, setCurrentStep] = useState(0);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
@@ -287,10 +289,15 @@ export function MediaPage<
         pendingData={pendingData}
         summary={currentStep === 0 ? 'metadata' : 'files'}
         currentStep={currentStep}
+        nextStepLabel={hasFilesToUpload ? undefined : "Terminer"}
+        nextStepHint={hasFilesToUpload ? undefined : "La saison a été créée. Cliquez sur Terminer pour fermer."}
         onNextStep={() => {
-    
-         prepareForNextStep();
-          setCurrentStep(1);
+          if (!hasFilesToUpload) {
+            resetEngine();
+          } else {
+            prepareForNextStep();
+            setCurrentStep(1);
+          }
         }}
          onRetry={retryFailedUploads} 
       />

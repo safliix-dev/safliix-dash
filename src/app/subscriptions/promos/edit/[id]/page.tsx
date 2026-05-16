@@ -31,6 +31,7 @@ export default function Page() {
     <div className="space-y-5">
       <Header
         title={isEdit ? "Modifier la promo" : "Créer une promo"}
+        backHref="/subscriptions/promos"
         className="rounded-2xl border border-base-300 px-5 py-3"
       />
 

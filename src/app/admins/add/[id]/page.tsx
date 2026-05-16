@@ -33,7 +33,7 @@ export default function CreateAdminPage() {
   return (
     <>
       <div className="space-y-6">
-        <Header title={title} />
+        <Header title={title} backHref="/admins" />
 
         <FormWithAside>
           <form

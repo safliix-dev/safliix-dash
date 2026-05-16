@@ -1,7 +1,6 @@
 'use client';
 
 import { useParams } from "next/navigation";
-import Link from "next/link";
 import { Controller } from "react-hook-form";
 import Header from "@/ui/components/header";
 import FormWithAside from "@/ui/components/formWithAside";
@@ -30,11 +29,7 @@ export default function Page() {
 
   return (
     <div className="space-y-4">
-      <Header title={isEdit ? "Modifier un ayant droit" : "Ajouter un ayant droit"}>
-        <Link href="/rights-holders" className="btn btn-ghost btn-xs rounded-full">
-          Retour liste
-        </Link>
-      </Header>
+      <Header title={isEdit ? "Modifier un ayant droit" : "Ajouter un ayant droit"} backHref="/rights-holders" />
 
       <FormWithAside>
         <form onSubmit={openConfirm} className="bg-neutral border border-base-300 rounded-2xl p-5 space-y-5">

@@ -30,6 +30,7 @@ export default function Page() {
     <div className="space-y-5">
       <Header
         title={isEdit ? "Modifier un utilisateur" : "Créer un utilisateur"}
+        backHref="/users"
       />
 
       <FormWithAside>

@@ -1,7 +1,6 @@
 // app/series/detail/[id]/seasons/add/page.tsx
 
 import Header from "@/ui/components/header";
-import Link from "next/link";
 import { SeasonFormClient } from "./client";
 
 type Props = {
@@ -13,13 +12,7 @@ export default async function Page({ params }: Props) {
 
   return (
     <div className="space-y-4">
-      <Header title="Ajouter une saison">
-        <div className="flex gap-2">
-          <Link href={`/series/detail/${seriesId}`} className="btn btn-ghost btn-sm">
-            Retour
-          </Link>
-        </div>
-      </Header>
+      <Header title="Ajouter une saison" backHref="/series" />
 
       <SeasonFormClient seriesId={seriesId} />
     </div>

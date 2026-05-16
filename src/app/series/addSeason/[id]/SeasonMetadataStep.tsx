@@ -23,6 +23,7 @@ export function SeasonMetadataStep({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
         {/* Numéro de saison */}
         <div>
           <label className="label text-sm mb-1">Numéro de saison <span className="text-red-500">*</span></label>
@@ -80,6 +81,23 @@ export function SeasonMetadataStep({
           )}
         />
       </div>
+
+      {/* Poster */}
+      <Controller
+        name="addPoster"
+        control={control}
+        render={({ field }) => (
+          <label className="flex items-center gap-3 cursor-pointer w-fit">
+            <input
+              type="checkbox"
+              className="checkbox checkbox-primary"
+              checked={field.value}
+              onChange={(e) => field.onChange(e.target.checked)}
+            />
+            <span className="text-sm">Ajouter une image pour cette saison</span>
+          </label>
+        )}
+      />
     </div>
   );
 }

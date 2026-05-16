@@ -33,6 +33,8 @@ interface FormConfirmationProps<T, TSlot extends string> {
   summary?: 'metadata' | 'files' | 'none';
   currentStep?: number;
   onNextStep?: () => void;
+  nextStepLabel?: string;
+  nextStepHint?: string;
   showCancelConfirm?: boolean;
   onConfirmCancel?: () => void;
   onCancelCancel?: () => void;
@@ -53,6 +55,8 @@ export function FormConfirmation<T extends BaseMetadata & MediaFileFields, TSlot
   summary = 'none',
   currentStep = 0,
   onNextStep,
+  nextStepLabel,
+  nextStepHint,
   showCancelConfirm = false,
   onConfirmCancel,
   onCancelCancel,
@@ -72,7 +76,7 @@ export function FormConfirmation<T extends BaseMetadata & MediaFileFields, TSlot
   const shouldShowSummary = !isUploading && !isSuccessStep0 && pendingData && (!upload || upload.step === 'idle');
 
   // 2. Logique de mutation du bouton principal
-  const finalConfirmLabel = isSuccessStep0 ? "Continuer vers les fichiers" : confirmLabel;
+  const finalConfirmLabel = isSuccessStep0 ? (nextStepLabel ?? "Continuer vers les fichiers") : confirmLabel;
   const finalOnConfirm = isSuccessStep0 && onNextStep ? onNextStep : onConfirm;
 
   // 3. Titre et message dynamiques
@@ -113,7 +117,7 @@ export function FormConfirmation<T extends BaseMetadata & MediaFileFields, TSlot
             </div>
             <h4 className="text-green-400 font-bold">Enregistrement terminé</h4>
             <p className="text-[11px] text-green-400/60 mt-1">
-              Cliquez sur le bouton ci-dessous pour passer à l&apos;upload.
+              {nextStepHint ?? "Cliquez sur le bouton ci-dessous pour passer à l'upload."}
             </p>
           </div>
         )}

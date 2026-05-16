@@ -37,6 +37,7 @@ export function SeasonFormClient({ seriesId }: SeasonFormClientProps) {
       )}
       title="Ajouter une saison"
       metaFields={["numero", "title", "description"]}
+      shouldSkipFilesStep={(data) => !data.addPoster}
       sidebar={{
         showDefaultLogo: true,
         defaultLogoUrl: "/ICONE_SFLIX.png",

@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useMediaFormEngine } from "@/lib/hooks/form/useMediaFormEngine";
 import { useMetaOptions } from "@/lib/hooks/form/useMetaOptions";
 import { episodeApi } from "@/lib/api/episode";
@@ -19,7 +19,10 @@ export function useEpisodeForm({ seriesId, seasonId, episodeId }: UseEpisodeForm
   
 
   // 1. Chargement des options
-  const loadMetaOptions = () => episodeApi.metaOptions(seriesId, seasonId);
+  const loadMetaOptions = useCallback(
+    () => episodeApi.metaOptions(seriesId, seasonId),
+    [seriesId, seasonId]
+  );
   const meta = useMetaOptions<EpisodeMetaOptions>(loadMetaOptions);
 
   // 2. Configuration du moteur (Engine)
@@ -50,7 +53,7 @@ export function useEpisodeForm({ seriesId, seasonId, episodeId }: UseEpisodeForm
     if (episodeId && !engine.entityId) {
       engine.setEntityId(episodeId);
     }
-  }, [episodeId, engine.entityId, engine.setEntityId,engine]);
+  }, [episodeId, engine.entityId, engine.setEntityId]);
 
   return {
     ...engine,

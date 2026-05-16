@@ -67,7 +67,7 @@ export default function Page() {
 
   return (
     <div className="space-y-5">
-      <Header title="Détail utilisateur" className="rounded-2xl border border-base-300 shadow-sm px-5">
+      <Header title="Détail utilisateur" backHref="/admins" className="rounded-2xl border border-base-300 shadow-sm px-5">
         <div className="flex items-center gap-3 text-sm text-white/80">
           <div className="flex items-center gap-2">
             <span>ID :</span>
