@@ -5,14 +5,10 @@
 export type EpisodeFormData = {
   title: string;
   description: string;
-  isCustomProduction: boolean;
-  status: string;
-  duration: number | null;  // 👈 Peut être number ou null
+  duration: number | null;
   releaseDate: string;
   publishDate: string;
-  director: string;
-  episodeNumber: number | null;  // 👈 Peut être number ou null
-  actors: Array<{ actorId?: string; name: string }>;
+  episodeNumber: number | null;
   seriesId: string;
   seasonId: string;
   mainImage?: File | null;
@@ -24,16 +20,12 @@ export type EpisodeFormData = {
 export interface EpisodeMetadataPayload {
   title: string;
   description: string;
-  isCustomProduction: boolean;
-  status: string;
   duration: number;
   releaseDate: string;
   plateformDate: string;
-  director: string;
   episodeNumber: number;
-  actors: string;
-  seriesId: string;      // 👈 Ajouté
-  seasonId: string;      // 👈 Ajouté
+  seriesId: string;
+  seasonId: string;
 }
 
 export interface EpisodeMetaOptions {

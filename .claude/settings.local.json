@@ -5,7 +5,9 @@
       "Bash(Select-Object Name, PSIsContainer)",
       "Bash(npx tsc *)",
       "Bash(rm -rf src/generated)",
-      "Bash(ls prisma.config.ts)"
+      "Bash(ls prisma.config.ts)",
+      "Bash(Select-String -Pattern \"episodes/add|episode\\\\.ts|episodeAdapter|EpisodeMetadata|EpisodeMeta\")",
+      "PowerShell(Get-Content *)"
     ]
   }
 }

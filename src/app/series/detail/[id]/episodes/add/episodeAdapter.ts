@@ -28,14 +28,10 @@ export const episodeAdapter: MediaFormEngineConfig<
     return {
       title: form.title,
       description: form.description,
-      isCustomProduction: form.isCustomProduction,
-      status: form.status,
       duration: form.duration ?? 0,
       releaseDate: form.releaseDate,
       plateformDate: form.publishDate,
-      director: form.director,
       episodeNumber: form.episodeNumber ?? 0,
-      actors: form.actors.join(","),
       seriesId: form.seriesId,
       seasonId: form.seasonId,
     };
