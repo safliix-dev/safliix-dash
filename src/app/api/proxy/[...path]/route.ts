@@ -2,32 +2,24 @@ import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { TokenService } from "@/services/token.service";
 
-// TODO: retirer quand Redis est prêt
-const BYPASS_AUTH = true;
-const MOCK_TOKEN = "REMPLACER_PAR_UN_VRAI_TOKEN_KEYCLOAK";
-
 async function proxyHandler(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
+  const token = await getToken({ req });
+
+  if (!token?.sub) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
   let accessToken: string | null = null;
 
-  if (BYPASS_AUTH) {
-    accessToken = MOCK_TOKEN;
-  } else {
-    const token = await getToken({ req });
+  try {
+    accessToken = await TokenService.getValidToken(token.sub);
+  } catch (err) {
+    console.error("❌ TokenService error:", err);
+    return NextResponse.json({ error: "Erreur session serveur" }, { status: 503 });
+  }
 
-    if (!token?.sub) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    }
-
-    try {
-      accessToken = await TokenService.getValidToken(token.sub);
-    } catch (err) {
-      console.error("❌ TokenService error:", err);
-      return NextResponse.json({ error: "Erreur session serveur" }, { status: 503 });
-    }
-
-    if (!accessToken) {
-      return NextResponse.json({ error: "Session invalide" }, { status: 401 });
-    }
+  if (!accessToken) {
+    return NextResponse.json({ error: "Session invalide" }, { status: 401 });
   }
 
   const baseUrl = process.env.NEST_API_URL;

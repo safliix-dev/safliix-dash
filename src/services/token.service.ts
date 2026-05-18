@@ -1,6 +1,5 @@
-// services/token.service.ts
 import { SessionService } from "./session.service";
-
+import { redis } from "@/lib/redis";
 
 interface RefreshedTokens {
   accessToken: string;
@@ -8,22 +7,15 @@ interface RefreshedTokens {
   expiresIn: number;
 }
 
-/**
- * Service centralisé pour la gestion des tokens
- */
 export class TokenService {
-  private static readonly REFRESH_BUFFER_SECONDS = 60; // 1 minute avant expiration
+  private static readonly REFRESH_BUFFER_SECONDS = 60;
+  private static readonly LOCK_TTL_SECONDS = 10;
+  private static readonly LOCK_WAIT_MS = 200;
 
-  /**
-   * Vérifier si un token est expiré
-   */
   static isTokenExpired(expiresAt: number): boolean {
     return Date.now() >= (expiresAt - this.REFRESH_BUFFER_SECONDS) * 1000;
   }
 
-  /**
-   * Rafraîchir le token via Keycloak
-   */
   static async refreshWithKeycloak(refreshToken: string): Promise<RefreshedTokens | null> {
     const issuer = process.env.KEYCLOAK_ISSUER!;
     const clientId = process.env.KEYCLOAK_CLIENT_ID!;
@@ -61,76 +53,63 @@ export class TokenService {
     }
   }
 
-  /**
-   * Récupérer un token valide (avec refresh automatique si nécessaire)
-   */
   static async getValidToken(userId: string): Promise<string | null> {
-    let session = await SessionService.getTokens(userId);
+    const session = await SessionService.getTokens(userId);
 
     if (!session?.accessToken) {
       console.log(`[TokenService] No session found for ${userId}`);
       return null;
     }
 
-    // Vérifier si le token a expiré
-    if (this.isTokenExpired(session.expiresAt) && session.refreshToken) {
-      console.log(`🔄 [TokenService] Token expired for ${userId}, refreshing...`);
+    if (!this.isTokenExpired(session.expiresAt)) {
+      return session.accessToken;
+    }
 
-      const newTokens = await this.refreshWithKeycloak(session.refreshToken);
+    if (!session.refreshToken) {
+      return null;
+    }
 
-      if (newTokens) {
-        await SessionService.updateTokens(userId, {
-          accessToken: newTokens.accessToken,
-          refreshToken: newTokens.refreshToken,
-          expiresIn: newTokens.expiresIn,
-        });
+    console.log(`🔄 [TokenService] Token expired for ${userId}, refreshing...`);
 
-        session = await SessionService.getTokens(userId);
+    const lockKey = `lock:refresh:${userId}`;
+    const lockAcquired = await redis.set(lockKey, "1", "EX", this.LOCK_TTL_SECONDS, "NX");
+
+    if (lockAcquired === "OK") {
+      try {
+        const newTokens = await this.refreshWithKeycloak(session.refreshToken);
+        if (!newTokens) {
+          console.error(`❌ [TokenService] Refresh failed for ${userId}`);
+          return null;
+        }
+        await SessionService.updateTokens(userId, newTokens);
         console.log(`✅ [TokenService] Token refreshed for ${userId}`);
-      } else {
-        console.error(`❌ [TokenService] Refresh failed for ${userId}`);
-        return null;
+        return newTokens.accessToken;
+      } finally {
+        await redis.del(lockKey);
       }
     }
 
-    return session?.accessToken || null;
+    // Another instance is refreshing — wait and read the updated session
+    await new Promise((resolve) => setTimeout(resolve, this.LOCK_WAIT_MS));
+    const refreshed = await SessionService.getTokens(userId);
+    return refreshed?.accessToken ?? null;
   }
 
-  /**
-   * Sauvegarder les tokens après login
-   */
   static async saveTokens(
     userId: string,
     tokens: { accessToken: string; refreshToken: string; expiresIn: number }
   ) {
-    return await SessionService.saveTokens(userId, {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      expiresIn: tokens.expiresIn,
-    });
+    return await SessionService.saveTokens(userId, tokens);
   }
 
-  /**
-   * Mettre à jour les tokens
-   */
   static async updateTokens(
     userId: string,
     tokens: { accessToken: string; refreshToken: string; expiresIn: number }
   ) {
-    return await SessionService.updateTokens(userId, {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      expiresIn: tokens.expiresIn,
-    });
+    return await SessionService.updateTokens(userId, tokens);
   }
 
-  /**
-   * Supprimer les tokens (logout)
-   */
   static async deleteTokens(userId: string) {
     return await SessionService.deleteSession(userId);
   }
-
-  
-  
 }
