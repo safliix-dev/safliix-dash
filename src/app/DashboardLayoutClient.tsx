@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
+import { keycloakLogout } from "@/lib/auth/logout";
 import Sidebar from "@/ui/layout/sidebar";
 import { BellDot, Lightbulb, Menu, SettingsIcon, X, LogOut, LogIn } from "lucide-react";
 import Image from "next/image";
@@ -179,7 +180,7 @@ export default function DashboardLayoutClient({ children }: DashboardLayoutClien
                               </button>
 
                               <button
-                                onClick={() => signOut({ callbackUrl: "/" })}
+                                onClick={() => keycloakLogout()}
                                 className="w-full text-left px-3 py-2 text-sm text-white/60 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
                               >
                                 <LogOut className="inline w-4 h-4 mr-2" />
