@@ -30,15 +30,17 @@ export function AdsFilesStep({
         {/* Image principale */}
         <UploadBox
           id="main"
-          label={mainImage ? (mainImage as File)?.name || "Image principale" : "Image principale"}
+          label="Image principale"
+          value={mainImage as File | null}
           className="min-h-[220px]"
           onFileSelect={(file) => setValue("mainImage", file ?? null, { shouldValidate: true })}
         />
-        
+
         {/* Image secondaire */}
         <UploadBox
           id="sec"
-          label={secondaryImage ? (secondaryImage as File)?.name || "Image secondaire" : "Image secondaire"}
+          label="Image secondaire"
+          value={secondaryImage as File | null}
           className="min-h-[220px]"
           onFileSelect={(file) => setValue("secondaryImage", file ?? null, { shouldValidate: false })}
         />

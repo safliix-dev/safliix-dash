@@ -33,16 +33,20 @@ export function EpisodeFilesStep({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <UploadBox
           id="episode-poster"
-          label={mainImage ? (mainImage as File)?.name || "Image principale" : "Image principale"}
+          label="Image principale"
+          value={mainImage as File | null}
           className="min-h-[220px]"
           onFileSelect={(file) => setValue("mainImage", file ?? null, { shouldValidate: true })}
         />
         <div className="space-y-2">
           <VideoUpload
+            id="episode-video"
             label="Fichier vidéo de l'épisode"
+            fileLabel="Choisir un fichier vidéo"
             file={movieFile as File | null}
             onSelect={(file) => setValue("movieFile", file ?? null, { shouldValidate: false })}
-            onPreview={onPreview} id={""} fileLabel={""}          />
+            onPreview={onPreview}
+          />
         </div>
       </div>
 
@@ -53,7 +57,8 @@ export function EpisodeFilesStep({
         <div className="w-48">
           <UploadBox
             id="subtitle"
-            label={subtitleFile ? (subtitleFile as File)?.name || "Sous-titre" : "Sous-titre"}
+            label="Sous-titre"
+            value={subtitleFile as File | null}
             className="min-h-[64px]"
             onFileSelect={(file) => setValue("subtitleFile", file ?? null, { shouldValidate: false })}
           />

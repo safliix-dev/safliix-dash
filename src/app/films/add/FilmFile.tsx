@@ -26,6 +26,8 @@ export function FilmFilesStep({
   metaLoading,
   onOpenConfirm
 }: FilmFilesStepProps) {
+  const mainImage = useWatch({ control, name: "mainImage" });
+  const secondaryImage = useWatch({ control, name: "secondaryImage" });
   const movieFile = useWatch({ control, name: "movieFile" });
   const trailerFile = useWatch({ control, name: "trailerFile" });
   const typeValue = useWatch({ control, name: "type" });
@@ -36,12 +38,14 @@ export function FilmFilesStep({
         <UploadBox
           id="main"
           label="Image principale"
+          value={mainImage as File | null}
           className="row-span-2 col-span-3 min-h-[220px]"
           onFileSelect={(file) => setValue("mainImage", file ?? null, { shouldValidate: true })}
         />
         <UploadBox
           id="sec"
           label="Image secondaire"
+          value={secondaryImage as File | null}
           className="col-span-3 min-h-[100px]"
           onFileSelect={(file) => setValue("secondaryImage", file ?? null, { shouldValidate: false })}
         />

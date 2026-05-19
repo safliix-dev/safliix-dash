@@ -1,33 +1,43 @@
-import { useRef, useState } from "react";
+'use client';
+import { useEffect, useState } from "react";
 import { ImageDownIcon } from "lucide-react";
-import Image from "next/image";
 
 type UploadBoxProps = {
   id?: string;
   label?: string;
   className?: string;
+  value?: File | null;
   onFileSelect?: (file: File | null) => void;
 };
 
-export default function UploadBox({ id = "main-upload", label = "Image", className = "", onFileSelect }: UploadBoxProps) {
-  const inputRef = useRef<HTMLInputElement | null>(null);
+export default function UploadBox({
+  id = "main-upload",
+  label = "Image",
+  className = "",
+  value,
+  onFileSelect,
+}: UploadBoxProps) {
   const [preview, setPreview] = useState<string | null>(null);
+
+  // Controlled mode: sync preview with value prop
+  useEffect(() => {
+    if (value === undefined) return;
+    if (!value) { setPreview(null); return; }
+    const url = URL.createObjectURL(value);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
-
-    if (preview) {
-      URL.revokeObjectURL(preview);
+    // Uncontrolled mode: manage preview internally
+    if (value === undefined) {
+      setPreview((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return file ? URL.createObjectURL(file) : null;
+      });
     }
-
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setPreview(imageUrl);
-      onFileSelect?.(file);
-    } else {
-      setPreview(null);
-      onFileSelect?.(null);
-    }
+    onFileSelect?.(file);
   };
 
   return (
@@ -38,21 +48,14 @@ export default function UploadBox({ id = "main-upload", label = "Image", classNa
       <input
         type="file"
         id={id}
-        ref={inputRef}
         onChange={handleChange}
         className="hidden"
         accept="image/*"
       />
-
       {preview ? (
-        <div className="relative w-full h-24 rounded-md overflow-hidden">
-          <Image
-            width={360}
-            height={360}
-            src={preview}
-            alt="Preview"
-            className="w-full h-full object-cover"
-          />
+        <div className="relative w-full h-full min-h-[120px] rounded-md overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={preview} alt="Aperçu" className="w-full h-full object-cover" />
           <span className="absolute bottom-2 right-2 text-sm bg-black/50 text-white px-2 py-1 rounded">
             Modifier
           </span>

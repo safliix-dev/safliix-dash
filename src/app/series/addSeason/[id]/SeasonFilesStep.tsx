@@ -27,7 +27,8 @@ export function SeasonFilesStep({
         <label className="label text-sm mb-1">Affiche (poster)</label>
         <UploadBox
           id="season-poster"
-          label={poster ? (poster as File)?.name || "Image de la saison" : "Image de la saison"}
+          label="Image de la saison"
+          value={poster as File | null}
           className="min-h-[220px]"
           onFileSelect={(file) => setValue("poster", file ?? null, { shouldValidate: true })}
         />
