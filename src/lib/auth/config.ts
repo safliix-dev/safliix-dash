@@ -73,6 +73,7 @@ export const authConfig: NextAuthOptions = {
           accessToken: account.access_token!,
           refreshToken: account.refresh_token!,
           expiresIn: expires_in,
+          idToken: account.id_token ?? undefined,
         });
 
         // On retourne un JWT NextAuth ultra léger

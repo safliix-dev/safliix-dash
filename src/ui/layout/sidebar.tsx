@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { keycloakLogout } from "@/lib/auth/logout";
 import SidebarItem from "./SidebarItem";
 import {
@@ -61,7 +60,6 @@ const items: MenuItem[] = [
 
 export default function Sidebar() {
 	const pathname = usePathname();
-  const { data: session } = useSession();
 
   return (
     <aside className="w-64 h-full bg-black text-white/80 border-r border-base-300/30 flex flex-col">
@@ -94,7 +92,7 @@ export default function Sidebar() {
 
       <div className="px-2 pb-4 mt-auto border-t border-base-300/30 pt-3">
         <button
-          onClick={() => keycloakLogout(session?.idToken)}
+          onClick={() => keycloakLogout()}
           className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-white/60 hover:text-red-400 hover:bg-red-400/10 transition-colors"
         >
           <LogOut className="w-5 h-5" />

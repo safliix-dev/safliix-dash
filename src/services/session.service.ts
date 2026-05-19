@@ -4,17 +4,19 @@ interface SessionData {
   accessToken: string;
   refreshToken: string;
   expiresAt: number;
+  idToken?: string;
 }
 
 const key = (userId: string) => `session:${userId}`;
 
 export const SessionService = {
-  async saveTokens(userId: string, data: { accessToken: string; refreshToken: string; expiresIn: number }) {
+  async saveTokens(userId: string, data: { accessToken: string; refreshToken: string; expiresIn: number; idToken?: string }) {
     const expiresAt = Math.floor(Date.now() / 1000) + data.expiresIn;
     const payload: SessionData = {
       accessToken: data.accessToken,
       refreshToken: data.refreshToken,
       expiresAt,
+      idToken: data.idToken,
     };
     await redis.set(key(userId), JSON.stringify(payload), "EX", data.expiresIn + 3600);
   },

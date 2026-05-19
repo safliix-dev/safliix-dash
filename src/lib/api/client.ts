@@ -106,6 +106,18 @@ function isWrappedResponse<T>(
   );
 }
 
+function extractErrorMessage(payload: unknown, fallback = "API request failed"): string {
+  if (typeof payload === "string" && payload.length > 0) return payload;
+  if (typeof payload === "object" && payload !== null) {
+    const p = payload as Record<string, unknown>;
+    const msg = p.message;
+    if (typeof msg === "string" && msg.length > 0) return msg;
+    if (Array.isArray(msg) && msg.length > 0) return msg.join(", ");
+    if (typeof p.error === "string" && p.error.length > 0) return p.error;
+  }
+  return fallback;
+}
+
 /**
  * 🚀 CLIENT API BFF
  */
@@ -155,7 +167,8 @@ export async function apiRequest<TResponse = unknown, TBody = unknown>(
       errorPayload,
     });
 
-    throw new ApiError("API request failed", response.status, errorPayload);
+    const errorMessage = extractErrorMessage(errorPayload);
+    throw new ApiError(errorMessage, response.status, errorPayload);
   }
 
   const rawData = await parseResponse<TResponse>(response);

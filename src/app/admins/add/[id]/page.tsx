@@ -124,7 +124,16 @@ export default function CreateAdminPage() {
                 <Controller
                   name="password"
                   control={control}
-                  rules={isEditMode ? {} : { required: "Mot de passe requis" }}
+                  rules={isEditMode ? {} : {
+                    required: "Mot de passe requis",
+                    minLength: { value: 12, message: "Minimum 12 caractères" },
+                    validate: {
+                      uppercase: v => /[A-Z]/.test(v) || "Au moins une majuscule requise",
+                      lowercase: v => /[a-z]/.test(v) || "Au moins une minuscule requise",
+                      digit: v => /[0-9]/.test(v) || "Au moins un chiffre requis",
+                      special: v => /[^A-Za-z0-9]/.test(v) || "Au moins un caractère spécial requis (!@#$...)",
+                    },
+                  }}
                   render={({ field, fieldState }) => (
                     <InputField
                       {...field}

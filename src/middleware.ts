@@ -4,22 +4,22 @@ import { NextResponse } from "next/server";
 export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
-    // On sécurise l'accès aux rôles avec un fallback vide
     const roles = (token?.roles as string[]) || [];
     const isSuperAdmin = roles.includes("super_admin");
+    const isOwner = roles.includes("owner");
     const isAdmin = roles.includes("admin");
     const pathname = req.nextUrl.pathname;
 
     console.log(`🛡️ Middleware - Path: ${pathname}, Roles: ${roles.join(", ")}`);
 
-    // 1. Protection /admin (Super Admin uniquement)
-    if (pathname.startsWith("/admin") && !isSuperAdmin) {
+    // /admins et /users : super_admin ou owner uniquement
+    const isPrivilegedPath = pathname.startsWith("/admins") || pathname.startsWith("/users");
+    if (isPrivilegedPath && !isSuperAdmin && !isOwner) {
       return NextResponse.rewrite(new URL("/unauthorized", req.url));
     }
 
-    
-    const isRestrictedPath = pathname.startsWith("/users") || pathname.startsWith("/settings");
-    if (isRestrictedPath && !isAdmin && !isSuperAdmin) {
+    // /settings : admin, super_admin ou owner
+    if (pathname.startsWith("/settings") && !isAdmin && !isSuperAdmin && !isOwner) {
       return NextResponse.rewrite(new URL("/unauthorized", req.url));
     }
 
@@ -30,14 +30,11 @@ export default withAuth(
       authorized: ({ token, req }) => {
         const { pathname } = req.nextUrl;
 
-        // ✅ IMPORTANT : Laisser passer TOUTES les routes d'API Auth
         if (pathname.startsWith("/api/auth")) return true;
 
-        // ✅ Autoriser les routes publiques
         const publicRoutes = ["/", "/unauthorized", "/debug", "/test"];
         if (publicRoutes.includes(pathname)) return true;
 
-        // 🔒 Pour tout le reste (ce qui est dans le matcher), il faut un token
         return !!token;
       },
     },
@@ -45,15 +42,10 @@ export default withAuth(
 );
 
 export const config = {
-  /*
-   * Matcher optimisé : 
-   * 1. On cible les dossiers sensibles
-   * 2. On exclut les fichiers statiques et les routes d'API
-   */
   matcher: [
-    "/admin/:path*",
+    "/admins/:path*",
     "/users/:path*",
     "/settings/:path*",
-    "/dashboard/:path*", // Ajoute ton dossier principal si besoin
+    "/dashboard/:path*",
   ],
 };
