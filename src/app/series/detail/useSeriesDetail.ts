@@ -32,32 +32,10 @@ export function useSeriesDetail(seriesId: string): UseSeriesDetailReturn {
 
   const toast = useToast();
 
-  // Chargement des détails de la série
-  const loadSeriesDetail = useCallback(async () => {
-    if (!seriesId) return;
-    
-    setLoading(true);
-    try {
-      const data = await seriesApi.detail(seriesId, );
-      setDetail(data);
-      
-      // Initialiser les saisons expansées (toutes par défaut)
-      if (data.seasons) {
-        const seasonIds = data.seasons.map(s => s.id);
-        setExpandedSeasons(new Set(seasonIds));
-      }
-    } catch (error) {
-      const friendly = formatApiError(error);
-      toast.error({ title: "Erreur", description: friendly.message });
-    } finally {
-      setLoading(false);
-    }
-  }, [seriesId, , toast]);
-
   // Chargement des épisodes d'une saison
   const loadEpisodes = useCallback(async (seasonId: string) => {
     if (!seriesId || !seasonId) return;
-    
+
     try {
       const episodes = await episodeApi.list(seriesId, seasonId, undefined, );
       const normalized = Array.isArray(episodes) ? episodes : [];
@@ -68,6 +46,29 @@ export function useSeriesDetail(seriesId: string): UseSeriesDetailReturn {
       setEpisodesBySeason(prev => ({ ...prev, [seasonId]: [] }));
     }
   }, [seriesId, , toast]);
+
+  // Chargement des détails de la série
+  const loadSeriesDetail = useCallback(async () => {
+    if (!seriesId) return;
+
+    setLoading(true);
+    try {
+      const data = await seriesApi.detail(seriesId, );
+      setDetail(data);
+
+      // Initialiser les saisons expansées (toutes par défaut) et charger leurs épisodes
+      if (data.seasons) {
+        const seasonIds = data.seasons.map(s => s.id);
+        setExpandedSeasons(new Set(seasonIds));
+        await Promise.all(seasonIds.map(id => loadEpisodes(id)));
+      }
+    } catch (error) {
+      const friendly = formatApiError(error);
+      toast.error({ title: "Erreur", description: friendly.message });
+    } finally {
+      setLoading(false);
+    }
+  }, [seriesId, loadEpisodes, toast]);
 
   // Expansion/repliement d'une saison
   const toggleSeason = useCallback(async (seasonId: string) => {
