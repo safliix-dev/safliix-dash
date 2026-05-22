@@ -19,7 +19,7 @@ export function SeasonRow({ season, seriesId }: SeasonRowProps) {
 
   useEffect(() => {
     episodeApi.list(seriesId, season.id, undefined, )
-      .then(data => setEpisodes(Array.isArray(data) ? data : []))
+      .then(data => setEpisodes(data.items ?? []))
       .catch(() => setEpisodes([]))
       .finally(() => setLoading(false));
   }, [seriesId, season.id]);

@@ -6,6 +6,7 @@ import {
   type EpisodeMetadataPayload,
   type EpisodeMetaOptions,
 } from "@/types/api/episode";
+import type { PaginatedResponse } from "@/types/api/common";
 
 export const episodeApi = {
   // Options (métadonnées pour les sélecteurs)
@@ -14,7 +15,7 @@ export const episodeApi = {
 
   // Liste des épisodes d'une saison
   list: (seriesId: string, seasonId: string, params?: EpisodeListParams, ) =>
-    apiRequest<EpisodeDetail[]>(`/series/seasons/${seasonId}/episodes`, { params,  }),
+    apiRequest<PaginatedResponse<EpisodeDetail>>(`/series/seasons/${seasonId}/episodes`, { params,  }),
 
   // Récupérer un épisode par son ID
   get: (episodeId: string, ) => 
