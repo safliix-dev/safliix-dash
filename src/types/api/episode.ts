@@ -36,13 +36,30 @@ export interface EpisodeMetaOptions {
 export type EpisodeSlot = 'MAIN' | 'TRAILER' | 'SUBTITLE' | 'POSTER';
 
 export interface EpisodeListParams  extends Record<string, unknown> { page?: number; pageSize?: number }
+export interface EpisodeAttachment {
+  id: string;
+  type: "POSTER" | "MAIN" | "TRAILER" | "SUBTITLE";
+  mediaFile: {
+    id: string;
+    s3Key: string;
+    title: string;
+    duration: number | null;
+    status: string;
+    mediaType: string;
+  };
+}
+
 export interface EpisodeItem {
   id: string;
   title: string;
+  number?: number;
   releaseDate?: string;
-  publishDate?: string;
+  platformDate?: string;
   status?: string;
-  duration?: string;
+  duration?: number;
+  description?: string;
+  seasonId?: string;
+  attachment?: EpisodeAttachment[];
 }
 
 export interface EpisodeDetail extends EpisodeItem {

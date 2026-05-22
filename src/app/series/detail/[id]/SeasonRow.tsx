@@ -56,7 +56,7 @@ export function SeasonRow({ season, seriesId }: SeasonRowProps) {
             </div>
           ) : episodes.length > 0 ? (
             episodes.map(episode => (
-              <EpisodeCard key={episode.id} id={episode.id} />
+              <EpisodeCard key={episode.id} episode={episode} />
             ))
           ) : (
             <div className="col-span-6 text-sm text-white/60">Aucun épisode.</div>

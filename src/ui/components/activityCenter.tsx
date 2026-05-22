@@ -1,15 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import { Activity, Wifi, WifiOff, X, Zap } from 'lucide-react';
+import { Activity, Loader2, Wifi, WifiOff, X, Zap } from 'lucide-react';
 import { useGlobalJobs } from '@/lib/contexts/JobContext';
 import { useGlobalSocket } from '@/lib/contexts/SocketContext';
 import { EncodingJobsMonitor } from './EncodingJobsMonitor';
 
 export const ActivityCenter = () => {
   const { activeCount, failedCount } = useGlobalJobs();
-  const { isConnected } = useGlobalSocket();
+  const { isConnected, reconnect } = useGlobalSocket();
   const [isOpen, setIsOpen] = useState(false);
+  const [isReconnecting, setIsReconnecting] = useState(false);
+
+  const handleReconnect = async () => {
+    if (isReconnecting) return;
+    setIsReconnecting(true);
+    await reconnect();
+    setTimeout(() => setIsReconnecting(false), 5000);
+  };
 
   const isActive  = activeCount > 0;
   const hasErrors = failedCount > 0;
@@ -77,17 +85,25 @@ export const ActivityCenter = () => {
 
               <div className="flex items-center gap-2">
                 {/* Connection badge */}
-                <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold border ${
-                  isConnected
-                    ? 'bg-success/8 text-success border-success/20'
-                    : 'bg-error/8 text-error border-error/20'
-                }`}>
-                  {isConnected
-                    ? <Wifi className="w-2.5 h-2.5" />
-                    : <WifiOff className="w-2.5 h-2.5" />
-                  }
-                  <span>{isConnected ? 'Live' : 'Hors ligne'}</span>
-                </div>
+                {isConnected ? (
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold border bg-success/8 text-success border-success/20">
+                    <Wifi className="w-2.5 h-2.5" />
+                    <span>Live</span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleReconnect}
+                    disabled={isReconnecting}
+                    title="Cliquer pour reconnecter"
+                    className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold border bg-error/8 text-error border-error/20 hover:bg-error/15 transition-colors cursor-pointer disabled:cursor-default disabled:opacity-60"
+                  >
+                    {isReconnecting
+                      ? <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                      : <WifiOff className="w-2.5 h-2.5" />
+                    }
+                    <span>{isReconnecting ? 'Connexion...' : 'Hors ligne'}</span>
+                  </button>
+                )}
 
                 <button
                   onClick={() => setIsOpen(false)}
