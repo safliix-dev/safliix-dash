@@ -34,17 +34,18 @@ KEYCLOAK_CLIENT_SECRET=<secret>
 NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
 NEXT_PUBLIC_API_URL=/api/proxy
 NEST_API_URL=http://localhost:3001/api
+REDIS_URL=redis://localhost:6379
 ```
 
-Requires a running Keycloak instance and a NestJS backend at `localhost:3001`.
+Requires a running Keycloak instance, a NestJS backend at `localhost:3001`, and a Redis instance.
 
 ## Architecture
 
-**Stack**: Next.js 15 (App Router) + TypeScript + TailwindCSS 4 + DaisyUI 5 + Prisma (SQLite) + NextAuth v4 (Keycloak)
+**Stack**: Next.js 15 (App Router) + TypeScript + TailwindCSS 4 + DaisyUI 5 + Prisma (SQLite) + Redis (ioredis) + NextAuth v4 (Keycloak)
 
 ### Authentication Flow
 
-NextAuth v4 with Keycloak (OIDC). Access/refresh tokens are **not** stored in the session cookie — instead they are saved to SQLite via `SessionService` (`src/services/session.service.ts`), and only a lightweight JWT with a `sessionStoreId` is kept in the cookie. This avoids cookie size limits.
+NextAuth v4 with Keycloak (OIDC). Access/refresh tokens are **not** stored in the session cookie — instead they are saved to **Redis** via `SessionService` (`src/services/session.service.ts`), and only a lightweight JWT (with `sub`, `roles`, `accessTokenExpires`) is kept in the cookie. This avoids cookie size limits.
 
 `TokenService` (`src/services/token.service.ts`) handles expiration detection (60-second buffer) and automatic token refresh. The middleware at `src/middleware.ts` enforces role-based routing:
 - `/admin/*` → `super_admin` role only
@@ -53,11 +54,15 @@ NextAuth v4 with Keycloak (OIDC). Access/refresh tokens are **not** stored in th
 
 ### API Proxy Pattern
 
-All calls to the NestJS backend go through the Next.js API route at `/api/proxy/[...path]` (`src/app/api/proxy/`). This route retrieves the current access token from SQLite and injects it as a Bearer header before forwarding to `NEST_API_URL`. Client-side code always calls `NEXT_PUBLIC_API_URL` (`/api/proxy`), never the backend directly.
+All calls to the NestJS backend go through the Next.js API route at `/api/proxy/[...path]` (`src/app/api/proxy/`). This route retrieves the current access token from Redis and injects it as a Bearer header before forwarding to `NEST_API_URL`. Client-side code always calls `NEXT_PUBLIC_API_URL` (`/api/proxy`), never the backend directly.
+
+### Session Store (Redis)
+
+Redis via `ioredis` (`src/lib/redis.ts`). Session tokens are stored under `session:<userId>` with a TTL matching the refresh token expiry. Requires `REDIS_URL` in the environment. All domain data lives in the NestJS backend.
 
 ### Database
 
-SQLite (`dev.db`) via Prisma with `better-sqlite3` adapter. The schema is minimal — a single `SessionStore` model that holds serialized token data keyed by session ID. All domain data lives in the NestJS backend.
+SQLite (`dev.db`) via Prisma with `better-sqlite3` adapter. Used only by NextAuth internals. All domain data lives in the NestJS backend.
 
 ### Source Layout
 
