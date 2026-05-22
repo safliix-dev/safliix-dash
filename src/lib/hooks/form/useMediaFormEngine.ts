@@ -109,13 +109,6 @@ export function useMediaFormEngine<
       setDialogStatus("partial_success");
     } else if (result.failed.length === 0 && result.successful.length > 0) {
       setDialogStatus("success");
-      // Fermeture automatique après un succès complet
-      setTimeout(() => {
-        if (isMountedRef.current) {
-          setDialogOpen(false);
-          resetEngine();
-        }
-      }, 2000);
     }
 
     return result;
