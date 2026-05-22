@@ -64,11 +64,15 @@ export const authConfig: NextAuthOptions = {
     async jwt({ token, account, profile }) {
       // 1. SIGN-IN INITIAL
       if (account && profile) {
+        console.log("[KC token fields]", {
+          expires_in: account.expires_in,
+          refresh_expires_in: account.refresh_expires_in,
+        });
         const realmRoles = profile.realm_roles || profile.realm_access?.roles || [];
         const clientRoles = profile.resource_access?.[clientId]?.roles || [];
         const allRoles = [...new Set([...realmRoles, ...clientRoles])];
         const expires_in = (account.expires_in as number) ?? 300;
-        const refresh_expires_in = (account.refresh_expires_in as number) ?? 1800;
+        const refresh_expires_in = (account.refresh_expires_in as number) ?? 28800;
 
         try {
           await SessionService.saveTokens(profile.sub!, {

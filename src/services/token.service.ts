@@ -47,7 +47,7 @@ export class TokenService {
         accessToken: data.access_token,
         refreshToken: data.refresh_token,
         expiresIn: data.expires_in,
-        refreshExpiresIn: data.refresh_expires_in ?? data.expires_in * 6,
+        refreshExpiresIn: data.refresh_expires_in ?? 28800,
       };
     } catch (error) {
       console.error("❌ Refresh token error:", error);

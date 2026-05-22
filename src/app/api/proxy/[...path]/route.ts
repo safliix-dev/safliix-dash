@@ -6,7 +6,7 @@ async function proxyHandler(req: NextRequest, { params }: { params: Promise<{ pa
   const token = await getToken({ req });
 
   if (!token?.sub) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    return NextResponse.json({ error: "session_expired" }, { status: 401 });
   }
 
   let accessToken: string | null = null;
@@ -19,7 +19,7 @@ async function proxyHandler(req: NextRequest, { params }: { params: Promise<{ pa
   }
 
   if (!accessToken) {
-    return NextResponse.json({ error: "Session invalide" }, { status: 401 });
+    return NextResponse.json({ error: "session_expired" }, { status: 401 });
   }
 
   const baseUrl = process.env.NEST_API_URL;
