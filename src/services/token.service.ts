@@ -5,6 +5,7 @@ interface RefreshedTokens {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
+  refreshExpiresIn: number;
 }
 
 export class TokenService {
@@ -46,6 +47,7 @@ export class TokenService {
         accessToken: data.access_token,
         refreshToken: data.refresh_token,
         expiresIn: data.expires_in,
+        refreshExpiresIn: data.refresh_expires_in ?? data.expires_in * 6,
       };
     } catch (error) {
       console.error("❌ Refresh token error:", error);
@@ -97,14 +99,14 @@ export class TokenService {
 
   static async saveTokens(
     userId: string,
-    tokens: { accessToken: string; refreshToken: string; expiresIn: number }
+    tokens: { accessToken: string; refreshToken: string; expiresIn: number; refreshExpiresIn: number }
   ) {
     return await SessionService.saveTokens(userId, tokens);
   }
 
   static async updateTokens(
     userId: string,
-    tokens: { accessToken: string; refreshToken: string; expiresIn: number }
+    tokens: { accessToken: string; refreshToken: string; expiresIn: number; refreshExpiresIn: number }
   ) {
     return await SessionService.updateTokens(userId, tokens);
   }

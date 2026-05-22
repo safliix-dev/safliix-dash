@@ -10,7 +10,7 @@ interface SessionData {
 const key = (userId: string) => `session:${userId}`;
 
 export const SessionService = {
-  async saveTokens(userId: string, data: { accessToken: string; refreshToken: string; expiresIn: number; idToken?: string }) {
+  async saveTokens(userId: string, data: { accessToken: string; refreshToken: string; expiresIn: number; refreshExpiresIn: number; idToken?: string }) {
     const expiresAt = Math.floor(Date.now() / 1000) + data.expiresIn;
     const payload: SessionData = {
       accessToken: data.accessToken,
@@ -18,17 +18,17 @@ export const SessionService = {
       expiresAt,
       idToken: data.idToken,
     };
-    await redis.set(key(userId), JSON.stringify(payload), "EX", data.expiresIn + 3600);
+    await redis.set(key(userId), JSON.stringify(payload), "EX", data.refreshExpiresIn);
   },
 
-  async updateTokens(userId: string, tokens: { accessToken: string; refreshToken: string; expiresIn: number }) {
+  async updateTokens(userId: string, tokens: { accessToken: string; refreshToken: string; expiresIn: number; refreshExpiresIn: number }) {
     const expiresAt = Math.floor(Date.now() / 1000) + tokens.expiresIn;
     const payload: SessionData = {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
       expiresAt,
     };
-    await redis.set(key(userId), JSON.stringify(payload), "EX", tokens.expiresIn + 3600);
+    await redis.set(key(userId), JSON.stringify(payload), "EX", tokens.refreshExpiresIn);
   },
 
   async getTokens(userId: string): Promise<SessionData | null> {

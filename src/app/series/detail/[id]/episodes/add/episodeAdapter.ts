@@ -40,7 +40,7 @@ export const episodeAdapter: MediaFormEngineConfig<
   collectFiles: (form): { key: EpisodeSlot; file: File }[] => {
     const slots: { key: EpisodeSlot; file: File | null | undefined }[] = [
       { key: 'POSTER', file: form.mainImage },
-      { key: 'MOVIE', file: form.movieFile },
+      { key: 'MAIN', file: form.movieFile },
       { key: 'TRAILER', file: form.trailerFile },
     ];
     

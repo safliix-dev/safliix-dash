@@ -68,13 +68,19 @@ export const authConfig: NextAuthOptions = {
         const clientRoles = profile.resource_access?.[clientId]?.roles || [];
         const allRoles = [...new Set([...realmRoles, ...clientRoles])];
         const expires_in = (account.expires_in as number) ?? 300;
+        const refresh_expires_in = (account.refresh_expires_in as number) ?? 1800;
 
-        await SessionService.saveTokens(profile.sub!, {
-          accessToken: account.access_token!,
-          refreshToken: account.refresh_token!,
-          expiresIn: expires_in,
-          idToken: account.id_token ?? undefined,
-        });
+        try {
+          await SessionService.saveTokens(profile.sub!, {
+            accessToken: account.access_token!,
+            refreshToken: account.refresh_token!,
+            expiresIn: expires_in,
+            refreshExpiresIn: refresh_expires_in,
+            idToken: account.id_token ?? undefined,
+          });
+        } catch (error) {
+          console.error("❌ Redis saveTokens error:", error);
+        }
 
         // On retourne un JWT NextAuth ultra léger
         return {
@@ -106,7 +112,7 @@ export const authConfig: NextAuthOptions = {
         try {
           await SessionService.deleteSession(token.sub);
         } catch (error) {
-          console.error("❌ SQLite Logout error:", error);
+          console.error("❌ Redis deleteSession error:", error);
         }
       }
     },
