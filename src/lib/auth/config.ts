@@ -64,15 +64,27 @@ export const authConfig: NextAuthOptions = {
     async jwt({ token, account, profile }) {
       // 1. SIGN-IN INITIAL
       if (account && profile) {
-        console.log("[KC token fields]", {
-          expires_in: account.expires_in,
-          refresh_expires_in: account.refresh_expires_in,
-        });
-        const realmRoles = profile.realm_roles || profile.realm_access?.roles || [];
-        const clientRoles = profile.resource_access?.[clientId]?.roles || [];
-        const allRoles = [...new Set([...realmRoles, ...clientRoles])];
-        const expires_in = (account.expires_in as number) ?? 300;
+        // expires_in peut être absent selon la config Keycloak — fallback sur expires_at
+        const expires_in =
+          (account.expires_in as number) ??
+          (account.expires_at ? Math.max(account.expires_at - Math.floor(Date.now() / 1000), 60) : 300);
         const refresh_expires_in = (account.refresh_expires_in as number) ?? 28800;
+
+        // Les rôles sont dans l'access token (realm_access), pas dans l'ID token (profile)
+        let allRoles: string[] = [];
+        try {
+          const accessPayload = JSON.parse(
+            Buffer.from(account.access_token!.split('.')[1], 'base64').toString()
+          );
+          // Supporte realm_access.roles (standard) et realm_roles (claim name custom)
+          const realmRoles: string[] = accessPayload.realm_access?.roles ?? accessPayload.realm_roles ?? [];
+          const clientRoles: string[] = accessPayload.resource_access?.[clientId]?.roles ?? [];
+          allRoles = [...new Set([...realmRoles, ...clientRoles])];
+        } catch {
+          const realmRoles = profile.realm_roles ?? profile.realm_access?.roles ?? [];
+          const clientRoles = profile.resource_access?.[clientId]?.roles ?? [];
+          allRoles = [...new Set([...realmRoles, ...clientRoles])];
+        }
 
         try {
           await SessionService.saveTokens(profile.sub!, {
@@ -86,7 +98,6 @@ export const authConfig: NextAuthOptions = {
           console.error("❌ Redis saveTokens error:", error);
         }
 
-        // On retourne un JWT NextAuth ultra léger
         return {
           sub: profile.sub,
           roles: allRoles,

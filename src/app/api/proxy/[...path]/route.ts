@@ -47,12 +47,6 @@ async function proxyHandler(req: NextRequest, { params }: { params: Promise<{ pa
 
   headers.set("Authorization", `Bearer ${accessToken}`);
 
-  // Debug temporaire — supprimer après diagnostic
-  try {
-    const decoded = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString());
-    console.log('[Proxy] Token claims:', { sub: decoded.sub, email: decoded.email, typ: decoded.typ });
-  } catch { /* ignore */ }
-
   let response: Response;
   try {
     response = await fetch(targetUrl, {
@@ -70,9 +64,15 @@ async function proxyHandler(req: NextRequest, { params }: { params: Promise<{ pa
     ? await response.json()
     : await response.text();
 
-  return NextResponse.json(body, {
+  const nextResponse = NextResponse.json(body, {
     status: response.status,
   });
+
+  response.headers.getSetCookie?.().forEach((cookie) => {
+    nextResponse.headers.append("Set-Cookie", cookie);
+  });
+
+  return nextResponse;
 }
 
 export const GET = proxyHandler;
