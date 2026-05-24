@@ -5,6 +5,8 @@ import Image from "next/image";
 import { StatusBadge } from "@/ui/components/statusBadge";
 import type { ContentStatus, ContentAction } from "@/types/api/common";
 import VideoPlayer from "../../../components/videoPlayer";
+import { usePlayback } from "@/lib/hooks/usePlayback";
+import type { PlaybackAttachmentType } from "@/types/api/playback";
 
 export type NormalizedStats = {
   locationsCount?: number;
@@ -18,6 +20,14 @@ export type NormalizedStats = {
     max?: number;
     color?: string;
   }[];
+};
+
+const ATTACHMENT_LABELS: Record<string, string> = {
+  MAIN: 'Principal',
+  TRAILER: 'Bande-annonce',
+  BONUS: 'Bonus',
+  CLIP: 'Clip',
+  ADVERTISEMENT: 'Pub',
 };
 
 // Configuration des actions selon le statut
@@ -44,7 +54,10 @@ type VideoCardProps = {
   stats: NormalizedStats;
   mode: "abonnement" | "location";
   detailHref?: string;
-  videoSrc?: string | null;
+  contentId: string;
+  contentType: 'film' | 'serie';
+  attachmentType?: PlaybackAttachmentType;
+  attachments?: { type: string }[];
   onEdit?: () => void;
   onPlay?: () => void;
   onAction?: (action: ContentAction) => void;
@@ -62,13 +75,18 @@ export default function VideoCard({
   stats,
   mode,
   detailHref,
-  videoSrc,
+  contentId,
+  contentType,
+  attachmentType = 'MAIN',
+  attachments = [],
   onEdit,
   onPlay,
   onAction,
 }: VideoCardProps) {
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
-  
+  const [activeAttachmentType, setActiveAttachmentType] = useState<PlaybackAttachmentType>(attachmentType);
+  const { url: playbackUrl, loading: playbackLoading, error: playbackError, load: loadPlayback, reset: resetPlayback } = usePlayback();
+
   const posterSrc = poster || "/image-icon.jpg";
 
   const {
@@ -91,10 +109,18 @@ export default function VideoCard({
   const handleOpenPlayer = () => {
     setIsPlayerOpen(true);
     onPlay?.();
+    void loadPlayback(contentId, contentType, activeAttachmentType);
   };
 
   const handleClosePlayer = () => {
     setIsPlayerOpen(false);
+    setActiveAttachmentType(attachmentType);
+    resetPlayback();
+  };
+
+  const handleSwitchAttachment = (type: PlaybackAttachmentType) => {
+    setActiveAttachmentType(type);
+    void loadPlayback(contentId, contentType, type);
   };
 
   // 🎹 Gestion de la touche Échap
@@ -334,12 +360,37 @@ export default function VideoCard({
               Échap ✕
             </div>
 
+            {/* Sélecteur d'attachment */}
+            {attachments.length > 1 && (
+              <div className="flex gap-2 px-4 py-3 bg-black border-b border-white/10">
+                {attachments.map(({ type }) => (
+                  <button
+                    key={type}
+                    onClick={() => handleSwitchAttachment(type as PlaybackAttachmentType)}
+                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                      activeAttachmentType === type
+                        ? 'bg-primary text-black font-medium'
+                        : 'bg-white/10 text-white/70 hover:bg-white/20'
+                    }`}
+                  >
+                    {ATTACHMENT_LABELS[type] ?? type}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Video Player */}
-            <VideoPlayer
-              src={videoSrc}
-              title={title}
-              autoPlay={true}
-            />
+            {playbackLoading ? (
+              <div className="flex items-center justify-center h-64 bg-black">
+                <span className="loading loading-spinner loading-lg text-primary" />
+              </div>
+            ) : playbackError ? (
+              <div className="flex items-center justify-center h-64 bg-black text-red-400 text-sm px-4 text-center">
+                {playbackError}
+              </div>
+            ) : (
+              <VideoPlayer src={playbackUrl} title={title} autoPlay={true} />
+            )}
           </div>
         </div>
       )}

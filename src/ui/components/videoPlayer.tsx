@@ -50,14 +50,7 @@ const VideoPlayer = ({ src, title, onProgress, autoPlay = false }: VideoPlayerPr
   const [currentQuality, setCurrentQuality] = useState<number>(-1);
   const [isHLSReady, setIsHLSReady] = useState(false);
 
-  const effectiveSrc = useMemo(() => {
-    if (!src) return null;
-    // Passer par le proxy HLS pour éviter les erreurs CORS du CDN
-    if (src.startsWith('https://cdn.safliix.com')) {
-      return `/api/hls-proxy?url=${encodeURIComponent(src)}`;
-    }
-    return src;
-  }, [src]);
+  const effectiveSrc = useMemo(() => src ?? null, [src]);
 
   // Montage component
   useEffect(() => {
@@ -89,6 +82,9 @@ const VideoPlayer = ({ src, title, onProgress, autoPlay = false }: VideoPlayerPr
         lowLatencyMode: true,
         maxBufferLength: 30,
         maxMaxBufferLength: 60,
+        xhrSetup: (xhr) => {
+          xhr.withCredentials = true;
+        },
       });
 
       hls.loadSource(effectiveSrc);

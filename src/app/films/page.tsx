@@ -215,9 +215,10 @@ export default function FilmsPage() {
                         title={film.title}
                         director={film.director}
                         poster={film.posterUrl}
-                        hero={film.heroUrl}
+                        contentId={film.id}
+                        contentType="film"
+                        attachments={film.attachments}
                         dp={film.dp}
-                        videoSrc={film.movieUrl}
                         category={film.category}
                         stats={stats}
                         status={film.status}

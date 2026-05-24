@@ -54,8 +54,7 @@ export interface FilmListItem {
   dp: string;
   category: string;
   posterUrl: string;
-  heroUrl?: string;
-  movieUrl: string;
+  attachments: { type: string }[];
   type: FilmDistributionType;
   stats: FilmStatsByType;
 

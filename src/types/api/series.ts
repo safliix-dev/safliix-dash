@@ -67,7 +67,7 @@ export interface SeriesListItem {
   number?: number | string;
   category?: string;
   posterUrl: string;
-  trailerUrl: string;
+  attachments: { type: string }[];
   stats: SerieStats;
   stars: number;
   donut?: { label?: string; value: number; color?: string };

@@ -198,7 +198,9 @@ export default function SeriesPage() {
                       <VideoCard
                         title={serie.title}
                         poster={serie.posterUrl}
-                        hero={serie.trailerUrl}
+                        contentId={serie.id}
+                        contentType="serie"
+                        attachments={serie.attachments}
                         director={serie.director}
                         dp={serie.dp}
                         category={serie.category}

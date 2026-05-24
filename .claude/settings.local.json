@@ -7,7 +7,9 @@
       "Bash(rm -rf src/generated)",
       "Bash(ls prisma.config.ts)",
       "Bash(Select-String -Pattern \"episodes/add|episode\\\\.ts|episodeAdapter|EpisodeMetadata|EpisodeMeta\")",
-      "PowerShell(Get-Content *)"
+      "PowerShell(Get-Content *)",
+      "Bash(Get-Content \"C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-USER-Desktop-projet-safliix-safliix-dash\\\\288a0b38-638f-4uralke44e\\\\tasks\\\\bftc6mpu8.output\" -ErrorAction SilentlyContinue)",
+      "Bash(Get-Content \"C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-USER-Desktop-projet-safliix-safliix-dash\\\\288a0b38-638f-4677-a99b-52138534e44e\\\\tasks\\\\bftc6mpu8.output\")"
     ]
   }
 }

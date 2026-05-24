@@ -13,8 +13,19 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
+  const cfNames = ['CloudFront-Policy', 'CloudFront-Signature', 'CloudFront-Key-Pair-Id'];
+  const cookieStr = cfNames
+    .flatMap(name => {
+      const val = req.cookies.get(name)?.value;
+      return val ? [`${name}=${val}`] : [];
+    })
+    .join('; ');
+
   const upstream = await fetch(url, {
-    headers: { Range: req.headers.get('Range') ?? '' },
+    headers: {
+      Range: req.headers.get('Range') ?? '',
+      ...(cookieStr && { Cookie: cookieStr }),
+    },
   });
 
   if (!upstream.ok) {
