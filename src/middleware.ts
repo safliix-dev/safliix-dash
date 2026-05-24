@@ -4,6 +4,13 @@ import { NextResponse } from "next/server";
 export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
+
+    if (token?.error) {
+      const url = new URL("/api/auth/signout", req.url);
+      url.searchParams.set("callbackUrl", "/");
+      return NextResponse.redirect(url);
+    }
+
     const roles = (token?.roles as string[]) || [];
     const isSuperAdmin = roles.includes("super_admin");
     const isOwner = roles.includes("owner");

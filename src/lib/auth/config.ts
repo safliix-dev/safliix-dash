@@ -28,8 +28,8 @@ declare module "next-auth/jwt" {
     sub?: string;
     roles?: string[];
     error?: string;
-    // On ne garde QUE l'expiration pour savoir quand le Proxy doit refresh
-    accessTokenExpires?: number; 
+    accessTokenExpires?: number;
+    refreshTokenExpires?: number;
   }
 }
 
@@ -91,16 +91,16 @@ export const authConfig: NextAuthOptions = {
           sub: profile.sub,
           roles: allRoles,
           accessTokenExpires: Date.now() + expires_in * 1000,
+          refreshTokenExpires: Date.now() + refresh_expires_in * 1000,
         };
       }
 
-      // 2. CHECK EXPIRATION (Optionnel ici, le Proxy pourra aussi le faire)
-      if (Date.now() < (token.accessTokenExpires as number)) {
-        return token;
+      // Le refresh token expiré = session définitivement morte
+      if (Date.now() > (token.refreshTokenExpires as number)) {
+        return { ...token, error: "RefreshTokenExpired" };
       }
 
-      // Si expiré, on peut marquer le token pour que le Proxy sache qu'il faut refresh
-      return { ...token, error: "AccessTokenExpired" };
+      return token;
     },
 
     async session({ session, token }) {
