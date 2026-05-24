@@ -21,6 +21,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const targetUrl = `${baseUrl.replace(/\/$/, "")}/admin/contents/${id}/playback${req.nextUrl.search}`;
 
+  // Debug temporaire — supprimer après diagnostic
+  try {
+    const decoded = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString());
+    console.log('[Playback] Token claims:', { sub: decoded.sub, email: decoded.email, typ: decoded.typ, iss: decoded.iss });
+  } catch { /* ignore */ }
+
   const headers = new Headers();
   headers.set("Authorization", `Bearer ${accessToken}`);
 
