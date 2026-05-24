@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { apiRequest } from '@/lib/api/client';
 import type { PlaybackAttachmentType, PlaybackResponse } from '@/types/api/playback';
 
 const RENEW_INTERVAL_MS = 15 * 60 * 1000;
@@ -34,18 +35,17 @@ export function usePlayback() {
     setLoading(true);
     setError(null);
 
-    const endpoint = `/api/playback/${contentId}?type=${type}&attachmentType=${attachmentType}`;
-
     try {
-      const res = await fetch(endpoint, { credentials: 'include', signal: abort.signal });
-      if (!res.ok) throw new Error(`Erreur ${res.status}`);
-      const data: PlaybackResponse = await res.json();
+      const data = await apiRequest<PlaybackResponse>(
+        `/admin/contents/${contentId}/playback`,
+        { params: { type, attachmentType }, signal: abort.signal }
+      );
       const mediaUrl = data.media[0]?.url;
       if (!mediaUrl) throw new Error('Aucun média disponible');
       setUrl(mediaUrl);
       stopRenew();
       renewRef.current = setInterval(() => {
-        fetch(endpoint, { credentials: 'include' });
+        apiRequest(`/admin/contents/${contentId}/playback`, { params: { type, attachmentType } }).catch(() => {});
       }, RENEW_INTERVAL_MS);
     } catch (e) {
       if (e instanceof Error && e.name === 'AbortError') return;
