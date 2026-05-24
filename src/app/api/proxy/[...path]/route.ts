@@ -47,6 +47,12 @@ async function proxyHandler(req: NextRequest, { params }: { params: Promise<{ pa
 
   headers.set("Authorization", `Bearer ${accessToken}`);
 
+  // Debug temporaire — supprimer après diagnostic
+  try {
+    const decoded = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString());
+    console.log('[Proxy] Token claims:', { sub: decoded.sub, email: decoded.email, typ: decoded.typ });
+  } catch { /* ignore */ }
+
   let response: Response;
   try {
     response = await fetch(targetUrl, {
