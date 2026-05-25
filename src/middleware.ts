@@ -19,16 +19,16 @@ export default withAuth(
 
     console.log(`🛡️ Middleware - Path: ${pathname}, Roles: ${roles.join(", ")}`);
 
-    // /admins et /users : super_admin ou owner uniquement
-    const isPrivilegedPath = pathname.startsWith("/admins") || pathname.startsWith("/users");
-    if (isPrivilegedPath && !isSuperAdmin && !isOwner) {
-      return NextResponse.rewrite(new URL("/unauthorized", req.url));
-    }
+    // // /admins et /users : super_admin ou owner uniquement
+    // const isPrivilegedPath = pathname.startsWith("/admins") || pathname.startsWith("/users");
+    // if (isPrivilegedPath && !isSuperAdmin && !isOwner) {
+    //   return NextResponse.rewrite(new URL("/unauthorized", req.url));
+    // }
 
-    // /settings : admin, super_admin ou owner
-    if (pathname.startsWith("/settings") && !isAdmin && !isSuperAdmin && !isOwner) {
-      return NextResponse.rewrite(new URL("/unauthorized", req.url));
-    }
+    // // /settings : admin, super_admin ou owner
+    // if (pathname.startsWith("/settings") && !isAdmin && !isSuperAdmin && !isOwner) {
+    //   return NextResponse.rewrite(new URL("/unauthorized", req.url));
+    // }
 
     return NextResponse.next();
   },
