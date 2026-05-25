@@ -58,15 +58,20 @@ export const AdsAdapter: MediaFormEngineConfig<
   presignUploads: async (id, files): Promise<AdsPresignedSlot[]> => {
     if (files.length === 0) return [];
 
+    const attachmentTypeMap: Record<AdsSlot, string> = {
+      mainImage: "ADVERTISEMENT",
+      secondaryImage: "THUMBNAIL",
+    };
+
     const descriptors: UploadFileDescriptor<AdsSlot>[] = files.map(f => ({
       key: f.key,
       name: f.file.name,
       type: f.file.type || "application/octet-stream",
-      attachmentType: f.key,
-      file:f.file
+      attachmentType: attachmentTypeMap[f.key],
+      file: f.file,
     }));
 
-    const slots = await uploadApi.presignUploads<AdsSlot>(id, "Ads", descriptors);
+    const slots = await uploadApi.presignUploads<AdsSlot>(id, "ad", descriptors);
 
     return slots.map(slot => ({
       uploadUrl: slot.uploadUrl,

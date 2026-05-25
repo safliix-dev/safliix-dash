@@ -171,25 +171,26 @@ export default function Page() {
 
   return (
     <div className="space-y-4">
-      <Header title="Liste et statistiques de pubs" className="rounded-xl px-4 py-3" />
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          <FilterBtn
-            title="Filtrer par statut"
-            options={statusOptions}
-            selected={statusFilter}
-            onSelect={setStatusFilter}
-          />
-          <FilterBtn title="Meilleures résultats" options={sortOptions} selected={sortFilter} onSelect={setSortFilter} />
-          <FilterBtn title="Dernier ajout" options={periodOptions} selected={periodFilter} onSelect={setPeriodFilter} />
-        </div>
-        <div className="flex flex-wrap gap-2">
+      <Header title="Liste et statistiques de pubs" className="rounded-xl px-4 py-3">
+        <div className="flex shrink-0 gap-2">
           <button className="btn btn-outline btn-primary border-primary/60 text-white">Exporter les rapports</button>
           <Link href="/pub/new" className="btn btn-primary font-semibold">
             Créer un pub
           </Link>
         </div>
+      </Header>
+
+      <div className="flex flex-wrap items-center gap-y-2 rounded-xl border border-base-300/40 bg-base-200/40 px-4 py-2.5">
+        <FilterBtn
+          title="Statut"
+          options={statusOptions}
+          selected={statusFilter}
+          onSelect={setStatusFilter}
+        />
+        <div className="mx-4 hidden h-5 w-px shrink-0 self-center bg-base-300/60 sm:block" />
+        <FilterBtn title="Tri" options={sortOptions} selected={sortFilter} onSelect={setSortFilter} />
+        <div className="mx-4 hidden h-5 w-px shrink-0 self-center bg-base-300/60 sm:block" />
+        <FilterBtn title="Période" options={periodOptions} selected={periodFilter} onSelect={setPeriodFilter} />
       </div>
 
       {loading && <div className="alert alert-info text-sm">Chargement des campagnes...</div>}
