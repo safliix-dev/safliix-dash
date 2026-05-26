@@ -11,10 +11,6 @@ export default withAuth(
       return NextResponse.redirect(url);
     }
 
-    const roles = (token?.roles as string[]) || [];
-    const isSuperAdmin = roles.includes("super_admin");
-    const isOwner = roles.includes("owner");
-    const isAdmin = roles.includes("admin");
     const pathname = req.nextUrl.pathname;
 
     console.log(`🛡️ Middleware - Path: ${pathname}, Roles: ${roles.join(", ")}`);

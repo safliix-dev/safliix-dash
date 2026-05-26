@@ -1,5 +1,5 @@
 // ui/specific/films/components/videoCard.tsx
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { Gauge, Play, Star, TrendingUp, X } from "lucide-react";
 import Image from "next/image";
 import { StatusBadge } from "@/ui/components/statusBadge";
@@ -114,12 +114,12 @@ export default function VideoCard({
     void loadPlayback(contentId, contentType, activeAttachmentType);
   };
 
-  const handleClosePlayer = () => {
+  const handleClosePlayer = useCallback(() => {
     setIsPlayerOpen(false);
     setActiveAttachmentType(attachmentType);
     setSelectedMediaIdx(0);
     resetPlayback();
-  };
+  }, [attachmentType, resetPlayback]);
 
   const handleSwitchAttachment = (type: PlaybackAttachmentType) => {
     setActiveAttachmentType(type);
@@ -146,7 +146,7 @@ export default function VideoCard({
       // Restaurer le scroll quand la modal est fermée
       document.body.style.overflow = "";
     };
-  }, [isPlayerOpen]);
+  }, [isPlayerOpen, handleClosePlayer]);
 
   const conicGradient = useMemo(() => {
     const segments = [
