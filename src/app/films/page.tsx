@@ -41,7 +41,7 @@ export default function FilmsPage() {
     closeDialog,
     executeAction,
   } = useContentAction({
-    contentType: "movie",
+    contentType: "film",
     onSuccess: () => {
       // Rafraîchir les données après une action réussie
       refreshData?.();

@@ -31,7 +31,7 @@ interface FilteredGroup<T> {
   items: T[];
 }
 
-export type ContentType = "movie" | "serie"; 
+export type ContentType = "film" | "serie";
 
 interface UseBaseContentManagementParams<T> {
   contentType: ContentType;
