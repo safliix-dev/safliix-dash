@@ -11,6 +11,7 @@ export default withAuth(
       return NextResponse.redirect(url);
     }
 
+    const roles = (token?.roles as string[]) || [];
     const pathname = req.nextUrl.pathname;
 
     console.log(`🛡️ Middleware - Path: ${pathname}, Roles: ${roles.join(", ")}`);
