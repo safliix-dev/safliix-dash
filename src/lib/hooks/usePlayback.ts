@@ -1,11 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { apiRequest } from '@/lib/api/client';
-import type { PlaybackAttachmentType, PlaybackResponse } from '@/types/api/playback';
+import type { PlaybackAttachmentType, PlaybackMedia, PlaybackResponse } from '@/types/api/playback';
 
 const RENEW_INTERVAL_MS = 15 * 60 * 1000;
 
 export function usePlayback() {
-  const [url, setUrl] = useState<string | null>(null);
+  const [mediaList, setMediaList] = useState<PlaybackMedia[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const renewRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -40,9 +40,8 @@ export function usePlayback() {
         `/admin/contents/${contentId}/playback`,
         { params: { type, attachmentType }, signal: abort.signal }
       );
-      const mediaUrl = data.media[0]?.url;
-      if (!mediaUrl) throw new Error('Aucun média disponible');
-      setUrl(mediaUrl);
+      if (!data.media.length) throw new Error('Aucun média disponible');
+      setMediaList(data.media);
       stopRenew();
       renewRef.current = setInterval(() => {
         apiRequest(`/admin/contents/${contentId}/playback`, { params: { type, attachmentType } }).catch(() => {});
@@ -58,10 +57,10 @@ export function usePlayback() {
   const reset = useCallback(() => {
     abortRef.current?.abort();
     stopRenew();
-    setUrl(null);
+    setMediaList([]);
     setError(null);
     setLoading(false);
   }, [stopRenew]);
 
-  return { url, loading, error, load, reset };
+  return { mediaList, loading, error, load, reset };
 }
