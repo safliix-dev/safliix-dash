@@ -70,9 +70,10 @@ export function useContentAction({ contentType, onSuccess }: UseContentActionPar
         restore: "DRAFT",
       };
 
+      const apiTypeMap: Record<string, string> = { movie: "film", serie: "serie" };
       const response = await uploadApi.changeStatus(
         dialogState.contentId,
-        contentType,
+        apiTypeMap[contentType] ?? contentType,
         statusMap[dialogState.action]
       );
 

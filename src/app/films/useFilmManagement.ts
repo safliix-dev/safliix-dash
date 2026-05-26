@@ -19,7 +19,7 @@ const getCreatedAt = (film: FilmListItem): string | undefined => {
 export function useFilmManagement() {
   // 2. Le hook ne fait maintenant qu'appeler la base avec des refs stables
   return useBaseContentManagement<FilmListItem>({
-    contentType: "film",
+    contentType: "movie",
     getItemsFromGroup,
     getRevenue,
     getCreatedAt,
