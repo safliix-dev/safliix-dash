@@ -112,8 +112,10 @@ function extractErrorMessage(payload: unknown, fallback = "API request failed"):
     const p = payload as Record<string, unknown>;
     const msg = p.message;
     if (typeof msg === "string" && msg.length > 0) return msg;
-    if (Array.isArray(msg) && msg.length > 0) return msg.join(", ");
+    if (Array.isArray(msg) && msg.length > 0) return msg.join(" | ");
+    if (Array.isArray(p.errors) && p.errors.length > 0) return (p.errors as unknown[]).join(" | ");
     if (typeof p.error === "string" && p.error.length > 0) return p.error;
+    if (typeof p.detail === "string" && p.detail.length > 0) return p.detail;
   }
   return fallback;
 }
@@ -183,9 +185,31 @@ export async function apiRequest<TResponse = unknown, TBody = unknown>(
 
   const rawData = await parseResponse<TResponse>(response);
 
+  // Réponse applicative avec success: false malgré un HTTP 2xx
+  if (
+    typeof rawData === "object" &&
+    rawData !== null &&
+    "success" in rawData &&
+    (rawData as Record<string, unknown>).success === false
+  ) {
+    const errorMessage = extractErrorMessage(rawData);
+    throw new ApiError(errorMessage, response.status, rawData);
+  }
+
+  // Réponse applicative avec success: true — succès quelle que soit la présence de data
+  if (
+    typeof rawData === "object" &&
+    rawData !== null &&
+    "success" in rawData &&
+    (rawData as Record<string, unknown>).success === true
+  ) {
+    const d = rawData as Record<string, unknown>;
+    return (d.data !== undefined ? d.data : rawData) as TResponse;
+  }
+
   const unwrappedData = isWrappedResponse<TResponse>(rawData)
-  ? rawData.data
-  : (rawData as TResponse);
+    ? rawData.data
+    : (rawData as TResponse);
   return unwrappedData;
 }
 

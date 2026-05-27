@@ -1,13 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Hls, { Level } from 'hls.js';
+import Hls, { ErrorTypes, ErrorDetails, Level } from 'hls.js';
 
 type VideoPlayerProps = {
   src?: string | null;
   title?: string;
   onProgress?: (progress: number) => void;
   autoPlay?: boolean;
+  onSubscriptionExpired?: () => void;
+  onSessionExpired?: () => void;
 };
 
 const formatTime = (seconds: number) => {
@@ -22,7 +24,7 @@ const formatTime = (seconds: number) => {
   return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
 
-const VideoPlayer = ({ src, title, onProgress, autoPlay = false }: VideoPlayerProps) => {
+const VideoPlayer = ({ src, title, onProgress, autoPlay = false, onSubscriptionExpired, onSessionExpired }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -122,18 +124,40 @@ const VideoPlayer = ({ src, title, onProgress, autoPlay = false }: VideoPlayerPr
       });
 
       hls.on(Hls.Events.ERROR, (_, data) => {
-        if (data.fatal) {
-          console.error('Fatal HLS error:', data);
-          setError('Erreur de streaming. Tentative de reconnection...');
-          // Tentative de reconnection
-          hls.recoverMediaError();
+        if (!data.fatal) return;
+
+        if (
+          data.type === ErrorTypes.NETWORK_ERROR &&
+          data.details === ErrorDetails.KEY_LOAD_ERROR
+        ) {
+          const code = (data.response as { code?: number } | undefined)?.code;
+          if (code === 401) onSessionExpired?.();
+          else if (code === 403) onSubscriptionExpired?.();
+          else setError('Clé AES introuvable. Contenu indisponible.');
+          hls.destroy();
+          return;
         }
+
+        if (data.type === ErrorTypes.NETWORK_ERROR) {
+          hls.startLoad();
+          return;
+        }
+
+        if (data.type === ErrorTypes.MEDIA_ERROR) {
+          hls.recoverMediaError();
+          return;
+        }
+
+        console.error('Fatal HLS error:', data);
+        setError('Erreur fatale de streaming.');
+        hls.destroy();
       });
 
       hlsRef.current = hls;
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       // Safari : lecture HLS native
       video.src = effectiveSrc;
+      video.crossOrigin = 'use-credentials';
       setIsHLSReady(true);
     } else {
       video.src = effectiveSrc;
@@ -489,6 +513,7 @@ const VideoPlayer = ({ src, title, onProgress, autoPlay = false }: VideoPlayerPr
         className="w-full h-[500px] object-contain cursor-pointer"
         preload="metadata"
         playsInline
+        crossOrigin="use-credentials"
         onClick={togglePlay}
       />
 
@@ -525,7 +550,7 @@ const VideoPlayer = ({ src, title, onProgress, autoPlay = false }: VideoPlayerPr
 
       {/* Controls overlay */}
       <div
-        className={`absolute inset-x-0 bottom-0 transition-all duration-300 ${
+        className={`absolute inset-x-0 bottom-0 z-10 transition-all duration-300 ${
           showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full'
         } bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-12 pb-3 px-4`}
       >
