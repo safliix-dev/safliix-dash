@@ -71,15 +71,11 @@ export function useContentAction({ contentType, onSuccess }: UseContentActionPar
       };
 
       const apiTypeMap: Record<string, string> = { movie: "film", serie: "serie" };
-      const response = await uploadApi.changeStatus(
+      await uploadApi.changeStatus(
         dialogState.contentId,
         apiTypeMap[contentType] ?? contentType,
         statusMap[dialogState.action]
       );
-
-      if (!response.ok) {
-        throw new Error("Erreur lors de l'action");
-      }
 
       setDialogState(prev => ({
         ...prev,
