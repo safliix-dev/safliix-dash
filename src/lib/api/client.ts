@@ -169,14 +169,11 @@ export async function apiRequest<TResponse = unknown, TBody = unknown>(
       errorPayload,
     });
 
-    if (
-      response.status === 401 &&
-      typeof errorPayload === "object" &&
-      errorPayload !== null &&
-      (errorPayload as Record<string, unknown>).error === "session_expired"
-    ) {
-      const { signOut } = await import("next-auth/react");
-      signOut({ callbackUrl: "/" });
+    if (response.status === 401) {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("auth:session-expired"));
+      }
+      return new Promise<TResponse>(() => {});
     }
 
     const errorMessage = extractErrorMessage(errorPayload);

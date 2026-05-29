@@ -131,8 +131,10 @@ const VideoPlayer = ({ src, title, onProgress, autoPlay = false, onSubscriptionE
           data.details === ErrorDetails.KEY_LOAD_ERROR
         ) {
           const code = (data.response as { code?: number } | undefined)?.code;
-          if (code === 401) onSessionExpired?.();
-          else if (code === 403) onSubscriptionExpired?.();
+          if (code === 401) {
+            window.dispatchEvent(new CustomEvent('auth:session-expired'));
+            onSessionExpired?.();
+          } else if (code === 403) onSubscriptionExpired?.();
           else setError('Clé AES introuvable. Contenu indisponible.');
           hls.destroy();
           return;
