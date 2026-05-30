@@ -12,10 +12,11 @@ import type { EpisodeFormData, EpisodeSlot } from "@/types/api/episode";
 interface EpisodeFormClientProps {
   seriesId: string;
   seasonId: string;
+  episodeId?: string;
 }
 
-export function EpisodeFormClient({ seriesId, seasonId }: EpisodeFormClientProps) {
-  const formHook = useEpisodeForm({ seriesId, seasonId });
+export function EpisodeFormClient({ seriesId, seasonId, episodeId }: EpisodeFormClientProps) {
+  const formHook = useEpisodeForm({ seriesId, seasonId, episodeId });
 
   return (
     <MediaPage<EpisodeFormData, EpisodeSlot>
@@ -34,7 +35,7 @@ export function EpisodeFormClient({ seriesId, seasonId }: EpisodeFormClientProps
           dialogStatus={dialogStatus}
         />
       )}
-      title="Ajouter un épisode"
+      title={episodeId ? "Modifier l'épisode" : "Ajouter un épisode"}
       metaFields={[
         "title", "episodeNumber", "releaseDate", "publishDate", "duration", "description"
       ]}

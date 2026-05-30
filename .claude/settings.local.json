@@ -11,7 +11,9 @@
       "Bash(Get-Content \"C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-USER-Desktop-projet-safliix-safliix-dash\\\\288a0b38-638f-4uralke44e\\\\tasks\\\\bftc6mpu8.output\" -ErrorAction SilentlyContinue)",
       "Bash(Get-Content \"C:\\\\Users\\\\USER\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-USER-Desktop-projet-safliix-safliix-dash\\\\288a0b38-638f-4677-a99b-52138534e44e\\\\tasks\\\\bftc6mpu8.output\")",
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\USER\\\\Desktop\\\\projet\\\\safliix\\\\safliix-dash\\\\src\\\\app\\\\films\" -Recurse -Directory | Where-Object {$_.Name -eq \"new\" -or $_.Name -eq \"add\"})",
-      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\USER\\\\Desktop\\\\projet\\\\safliix\\\\safliix-dash\\\\src\\\\app\\\\series\" -Recurse -Directory | Where-Object {$_.Name -eq \"new\" -or $_.Name -eq \"add\"})"
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\USER\\\\Desktop\\\\projet\\\\safliix\\\\safliix-dash\\\\src\\\\app\\\\series\" -Recurse -Directory | Where-Object {$_.Name -eq \"new\" -or $_.Name -eq \"add\"})",
+      "Bash(git push *)",
+      "Bash(xargs grep -l \"episode\")"
     ]
   }
 }

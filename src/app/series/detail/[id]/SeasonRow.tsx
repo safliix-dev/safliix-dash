@@ -56,7 +56,12 @@ export function SeasonRow({ season, seriesId }: SeasonRowProps) {
             </div>
           ) : episodes.length > 0 ? (
             episodes.map(episode => (
-              <EpisodeCard key={episode.id} episode={episode} />
+              <EpisodeCard
+                key={episode.id}
+                episode={episode}
+                seriesId={seriesId}
+                onDeleted={() => setEpisodes(prev => prev.filter(e => e.id !== episode.id))}
+              />
             ))
           ) : (
             <div className="col-span-6 text-sm text-white/60">Aucun épisode.</div>

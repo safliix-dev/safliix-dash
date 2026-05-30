@@ -59,6 +59,7 @@ export interface EpisodeItem {
   duration?: number;
   description?: string;
   seasonId?: string;
+  posterUrl?: string;
   attachment?: EpisodeAttachment[];
 }
 
