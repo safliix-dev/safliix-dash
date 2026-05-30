@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
-import { Film, Play, X } from "lucide-react";
+import { Film, Pencil, Play, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { EpisodeDetail } from "@/types/api/episode";
 import VideoPlayer from "@/ui/components/videoPlayer";
@@ -99,25 +99,34 @@ export default function EpisodeCard({ episode, seriesId, onDeleted }: EpisodeCar
             {episode.duration ? `Durée : ${episode.duration} min` : "Durée non renseignée"}
           </p>
         </div>
-        <div className="absolute bottom-2 left-2 right-2 flex items-center gap-2">
-          <button
-            className="btn btn-sm btn-outline btn-success p-1 flex items-center gap-1"
-            onClick={handleOpenPlayer}
-          >
-            <Play size={12} /> Voir
-          </button>
-          <button
-            className="btn btn-sm btn-outline btn-info p-1"
-            onClick={handleEdit}
-          >
-            Modifier
-          </button>
-          <button
-            className="btn btn-sm btn-outline btn-error p-1"
-            onClick={() => { setDeleteOpen(true); setDeleteStatus("idle"); setDeleteMessage(null); }}
-          >
-            Supprimer
-          </button>
+        <div className="absolute bottom-2 left-2 right-2 flex items-center justify-center gap-2">
+          <div className="tooltip tooltip-top" data-tip="Voir">
+            <button
+              className="btn btn-xs btn-circle btn-outline btn-success"
+              onClick={handleOpenPlayer}
+              aria-label="Voir"
+            >
+              <Play size={12} />
+            </button>
+          </div>
+          <div className="tooltip tooltip-top" data-tip="Modifier">
+            <button
+              className="btn btn-xs btn-circle btn-outline btn-info"
+              onClick={handleEdit}
+              aria-label="Modifier"
+            >
+              <Pencil size={12} />
+            </button>
+          </div>
+          <div className="tooltip tooltip-top" data-tip="Supprimer">
+            <button
+              className="btn btn-xs btn-circle btn-outline btn-error"
+              onClick={() => { setDeleteOpen(true); setDeleteStatus("idle"); setDeleteMessage(null); }}
+              aria-label="Supprimer"
+            >
+              <Trash2 size={12} />
+            </button>
+          </div>
         </div>
       </div>
 

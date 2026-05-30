@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useMediaFormEngine } from "@/lib/hooks/form/useMediaFormEngine";
 import { episodeAdapter } from "./episodeAdapter";
 import { EpisodeFormData } from "@/types/api/episode";
+import { episodeApi } from "@/lib/api/episode";
 
 interface UseEpisodeFormProps {
   seriesId: string;
@@ -35,12 +36,29 @@ export function useEpisodeForm({ seriesId, seasonId, episodeId }: UseEpisodeForm
     } as EpisodeFormData
   );
 
-  // Gestion de l'ID en mode édition
   useEffect(() => {
-    if (episodeId && !engine.entityId) {
-      engine.setEntityId(episodeId);
-    }
-  }, [episodeId, engine.entityId, engine.setEntityId]);
+    if (!episodeId) return;
+
+    engine.setEntityId(episodeId);
+
+    void episodeApi.get(episodeId).then(data => {
+      engine.reset({
+        title: data.title ?? "",
+        description: data.description ?? "",
+        duration: data.duration ?? null,
+        releaseDate: data.releaseDate ?? "",
+        publishDate: data.platformDate ?? "",
+        episodeNumber: data.number ?? null,
+        seriesId,
+        seasonId: data.seasonId ?? seasonId,
+        mainImage: null,
+        movieFile: null,
+        trailerFile: null,
+        subtitleFile: null,
+      } as EpisodeFormData);
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [episodeId]);
 
   return {
     ...engine,
