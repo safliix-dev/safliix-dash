@@ -5,6 +5,7 @@
 import React, { useEffect, useState } from "react";
 import { Control, FieldErrors, FieldValues, UseFormHandleSubmit, UseFormSetValue } from "react-hook-form";
 import Image from "next/image";
+import Link from "next/link";
 
 import { FormStepLayout } from "@/ui/components/form/FormStepLayout";
 import { FormNavigation } from "@/ui/components/form/FormNavigation";
@@ -160,6 +161,9 @@ export function MediaPage<
     }, {}) ?? {};
   }, [meta.options]);
 
+  const noRightHolders = !meta.loading && meta.options !== null &&
+    ((meta.options as Record<string, unknown>)?.rightHolders as unknown[] | undefined)?.length === 0;
+
   const [currentStep, setCurrentStep] = useState(0);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
@@ -175,6 +179,23 @@ export function MediaPage<
     }
   }, [dialogStatus, currentStep, resetEngine]);
 
+
+  if (noRightHolders) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="bg-neutral border border-base-300 rounded-2xl p-10 max-w-md text-center space-y-5 shadow-lg">
+          <div className="text-4xl">⚠️</div>
+          <h2 className="text-lg font-bold text-white">Aucun ayant droit enregistré</h2>
+          <p className="text-sm text-white/60">
+            Vous devez créer au moins un ayant droit avant de pouvoir ajouter du contenu.
+          </p>
+          <Link href="/rights-holders/edit/new" className="btn btn-primary w-full rounded-full">
+            Créer un ayant droit
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const handleStepSubmit = async (data: TFormData) => {
     if (currentStep === 0) {
