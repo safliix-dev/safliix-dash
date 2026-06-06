@@ -38,6 +38,7 @@ interface FormConfirmationProps<T, TSlot extends string> {
   showCancelConfirm?: boolean;
   onConfirmCancel?: () => void;
   onCancelCancel?: () => void;
+  fieldResolvers?: Record<string, Record<string, string>>;
 }
 
 export function FormConfirmation<T extends BaseMetadata & MediaFileFields, TSlot extends string>({
@@ -60,6 +61,7 @@ export function FormConfirmation<T extends BaseMetadata & MediaFileFields, TSlot
   showCancelConfirm = false,
   onConfirmCancel,
   onCancelCancel,
+  fieldResolvers,
 }: FormConfirmationProps<T, TSlot>) {
   
   // 1. Détection des états
@@ -300,7 +302,7 @@ export function FormConfirmation<T extends BaseMetadata & MediaFileFields, TSlot
         {/* SECTION : RÉSUMÉ */}
         {shouldShowSummary && (
           <div className="mt-4 bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white/80">
-            {summary === 'metadata' && <MetadataSummary data={pendingData} />}
+            {summary === 'metadata' && <MetadataSummary data={pendingData} fieldResolvers={fieldResolvers} />}
             {summary === 'files' && <FilesSummary data={pendingData} />}
           </div>
         )}
@@ -324,7 +326,7 @@ export function FormConfirmation<T extends BaseMetadata & MediaFileFields, TSlot
 
 // --- Sous-composants de résumé ---
 
-function MetadataSummary<T extends BaseMetadata>({ data }: { data: T }) {
+function MetadataSummary<T extends BaseMetadata>({ data, fieldResolvers }: { data: T; fieldResolvers?: Record<string, Record<string, string>> }) {
   // Exclure les champs techniques ou trop volumineux
   const excludeKeys = ['__typename', 'id', 'createdAt', 'updatedAt'];
   
@@ -454,14 +456,18 @@ function MetadataSummary<T extends BaseMetadata>({ data }: { data: T }) {
         Informations ({entries.length} champs)
       </h4>
       <div className="space-y-1 max-h-96 overflow-y-auto">
-        {entries.map(([key, value]) => (
-          <div key={key} className="flex justify-between py-1 text-xs border-b border-white/5 last:border-0">
-            <span className="text-white/50">{translateKey(key)}</span>
-            <span className="font-medium text-white/80 text-right max-w-[60%] truncate" title={formatValue(value)}>
-              {formatValue(value)}
-            </span>
-          </div>
-        ))}
+        {entries.map(([key, value]) => {
+          const resolved = fieldResolvers?.[key]?.[String(value)];
+          const display = resolved ?? formatValue(value);
+          return (
+            <div key={key} className="flex justify-between py-1 text-xs border-b border-white/5 last:border-0">
+              <span className="text-white/50">{translateKey(key)}</span>
+              <span className="font-medium text-white/80 text-right max-w-[60%] truncate" title={display}>
+                {display}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

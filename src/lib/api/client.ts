@@ -201,7 +201,19 @@ export async function apiRequest<TResponse = unknown, TBody = unknown>(
     (rawData as Record<string, unknown>).success === true
   ) {
     const d = rawData as Record<string, unknown>;
-    return (d.data !== undefined ? d.data : rawData) as TResponse;
+    if (d.data !== undefined) {
+      const inner = d.data;
+      // { data: { items: [...] } } → shape paginée
+      if (typeof inner === "object" && inner !== null && !Array.isArray(inner) && "items" in inner) {
+        return inner as TResponse;
+      }
+      // { data: [...] } → tableau direct
+      if (Array.isArray(inner)) {
+        return inner as TResponse;
+      }
+      return inner as TResponse;
+    }
+    return rawData as TResponse;
   }
 
   const unwrappedData = isWrappedResponse<TResponse>(rawData)

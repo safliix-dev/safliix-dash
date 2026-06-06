@@ -42,7 +42,7 @@ export default function Page() {
       try {
         const res = await imageRightsApi.list({ page: 1, pageSize: 20 }, );
         if (cancelled) return;
-        const items = res.items ?? [];
+        const items = res ?? [];
         const mapped = items.map((holder) => ({
           ...holder,
           fullName: holder.fullName || `${holder.firstName ?? ""} ${holder.lastName ?? ""}`.trim(),

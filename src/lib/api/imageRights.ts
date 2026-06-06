@@ -7,7 +7,6 @@ import {
   type RightsHolderContentResponse,
   type RightsHolderListParams,
   type RightsHolderContentType,
-  type RightsHolderListResponse,
 } from "@/types/api/imageRights";
 
 /**
@@ -16,7 +15,7 @@ import {
 export const imageRightsApi = {
   /** Liste des ayants droit */
   list: (params: RightsHolderListParams, signal?: AbortSignal) =>
-    apiRequest<RightsHolderListResponse>("/rights-holders", { params , signal }),
+    apiRequest<ImageRightsHolder[]>("/rights-holders", { params, signal }),
 
   /** Détail d’un ayant droit */
   detail: (id: string, signal?: AbortSignal) =>

@@ -152,6 +152,14 @@ export function MediaPage<
     ? !shouldSkipFilesStep(pendingData as TFormData)
     : true;
 
+  const rightHolderResolver = React.useMemo(() => {
+    const holders = (meta.options as Record<string, unknown> | null)?.rightHolders as Array<{ id: string; firstName: string; lastName: string }> | undefined;
+    return holders?.reduce<Record<string, string>>((acc, h) => {
+      acc[h.id] = `${h.firstName} ${h.lastName}`;
+      return acc;
+    }, {}) ?? {};
+  }, [meta.options]);
+
   const [currentStep, setCurrentStep] = useState(0);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
@@ -277,6 +285,7 @@ export function MediaPage<
             : "Les fichiers vont être envoyés."
         }
         status={dialogStatus}
+        fieldResolvers={{ rightHolderId: rightHolderResolver }}
         confirmLabel={
           currentStep === 0
             ? "Sauvegarder"

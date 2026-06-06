@@ -69,11 +69,11 @@ export default function Page() {
               />
             </div>
             <div>
-              <label className="label text-sm mb-1">Email</label>
+              <label className="label text-sm mb-1">Email <span className="text-red-500">*</span></label>
               <Controller
                 name="email"
                 control={control}
-                rules={{ required: false }}
+                rules={{ required: "Email requis" }}
                 render={({ field, fieldState }) => (
                   <InputField {...field} type="email" placeholder="Email" error={fieldState.error?.message} />
                 )}

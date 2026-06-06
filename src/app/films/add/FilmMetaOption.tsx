@@ -370,20 +370,23 @@ export function FilmMetadataStep({
 
         {/* Ayant droit */}
         <div>
-          <label className="label text-sm mb-1">Ayant droit</label>
+          <label className="label text-sm mb-1">Ayant droit <span className="text-red-500">*</span></label>
           <Controller
             name="rightHolderId"
             control={control}
-            render={({ field }) => (
-              <SuggestionsInput
-                optionList={(meta.options?.rightHolders ?? []).map((item: { id: string; firstName: string; lastName: string }) => ({
-                  label: `${item.firstName} ${item.lastName}`,
-                  value: item.id
-                }))}
-                {...field}
-                value={field.value ?? ""}
-                className="input bg-base-200 border-base-300"
-              />
+            rules={{ required: "Ayant droit requis" }}
+            render={({ field, fieldState }) => (
+              <>
+                <select {...field} value={field.value ?? ""} className="select select-bordered w-full bg-base-200">
+                  <option value="">-- Sélectionner un ayant droit --</option>
+                  {(meta.options?.rightHolders ?? []).map((item: { id: string; firstName: string; lastName: string }) => (
+                    <option key={item.id} value={item.id}>
+                      {item.firstName} {item.lastName}
+                    </option>
+                  ))}
+                </select>
+                {fieldState.error && <p className="text-red-500 text-sm mt-1">{fieldState.error.message}</p>}
+              </>
             )}
           />
         </div>
