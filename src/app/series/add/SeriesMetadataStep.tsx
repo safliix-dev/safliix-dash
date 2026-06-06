@@ -9,7 +9,6 @@ import InputField, { MultipleInputField } from "@/ui/components/inputField";
 import SuggestionsInput from "@/ui/components/suggestionField";
 import { ActorsSelector } from "@/ui/components/form/ActorSelector";
 import { CountryMultiSelect } from "@/ui/components/form/CountryMultiSelect";
-import UploadBox from "@/ui/specific/films/components/uploadBox";
 import type { SeriesFormData, SeriesMetaOptions } from "@/types/api/series";
 import type { CountryEntry } from "@/lib/countries";
 
@@ -202,7 +201,7 @@ export function SeriesMetadataStep({
           {errors.seasonCount && <p className="text-red-600 text-sm">{errors.seasonCount.message as string}</p>}
         </div>
         <div>
-          <label className="label text-sm mb-1">Réalisateur <span className="text-red-500">*</span></label>
+          <label className="label text-sm mb-1">Directeur <span className="text-red-500">*</span></label>
           <Controller
             name="director"
             control={control}
@@ -260,45 +259,20 @@ export function SeriesMetadataStep({
         </div>
       </div>
 
-      {/* Pays bloqués et Langues */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="label text-sm mb-1">Pays bloqués</label>
-          <Controller
-            name="blockCountries"
-            control={control}
-            render={({ field }) => (
-              <CountryMultiSelect
-                availableCountries={countries}
-                value={field.value ?? []}
-                onChange={field.onChange}
-              />
-            )}
-          />
-        </div>
-        <div>
-          <label className="label text-sm mb-1">Langues de sous-titres</label>
-          <Controller
-            name="subtitleLanguages"
-            control={control}
-            render={({ field }) => (
-              <InputField
-                {...field}
-                value={(field.value ?? []).join(", ")}
-                onChange={(e) =>
-                  field.onChange(
-                    e.target.value
-                      .split(",")
-                      .map((v) => v.trim())
-                      .filter(Boolean),
-                  )
-                }
-                placeholder="Ex: fr, en"
-                className="input bg-base-200 border-base-300"
-              />
-            )}
-          />
-        </div>
+      {/* Pays bloqués */}
+      <div>
+        <label className="label text-sm mb-1">Pays bloqués</label>
+        <Controller
+          name="blockCountries"
+          control={control}
+          render={({ field }) => (
+            <CountryMultiSelect
+              availableCountries={countries}
+              value={field.value ?? []}
+              onChange={field.onChange}
+            />
+          )}
+        />
       </div>
 
       {/* Description */}
@@ -355,7 +329,7 @@ export function SeriesMetadataStep({
       </div>
 
       {/* Langue et Classification */}
-      <div className="grid grid-cols-3 gap-3 items-end">
+      <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="label text-sm mb-1">Langue <span className="text-red-500">*</span></label>
           <Controller
@@ -363,15 +337,16 @@ export function SeriesMetadataStep({
             control={control}
             rules={{ required: "La langue est obligatoire" }}
             render={({ field }) => (
-              <SuggestionsInput 
-                optionList={(meta.options?.languages ?? []).map((item: string) => ({
-                  label: item,
-                  value: item
-                }))}
-                {...field} 
-                value={field.value ?? ""} 
-                className="input bg-base-200 border-base-300" 
-              />
+              <select
+                {...field}
+                value={field.value ?? ""}
+                onChange={(e) => field.onChange(e.target.value)}
+                className="input bg-base-200 border-base-300 w-full"
+              >
+                <option value="">Sélectionnez une langue</option>
+                <option value="fr">français</option>
+                <option value="en">anglais</option>
+              </select>
             )}
           />
           {errors.language && <p className="text-red-600 text-sm">{errors.language.message as string}</p>}
@@ -382,16 +357,23 @@ export function SeriesMetadataStep({
             name="ageRating"
             control={control}
             render={({ field }) => (
-              <InputField
+              <select
                 {...field}
                 value={field.value ?? ""}
-                placeholder="Ex: R, PG-13"
-                className="input bg-base-200 border-base-300"
-              />
+                onChange={(e) => field.onChange(e.target.value)}
+                className="input bg-base-200 border-base-300 w-full"
+              >
+                <option value="">Sélectionnez une classification</option>
+                <option value="TP">Tous publics</option>
+                <option value="10">Déconseillé aux moins de 10 ans</option>
+                <option value="12">Déconseillé aux moins de 12 ans</option>
+                <option value="14">Déconseillé aux moins de 14 ans</option>
+                <option value="16">Déconseillé aux moins de 16 ans</option>
+                <option value="18">Déconseillé aux moins de 18 ans</option>
+              </select>
             )}
           />
         </div>
-        <UploadBox id="trailer" label="Sous-titres" className="w-full min-h-[80px]" />
       </div>
     </div>
   );

@@ -1,8 +1,9 @@
 // ui/specific/films/components/videoCard.tsx
-import React, { useCallback, useMemo, useState, useEffect } from "react";
-import { Gauge, Play, Star, TrendingUp, X } from "lucide-react";
+import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
+import { Gauge, Play, Plus, Star, TrendingUp, X } from "lucide-react";
 import Image from "next/image";
 import { StatusBadge } from "@/ui/components/statusBadge";
+import ConfirmationDialog from "@/ui/components/confirmationDialog";
 import type { ContentStatus, ContentAction } from "@/types/api/common";
 import VideoPlayer from "../../../components/videoPlayer";
 import { usePlayback } from "@/lib/hooks/usePlayback";
@@ -59,6 +60,9 @@ type VideoCardProps = {
   contentType: 'film' | 'serie';
   attachmentType?: PlaybackAttachmentType;
   attachments?: { type: string }[];
+  discoveryHighlight?: boolean;
+  discoveryExclusivity?: boolean;
+  onDiscoveryToggle?: (field: 'highlight' | 'exclusivity', value: boolean) => void;
   onEdit?: () => void;
   onPlay?: () => void;
   onAction?: (action: ContentAction) => void;
@@ -80,11 +84,19 @@ export default function VideoCard({
   contentType,
   attachmentType = 'MAIN',
   attachments = [],
+  discoveryHighlight,
+  discoveryExclusivity,
+  onDiscoveryToggle,
   onEdit,
   onPlay,
   onAction,
 }: VideoCardProps) {
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+  const [isDiscoveryOpen, setIsDiscoveryOpen] = useState(false);
+  const [localHighlight, setLocalHighlight] = useState(discoveryHighlight ?? false);
+  const [localExclusivity, setLocalExclusivity] = useState(discoveryExclusivity ?? false);
+  const [pendingDiscovery, setPendingDiscovery] = useState<{ field: 'highlight' | 'exclusivity'; value: boolean } | null>(null);
+  const discoveryRef = useRef<HTMLDivElement>(null);
   const [activeAttachmentType, setActiveAttachmentType] = useState<PlaybackAttachmentType>(attachmentType);
   const [selectedMediaIdx, setSelectedMediaIdx] = useState(0);
   const { mediaList, loading: playbackLoading, error: playbackError, load: loadPlayback, reset: resetPlayback } = usePlayback();
@@ -126,6 +138,20 @@ export default function VideoCard({
     setSelectedMediaIdx(0);
     void loadPlayback(contentId, contentType, type);
   };
+
+  useEffect(() => { setLocalHighlight(discoveryHighlight ?? false); }, [discoveryHighlight]);
+  useEffect(() => { setLocalExclusivity(discoveryExclusivity ?? false); }, [discoveryExclusivity]);
+
+  useEffect(() => {
+    if (!isDiscoveryOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (discoveryRef.current && !discoveryRef.current.contains(e.target as Node)) {
+        setIsDiscoveryOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isDiscoveryOpen]);
 
   // 🎹 Gestion de la touche Échap
   useEffect(() => {
@@ -173,7 +199,44 @@ export default function VideoCard({
 
   return (
     <>
-      <div className="bg-neutral text-white p-4 rounded-xl shadow-lg flex flex-col gap-4 border border-base-300">
+      <div className="relative bg-neutral text-white p-4 rounded-xl shadow-lg flex flex-col gap-4 border border-base-300">
+
+        {/* Discovery contextual menu */}
+        <div ref={discoveryRef} className="absolute top-3 right-3 z-20">
+          <button
+            className="btn btn-circle btn-xs border border-base-300 bg-base-200/60 text-white/50 hover:text-white hover:border-primary/60 hover:bg-base-200"
+            onClick={() => setIsDiscoveryOpen(v => !v)}
+            title="Mise en avant Discovery"
+          >
+            <Plus className="w-3 h-3" />
+          </button>
+
+          {isDiscoveryOpen && (
+            <div className="absolute right-0 top-full mt-2 w-52 bg-base-100 border border-base-300 rounded-xl shadow-2xl p-3 flex flex-col gap-3">
+              <p className="text-xs font-semibold text-white/40 uppercase tracking-widest">Discovery</p>
+
+              <label className="flex items-center justify-between gap-2 cursor-pointer">
+                <span className="text-sm text-white/80">Highlights</span>
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary toggle-sm"
+                  checked={localHighlight}
+                  onChange={(e) => setPendingDiscovery({ field: 'highlight', value: e.target.checked })}
+                />
+              </label>
+
+              <label className="flex items-center justify-between gap-2 cursor-pointer">
+                <span className="text-sm text-white/80">Exclusivité</span>
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary toggle-sm"
+                  checked={localExclusivity}
+                  onChange={(e) => setPendingDiscovery({ field: 'exclusivity', value: e.target.checked })}
+                />
+              </label>
+            </div>
+          )}
+        </div>
         <div className="flex items-start gap-4">
           {/* === LEFT === */}
           <div className="flex flex-col items-center gap-2">
@@ -339,6 +402,29 @@ export default function VideoCard({
           )}
         </div>
       </div>
+
+      {/* DISCOVERY CONFIRMATION */}
+      <ConfirmationDialog
+        open={pendingDiscovery !== null}
+        title="Modifier la mise en avant"
+        message={
+          pendingDiscovery
+            ? `${pendingDiscovery.value ? 'Ajouter' : 'Retirer'} « ${title} » ${
+                pendingDiscovery.value ? 'dans' : 'de'
+              } la section ${pendingDiscovery.field === 'highlight' ? 'Highlights' : 'Exclusivité'} de la Discovery ?`
+            : undefined
+        }
+        confirmLabel="Confirmer"
+        cancelLabel="Annuler"
+        onConfirm={() => {
+          if (!pendingDiscovery) return;
+          if (pendingDiscovery.field === 'highlight') setLocalHighlight(pendingDiscovery.value);
+          else setLocalExclusivity(pendingDiscovery.value);
+          onDiscoveryToggle?.(pendingDiscovery.field, pendingDiscovery.value);
+          setPendingDiscovery(null);
+        }}
+        onCancel={() => setPendingDiscovery(null)}
+      />
 
       {/* MODAL VIDEO PLAYER */}
       {isPlayerOpen && (

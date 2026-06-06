@@ -9,6 +9,7 @@ import ConfirmationDialog from "@/ui/components/confirmationDialog";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useFilmManagement } from "./useFilmManagement";
 import { useContentAction } from "@/lib/hooks/useContentAction";
 import { RightsHolderMoviesReport } from "@/ui/pdf/RightsHolderMoviesReport";
@@ -17,6 +18,7 @@ import FilterBtn from "@/ui/components/filterBtn";
 import type { FilmListItem } from "@/types/api/films";
 
 export default function FilmsPage() {
+  const router = useRouter();
   const [isClient, setIsClient] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [reportPeriod, setReportPeriod] = useState({ start: "", end: "" });
@@ -114,6 +116,17 @@ export default function FilmsPage() {
 
   const handleFilmAction = (filmId: string, action: "publish" | "archive" | "restore") => {
     openConfirmation(filmId, action);
+  };
+
+  const handleDiscoveryToggle = async (filmId: string, field: 'highlight' | 'exclusivity', value: boolean) => {
+    const body = field === 'highlight'
+      ? { discoveryHighlight: value }
+      : { discoveryExclusivity: value };
+    await fetch(`/api/proxy/admin/content/${filmId}/discovery`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
   };
 
   return (
@@ -224,7 +237,11 @@ export default function FilmsPage() {
                         status={film.status}
                         mode={mode}
                         detailHref={`/films/detail/${film.id}`}
+                        discoveryHighlight={film.discoveryHighlight}
+                        discoveryExclusivity={film.discoveryExclusivity}
+                        onDiscoveryToggle={(field, value) => handleDiscoveryToggle(film.id, field, value)}
                         onAction={(action) => handleFilmAction(film.id, action)}
+                        onEdit={() => router.push(`/films/add?id=${film.id}`)}
                       />
                     );
                   })}

@@ -93,13 +93,14 @@ interface MediaPageProps<
   TSlot extends string,
   TMetaOptions = unknown
 > {
-  useFormHook: () => MediaFormEngineReturn<TFormData, TSlot> & {
+  useFormHook: (initialId?: string) => MediaFormEngineReturn<TFormData, TSlot> & {
     meta: FormMeta<TMetaOptions>;
   };
   MetadataComponent: React.ComponentType<MetadataComponentProps<TFormData, TMetaOptions>>;
   FilesComponent: React.ComponentType<FilesComponentProps<TFormData>>;
   title: string;
   metaFields: (keyof TFormData)[];
+  initialId?: string;
   shouldSkipFilesStep?: (data: TFormData) => boolean;
   sidebar?: {
     component?: React.ComponentType<SidebarProps>;
@@ -119,6 +120,7 @@ export function MediaPage<
   FilesComponent,
   title,
   metaFields,
+  initialId,
   shouldSkipFilesStep,
   sidebar = {
     showDefaultLogo: true,
@@ -144,7 +146,7 @@ export function MediaPage<
     resetEngine,
     meta,
     retryFailedUploads,
-  } = useFormHook();
+  } = useFormHook(initialId);
 
   const hasFilesToUpload = shouldSkipFilesStep && pendingData
     ? !shouldSkipFilesStep(pendingData as TFormData)

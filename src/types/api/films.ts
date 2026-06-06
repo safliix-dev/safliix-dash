@@ -57,7 +57,8 @@ export interface FilmListItem {
   attachments: { type: string }[];
   type: FilmDistributionType;
   stats: FilmStatsByType;
-
+  discoveryHighlight?: boolean;
+  discoveryExclusivity?: boolean;
   stars?: number;
   donut?: { label?: string; value: number; color?: string };
   createdAt:string;

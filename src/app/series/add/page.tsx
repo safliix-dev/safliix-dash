@@ -1,8 +1,9 @@
-// app/series/page.tsx
+// app/series/add/page.tsx
 
 'use client';
 
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { MediaPage, MetadataComponentProps, FilesComponentProps } from "@/ui/layout/mediaPage";
 import { useSeriesForm } from "./useSerieForm";
 import { SeriesMetadataStep } from "./SeriesMetadataStep";
@@ -12,10 +13,13 @@ import type { SeriesFormData, SeriesMetaOptions, SeriesSlot } from "@/types/api/
 import type { CountryEntry } from "@/lib/countries";
 
 export default function SeriesPage() {
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("id") ?? undefined;
+
   const {
     setValue,
     meta,
-  } = useSeriesForm();
+  } = useSeriesForm(editId);
 
   const [countries, setCountries] = useState<CountryEntry[]>([]);
 
@@ -23,10 +27,10 @@ export default function SeriesPage() {
     setCountries(getCountries("fr"));
   }, []);
 
-  const SeriesMetadataComponent = ({ 
-    control, 
-    errors, 
-    meta 
+  const SeriesMetadataComponent = ({
+    control,
+    errors,
+    meta
   }: MetadataComponentProps<SeriesFormData, SeriesMetaOptions>) => (
     <SeriesMetadataStep
       control={control}
@@ -37,11 +41,11 @@ export default function SeriesPage() {
     />
   );
 
-  const SeriesFilesComponent = ({ 
-    control, 
-    setValue, 
-    onPreview, 
-    dialogStatus 
+  const SeriesFilesComponent = ({
+    control,
+    setValue,
+    onPreview,
+    dialogStatus
   }: FilesComponentProps<SeriesFormData>) => (
     <SeriesFilesStep
       control={control}
@@ -49,22 +53,21 @@ export default function SeriesPage() {
       onPreview={onPreview}
       dialogStatus={dialogStatus}
       metaLoading={meta.loading}
-      onOpenConfirm={() => {
-        // TODO: gérer l'enregistrement en brouillon
-        console.log("Enregistrer en brouillon");
-      }}
+      onOpenConfirm={() => {}}
+      editId={editId}
     />
   );
 
   return (
     <MediaPage<SeriesFormData, SeriesSlot, SeriesMetaOptions>
       useFormHook={useSeriesForm}
+      initialId={editId}
       MetadataComponent={SeriesMetadataComponent}
       FilesComponent={SeriesFilesComponent}
-      title="Édition de série"
+      title={editId ? "Modifier la série" : "Ajouter une série"}
       metaFields={[
-        "title", "productionHouse", "country", "releaseDate", 
-        "publishDate", "category", "genre", "actors", 
+        "title", "productionHouse", "country", "releaseDate",
+        "publishDate", "category", "genre", "actors",
         "director", "description", "language", "seasonCount"
       ]}
       sidebar={{

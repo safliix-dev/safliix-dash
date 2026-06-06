@@ -69,6 +69,8 @@ export interface SeriesListItem {
   posterUrl: string;
   attachments: { type: string }[];
   stats: SerieStats;
+  discoveryHighlight?: boolean;
+  discoveryExclusivity?: boolean;
   stars: number;
   donut?: { label?: string; value: number; color?: string };
   createdAt:string;

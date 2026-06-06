@@ -7,6 +7,7 @@ import { useWatch } from "react-hook-form";
 import { Control, UseFormSetValue } from "react-hook-form";
 import UploadBox from "@/ui/specific/films/components/uploadBox";
 import { VideoUpload } from "@/ui/components/form/VideoUpload";
+import { AttachmentsList } from "@/ui/specific/films/components/AttachmentsList";
 import type { SeriesFormData } from "@/types/api/series";
 import { DialogStatus } from "@/ui/components/confirmationDialog";
 
@@ -17,6 +18,7 @@ interface SeriesFilesStepProps {
   dialogStatus: DialogStatus;
   metaLoading: boolean;
   onOpenConfirm: () => void;
+  editId?: string;
 }
 
 export function SeriesFilesStep({
@@ -25,11 +27,28 @@ export function SeriesFilesStep({
   onPreview,
   dialogStatus,
   metaLoading,
-  onOpenConfirm
+  onOpenConfirm,
+  editId,
 }: SeriesFilesStepProps) {
   const mainImage = useWatch({ control, name: "mainImage" });
   const secondaryImage = useWatch({ control, name: "secondaryImage" });
   const trailerFile = useWatch({ control, name: "trailerFile" }) as File | null;
+
+  if (editId) {
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-white/50">
+          Gérez les fichiers uploadés pour cette série. Cliquez sur{" "}
+          <span className="text-primary">Mettre à jour</span> pour remplacer un fichier.
+        </p>
+        <AttachmentsList
+          contentId={editId}
+          apiContentType="serie"
+          playbackType="serie"
+        />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -57,8 +76,6 @@ export function SeriesFilesStep({
           onPreview={onPreview}
         />
       </div>
-
-      
 
       <div className="flex items-center gap-3 pt-2 justify-end">
         <button

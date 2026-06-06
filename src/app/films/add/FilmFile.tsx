@@ -7,8 +7,10 @@ import { useWatch } from "react-hook-form";
 import { Control, UseFormSetValue } from "react-hook-form";
 import UploadBox from "@/ui/specific/films/components/uploadBox";
 import { VideoUpload } from "@/ui/components/form/VideoUpload";
+import { AttachmentsList } from "@/ui/specific/films/components/AttachmentsList";
 import type { FilmFormData } from "@/types/api/films";
 import { DialogStatus } from "@/ui/components/confirmationDialog";
+
 interface FilmFilesStepProps {
   control: Control<FilmFormData>;
   setValue: UseFormSetValue<FilmFormData>;
@@ -16,6 +18,7 @@ interface FilmFilesStepProps {
   dialogStatus: DialogStatus;
   metaLoading: boolean;
   onOpenConfirm: () => void;
+  editId?: string;
 }
 
 export function FilmFilesStep({
@@ -24,13 +27,30 @@ export function FilmFilesStep({
   onPreview,
   dialogStatus,
   metaLoading,
-  onOpenConfirm
+  onOpenConfirm,
+  editId,
 }: FilmFilesStepProps) {
   const mainImage = useWatch({ control, name: "mainImage" });
   const secondaryImage = useWatch({ control, name: "secondaryImage" });
   const movieFile = useWatch({ control, name: "movieFile" });
   const trailerFile = useWatch({ control, name: "trailerFile" });
   const typeValue = useWatch({ control, name: "type" });
+
+  if (editId) {
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-white/50">
+          Gérez les fichiers uploadés pour ce film. Cliquez sur{" "}
+          <span className="text-primary">Mettre à jour</span> pour remplacer un fichier.
+        </p>
+        <AttachmentsList
+          contentId={editId}
+          apiContentType="movie"
+          playbackType="film"
+        />
+      </div>
+    );
+  }
 
   return (
     <>

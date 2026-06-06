@@ -5,11 +5,11 @@ import Header from "@/ui/components/header";
 import VideoCard from "@/ui/specific/films/components/videoCard";
 import FilterBtn from "@/ui/components/filterBtn";
 import { StatusFilter } from "@/ui/components/statusFilter";
-import { StatusBadge } from "@/ui/components/statusBadge";
 import ConfirmationDialog from "@/ui/components/confirmationDialog";
 import { Download, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useSeriesManagement } from "./useSeriesManagement";
 import { useContentAction } from "@/lib/hooks/useContentAction";
 import { PDFDownloadLink } from "@react-pdf/renderer";
@@ -18,6 +18,7 @@ import type { SeriesListItem } from "@/types/api/series";
 import type { NormalizedStats } from "@/ui/specific/films/components/videoCard";
 
 export default function SeriesPage() {
+  const router = useRouter();
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   
   const {
@@ -96,6 +97,17 @@ export default function SeriesPage() {
 
   const handleSerieAction = (serieId: string, action: "publish" | "archive" | "restore") => {
     openConfirmation(serieId, action);
+  };
+
+  const handleDiscoveryToggle = async (serieId: string, field: 'highlight' | 'exclusivity', value: boolean) => {
+    const body = field === 'highlight'
+      ? { discoveryHighlight: value }
+      : { discoveryExclusivity: value };
+    await fetch(`/api/proxy/admin/content/${serieId}/discovery`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
   };
 
   return (
@@ -191,26 +203,26 @@ export default function SeriesPage() {
                 {group.items.map((serie) => {
                   const stats = extractSerieStats(serie);
                   return (
-                    <div key={serie.id} className="relative">
-                      <div className="absolute top-2 right-2 z-10">
-                        <StatusBadge status={serie.status} />
-                      </div>
-                      <VideoCard
-                        title={serie.title}
-                        poster={serie.posterUrl}
-                        contentId={serie.id}
-                        contentType="serie"
-                        attachments={serie.attachments}
-                        director={serie.director}
-                        dp={serie.dp}
-                        category={serie.category}
-                        status={serie.status}
-                        stats={stats}
-                        mode={mode}
-                        detailHref={`/series/detail/${serie.id}`}
-                        onAction={(action) => handleSerieAction(serie.id, action)}
-                      />
-                    </div>
+                    <VideoCard
+                      key={serie.id}
+                      title={serie.title}
+                      poster={serie.posterUrl}
+                      contentId={serie.id}
+                      contentType="serie"
+                      attachments={serie.attachments}
+                      director={serie.director}
+                      dp={serie.dp}
+                      category={serie.category}
+                      status={serie.status}
+                      stats={stats}
+                      mode={mode}
+                      detailHref={`/series/detail/${serie.id}`}
+                      discoveryHighlight={serie.discoveryHighlight}
+                      discoveryExclusivity={serie.discoveryExclusivity}
+                      onDiscoveryToggle={(field, value) => handleDiscoveryToggle(serie.id, field, value)}
+                      onAction={(action) => handleSerieAction(serie.id, action)}
+                      onEdit={() => router.push(`/series/add?id=${serie.id}`)}
+                    />
                   );
                 })}
               </div>

@@ -13,7 +13,10 @@
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\USER\\\\Desktop\\\\projet\\\\safliix\\\\safliix-dash\\\\src\\\\app\\\\films\" -Recurse -Directory | Where-Object {$_.Name -eq \"new\" -or $_.Name -eq \"add\"})",
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\USER\\\\Desktop\\\\projet\\\\safliix\\\\safliix-dash\\\\src\\\\app\\\\series\" -Recurse -Directory | Where-Object {$_.Name -eq \"new\" -or $_.Name -eq \"add\"})",
       "Bash(git push *)",
-      "Bash(xargs grep -l \"episode\")"
+      "Bash(xargs grep -l \"episode\")",
+      "Bash(git diff *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
