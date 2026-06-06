@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import {
   Eye, TrendingUp, Target, Star, ListMusic,
-  Calendar, Globe, Clock, Film, ArrowLeft, Pencil,
+  Calendar, Globe, Clock, Film, Pencil,
   Users, Award, MapPin,
 } from 'lucide-react';
 import Header from '@/ui/components/header';
