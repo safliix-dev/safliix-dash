@@ -6,20 +6,21 @@ import VideoCard from "@/ui/specific/films/components/videoCard";
 import FilterBtn from "@/ui/components/filterBtn";
 import { StatusFilter } from "@/ui/components/statusFilter";
 import ConfirmationDialog from "@/ui/components/confirmationDialog";
-import { Download, Plus } from "lucide-react";
+import { Plus, FileText } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSeriesManagement } from "./useSeriesManagement";
 import { useContentAction } from "@/lib/hooks/useContentAction";
-import { PDFDownloadLink } from "@react-pdf/renderer";
-import { RightsHolderMoviesReport, type MovieReportEntry } from "@/ui/pdf/RightsHolderMoviesReport";
+import PdfPreviewModal, { type ReportGroup } from "@/ui/components/pdfPreviewModal";
+import type { MovieReportEntry } from "@/ui/pdf/RightsHolderMoviesReport";
 import type { SeriesListItem } from "@/types/api/series";
 import type { NormalizedStats } from "@/ui/specific/films/components/videoCard";
 
 export default function SeriesPage() {
   const router = useRouter();
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [isReportsOpen, setIsReportsOpen] = useState(false);
   
   const {
     mode,
@@ -45,14 +46,6 @@ export default function SeriesPage() {
       refreshData?.();
     },
   });
-
-  const reportPeriod = (() => {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(start.getDate() - 30);
-    const fmt = (d: Date) => d.toLocaleDateString("fr-FR");
-    return { start: fmt(start), end: fmt(end) };
-  })();
 
   const extractSerieStats = (serie: SeriesListItem): NormalizedStats => {
     const stats = serie.stats;
@@ -110,6 +103,13 @@ export default function SeriesPage() {
     });
   };
 
+  const reportGroups: ReportGroup[] = filteredData.map((group) => ({
+    id: group.id,
+    name: `${group.firstName} ${group.lastName}`,
+    fileName: `rapport-${group.lastName || "ayant-droit"}-${mode}.pdf`,
+    entries: buildReportEntries(group.items),
+  }));
+
   return (
     <div className="space-y-5">
       <Header title="Nos séries" className="rounded-2xl border border-base-300 shadow-sm px-5">
@@ -121,15 +121,9 @@ export default function SeriesPage() {
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <button className="btn btn-primary btn-sm rounded-lg">
-              <Download className="w-4 h-4" />
-              <span className="ml-1">Exporter les rapports</span>
-            </button>
-            <Link className="btn btn-primary btn-sm rounded-lg" href="/series/add">
-              <Plus className="w-4 h-4 mr-1" /> Ajouter une série
-            </Link>
-          </div>
+          <Link className="btn btn-primary btn-sm rounded-lg" href="/series/add">
+            <Plus className="w-4 h-4 mr-1" /> Ajouter une série
+          </Link>
         </div>
       </Header>
 
@@ -139,16 +133,26 @@ export default function SeriesPage() {
           onStatusChange={setStatusFilter}
           options={statusFilterOptions}
         />
-        <FilterBtn
-          title="Tri"
-          selected={sortFilter}
-          options={[
-            { label: "Par défaut", value: "none" },
-            { label: "Meilleures ventes", value: "best" },
-            { label: "Dernier ajout", value: "latest" },
-          ]}
-          onSelect={(val) => setSortFilter(val as typeof sortFilter)}
-        />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsReportsOpen(true)}
+            disabled={filteredData.length === 0}
+            className="btn btn-outline btn-primary btn-xs rounded-full"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            Rapports PDF
+          </button>
+          <FilterBtn
+            title="Tri"
+            selected={sortFilter}
+            options={[
+              { label: "Par défaut", value: "none" },
+              { label: "Meilleures ventes", value: "best" },
+              { label: "Dernier ajout", value: "latest" },
+            ]}
+            onSelect={(val) => setSortFilter(val as typeof sortFilter)}
+          />
+        </div>
       </div>
 
       {loading && (
@@ -175,26 +179,6 @@ export default function SeriesPage() {
                 >
                   {collapsedGroups.has(group.id) ? "Déplier" : "Plier"}
                 </button>
-                <PDFDownloadLink
-                  document={
-                    <RightsHolderMoviesReport
-                      mode={mode}
-                      rightsholderName={`${group.firstName} ${group.lastName}`}
-                      periodStart={reportPeriod.start}
-                      periodEnd={reportPeriod.end}
-                      entries={buildReportEntries(group.items)}
-                    />
-                  }
-                  fileName={`rapport-${group.lastName || "ayant-droit"}-${mode}.pdf`}
-                  className="btn btn-ghost btn-xs text-primary border-primary/50 rounded-full"
-                >
-                  {({ loading }) => (
-                    <span className="flex items-center gap-1">
-                      {loading && <span className="loading loading-spinner loading-xs text-primary" />}
-                      {loading ? "Préparation..." : "Télécharger le rapport"}
-                    </span>
-                  )}
-                </PDFDownloadLink>
               </div>
             </div>
             
@@ -248,7 +232,6 @@ export default function SeriesPage() {
         </div>
       )}
 
-      {/* Modal de confirmation */}
       <ConfirmationDialog
         open={dialogState.open}
         title={dialogState.title}
@@ -259,6 +242,14 @@ export default function SeriesPage() {
         cancelLabel="Annuler"
         onConfirm={executeAction}
         onCancel={closeDialog}
+      />
+
+      <PdfPreviewModal
+        open={isReportsOpen}
+        onClose={() => setIsReportsOpen(false)}
+        groups={reportGroups}
+        mode={mode}
+        title="Rapports PDF — Séries"
       />
     </div>
   );

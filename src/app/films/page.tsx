@@ -3,16 +3,15 @@
 
 import Header from "@/ui/components/header";
 import VideoCard from "@/ui/specific/films/components/videoCard";
-import ClientPDFDownload from "@/ui/components/clientPdfDownloader";
 import { StatusFilter } from "@/ui/components/statusFilter";
 import ConfirmationDialog from "@/ui/components/confirmationDialog";
-import { Plus } from "lucide-react";
+import PdfPreviewModal, { type ReportGroup } from "@/ui/components/pdfPreviewModal";
+import { Plus, FileText } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFilmManagement } from "./useFilmManagement";
 import { useContentAction } from "@/lib/hooks/useContentAction";
-import { RightsHolderMoviesReport } from "@/ui/pdf/RightsHolderMoviesReport";
 import type { NormalizedStats } from "@/ui/specific/films/components/videoCard";
 import FilterBtn from "@/ui/components/filterBtn";
 import type { FilmListItem } from "@/types/api/films";
@@ -21,7 +20,7 @@ export default function FilmsPage() {
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
-  const [reportPeriod, setReportPeriod] = useState({ start: "", end: "" });
+  const [isReportsOpen, setIsReportsOpen] = useState(false);
 
   const {
     mode,
@@ -52,11 +51,6 @@ export default function FilmsPage() {
 
   useEffect(() => {
     setIsClient(true);
-    const end = new Date();
-    const start = new Date();
-    start.setDate(start.getDate() - 30);
-    const fmt = (d: Date) => d.toLocaleDateString("fr-FR");
-    setReportPeriod({ start: fmt(start), end: fmt(end) });
   }, []);
 
   const toggleGroup = (id: string) =>
@@ -129,6 +123,19 @@ export default function FilmsPage() {
     });
   };
 
+  const reportGroups: ReportGroup[] = filteredData.map((group) => ({
+    id: group.id,
+    name: `${group.firstName} ${group.lastName}`,
+    fileName: `rapport-${group.lastName}-${mode}.pdf`,
+    entries: group.items.map((film, idx) => ({
+      order: `${idx + 1}`.padStart(3, "0"),
+      title: film.title,
+      share: film.stats?.stats?.revenue || 0,
+      views: film.stats?.type === "abonnement" ? (film.stats.stats as { totalViews: number }).totalViews : 0,
+      revenue: film.stats?.stats?.revenue || 0,
+    })),
+  }));
+
   return (
     <div className="space-y-5">
       <Header title="Nos films" className="rounded-2xl border border-base-300 shadow-sm px-5">
@@ -164,16 +171,26 @@ export default function FilmsPage() {
             onStatusChange={setStatusFilter}
             options={statusFilterOptions}
           />
-          <FilterBtn
-            title="Tri"
-            selected={sortFilter}
-            onSelect={(val) => setSortFilter(val)}
-            options={[
-              {label: "Par défaut", value: "none"},
-              {label: "Meilleures ventes", value: "best"},
-              {label: "Dernier ajout", value: "latest"}
-            ]}
-          />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsReportsOpen(true)}
+              disabled={filteredData.length === 0}
+              className="btn btn-outline btn-primary btn-xs rounded-full"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              Rapports PDF
+            </button>
+            <FilterBtn
+              title="Tri"
+              selected={sortFilter}
+              onSelect={(val) => setSortFilter(val)}
+              options={[
+                {label: "Par défaut", value: "none"},
+                {label: "Meilleures ventes", value: "best"},
+                {label: "Dernier ajout", value: "latest"}
+              ]}
+            />
+          </div>
         </div>
       </div>
 
@@ -190,32 +207,9 @@ export default function FilmsPage() {
                   <h3 className="font-bold">{group.firstName} {group.lastName}</h3>
                   <span className="badge badge-sm badge-ghost">{group.items.length} films</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => toggleGroup(group.id)} className="btn btn-ghost btn-xs">
-                    {collapsedGroups.has(group.id) ? "Déplier" : "Plier"}
-                  </button>
-                  
-                  <ClientPDFDownload
-                    label="Rapport PDF"
-                    className="btn btn-outline btn-primary btn-xs rounded-full"
-                    fileName={`rapport-${group.lastName}-${mode}.pdf`}
-                    document={
-                      <RightsHolderMoviesReport
-                        mode={mode}
-                        rightsholderName={`${group.firstName} ${group.lastName}`}
-                        periodStart={reportPeriod.start}
-                        periodEnd={reportPeriod.end}
-                        entries={group.items.map((film, idx) => ({
-                          order: `${idx + 1}`.padStart(3, "0"),
-                          title: film.title,
-                          share: film.stats?.stats?.revenue || 0,
-                          views: film.stats?.type === "abonnement" ? film.stats.stats.totalViews : 0,
-                          revenue: film.stats?.stats?.revenue || 0,
-                        }))}
-                      />
-                    }
-                  />
-                </div>
+                <button onClick={() => toggleGroup(group.id)} className="btn btn-ghost btn-xs">
+                  {collapsedGroups.has(group.id) ? "Déplier" : "Plier"}
+                </button>
               </div>
 
               {!collapsedGroups.has(group.id) && (
@@ -257,7 +251,6 @@ export default function FilmsPage() {
         </div>
       )}
 
-      {/* Modal de confirmation */}
       <ConfirmationDialog
         open={dialogState.open}
         title={dialogState.title}
@@ -268,6 +261,14 @@ export default function FilmsPage() {
         cancelLabel="Annuler"
         onConfirm={executeAction}
         onCancel={closeDialog}
+      />
+
+      <PdfPreviewModal
+        open={isReportsOpen}
+        onClose={() => setIsReportsOpen(false)}
+        groups={reportGroups}
+        mode={mode}
+        title="Rapports PDF — Films"
       />
     </div>
   );
