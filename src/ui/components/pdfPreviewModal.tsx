@@ -6,6 +6,8 @@ import { PDFViewer, pdf } from "@react-pdf/renderer";
 import PeriodSelector, { defaultPeriod, isoToFR, type PeriodValue } from "@/ui/components/periodSelector";
 import ClientPDFDownload from "@/ui/components/clientPdfDownloader";
 import { RightsHolderMoviesReport, type MovieReportEntry } from "@/ui/pdf/RightsHolderMoviesReport";
+import { imageRightsApi } from "@/lib/api/imageRights";
+import type { RightsHolderContentResponse } from "@/types/api/imageRights";
 
 export interface ReportGroup {
   id: string;
@@ -17,15 +19,57 @@ export interface ReportGroup {
 interface PdfPreviewModalProps {
   open: boolean;
   onClose: () => void;
-  groups: ReportGroup[];
+  contentType: "movie" | "serie";
   mode: "location" | "abonnement";
   title?: string;
+}
+
+function mapToReportGroups(
+  data: RightsHolderContentResponse[],
+  contentType: "movie" | "serie",
+  mode: "location" | "abonnement",
+): ReportGroup[] {
+  return data
+    .map((g) => {
+      let entries: MovieReportEntry[];
+
+      if (contentType === "movie") {
+        const films = g.movies.filter((f) => f.type === undefined || f.type === mode);
+        entries = films.map((film, idx) => {
+          const revenue = film.stats?.stats?.revenue ?? 0;
+          const views = film.stats?.type === "abonnement" ? film.stats.stats.totalViews : 0;
+          return {
+            order: `${idx + 1}`.padStart(3, "0"),
+            title: film.title,
+            share: revenue,
+            views,
+            revenue,
+          };
+        });
+      } else {
+        entries = g.series.map((serie, idx) => ({
+          order: `${idx + 1}`.padStart(3, "0"),
+          title: serie.title || "Sans titre",
+          share: serie.stats?.subscriberViewPercentage ?? 0,
+          views: serie.stats?.totalViews ?? 0,
+          revenue: serie.stats?.revenue ?? 0,
+        }));
+      }
+
+      return {
+        id: g.id,
+        name: `${g.firstName} ${g.lastName}`,
+        fileName: `rapport-${g.lastName}-${mode}.pdf`,
+        entries,
+      };
+    })
+    .filter((g) => g.entries.length > 0);
 }
 
 export default function PdfPreviewModal({
   open,
   onClose,
-  groups,
+  contentType,
   mode,
   title = "Rapports PDF",
 }: PdfPreviewModalProps) {
@@ -33,16 +77,39 @@ export default function PdfPreviewModal({
   const [reportPeriod, setReportPeriod] = useState<PeriodValue>(defaultPeriod);
   const [isMounted, setIsMounted] = useState(false);
   const [isZipping, setIsZipping] = useState(false);
+  const [groups, setGroups] = useState<ReportGroup[]>([]);
+  const [isFetching, setIsFetching] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
   useEffect(() => {
-    if (groups.length > 0 && !groups.find((g) => g.id === selectedId)) {
-      setSelectedId(groups[0].id);
-    }
-  }, [groups, selectedId]);
+    if (!open) return;
+    const controller = new AbortController();
+    setIsFetching(true);
+
+    imageRightsApi
+      .contentsList(contentType, {
+        from: reportPeriod.start,
+        to: reportPeriod.end,
+        signal: controller.signal,
+      })
+      .then((data) => {
+        const mapped = mapToReportGroups(data, contentType, mode);
+        setGroups(mapped);
+        setSelectedId((prev) =>
+          mapped.find((g) => g.id === prev) ? prev : (mapped[0]?.id ?? "")
+        );
+      })
+      .catch((err) => {
+        if (err instanceof Error && err.name === "AbortError") return;
+        console.error("Erreur chargement rapports PDF:", err);
+      })
+      .finally(() => setIsFetching(false));
+
+    return () => controller.abort();
+  }, [open, reportPeriod, contentType, mode]);
 
   const selectedGroup = groups.find((g) => g.id === selectedId);
 
@@ -97,30 +164,38 @@ export default function PdfPreviewModal({
           {/* Sidebar */}
           <div className="w-60 flex-shrink-0 border-r border-base-300 flex flex-col p-4 gap-5">
             <div className="flex flex-col flex-1 min-h-0">
-              <p className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-2">Ayants-droit</p>
-              <div className="flex flex-col gap-1 overflow-y-auto flex-1">
-                {groups.map((group) => (
-                  <button
-                    key={group.id}
-                    onClick={() => setSelectedId(group.id)}
-                    className={`text-left px-3 py-2 rounded-lg text-sm transition-colors truncate ${
-                      selectedId === group.id
-                        ? "bg-primary/15 text-primary font-semibold"
-                        : "hover:bg-base-200 text-white/70"
-                    }`}
-                  >
-                    {group.name}
-                  </button>
-                ))}
-                {groups.length === 0 && (
-                  <p className="text-xs text-white/30 italic">Aucun ayant-droit</p>
-                )}
-              </div>
+              <p className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-2">
+                Ayants-droit
+              </p>
+              {isFetching ? (
+                <div className="flex items-center justify-center flex-1">
+                  <span className="loading loading-spinner loading-sm" />
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1 overflow-y-auto flex-1">
+                  {groups.map((group) => (
+                    <button
+                      key={group.id}
+                      onClick={() => setSelectedId(group.id)}
+                      className={`text-left px-3 py-2 rounded-lg text-sm transition-colors truncate ${
+                        selectedId === group.id
+                          ? "bg-primary/15 text-primary font-semibold"
+                          : "hover:bg-base-200 text-white/70"
+                      }`}
+                    >
+                      {group.name}
+                    </button>
+                  ))}
+                  {groups.length === 0 && (
+                    <p className="text-xs text-white/30 italic">Aucun ayant-droit</p>
+                  )}
+                </div>
+              )}
             </div>
 
             <button
               onClick={handleDownloadAll}
-              disabled={isZipping || groups.length === 0}
+              disabled={isZipping || groups.length === 0 || isFetching}
               className="btn btn-outline btn-primary btn-sm w-full flex-shrink-0"
             >
               {isZipping ? (
@@ -134,7 +209,12 @@ export default function PdfPreviewModal({
 
           {/* Preview area */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            {selectedGroup ? (
+            {isFetching ? (
+              <div className="flex-1 flex flex-col items-center justify-center gap-3 text-white/30">
+                <span className="loading loading-spinner loading-lg" />
+                <p className="text-sm">Chargement des données...</p>
+              </div>
+            ) : selectedGroup ? (
               <>
                 <div className="flex items-center justify-between px-4 py-3 border-b border-base-300 flex-shrink-0">
                   <span className="font-medium text-sm truncate">{selectedGroup.name}</span>

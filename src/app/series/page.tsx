@@ -12,8 +12,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSeriesManagement } from "./useSeriesManagement";
 import { useContentAction } from "@/lib/hooks/useContentAction";
-import PdfPreviewModal, { type ReportGroup } from "@/ui/components/pdfPreviewModal";
-import type { MovieReportEntry } from "@/ui/pdf/RightsHolderMoviesReport";
+import PdfPreviewModal from "@/ui/components/pdfPreviewModal";
 import type { SeriesListItem } from "@/types/api/series";
 import type { NormalizedStats } from "@/ui/specific/films/components/videoCard";
 
@@ -71,15 +70,6 @@ export default function SeriesPage() {
     };
   };
 
-  const buildReportEntries = (items: SeriesListItem[]): MovieReportEntry[] =>
-    items.map((serie, idx) => ({
-      order: `${idx + 1}`.padStart(3, "0"),
-      title: serie.title || "Sans titre",
-      share: serie.stats?.subscriberViewPercentage || 0,
-      views: serie.stats?.totalViews || 0,
-      revenue: serie.stats?.revenue || 0
-    }));
-
   const toggleGroup = (id: string) =>
     setCollapsedGroups((prev) => {
       const next = new Set(prev);
@@ -103,12 +93,6 @@ export default function SeriesPage() {
     });
   };
 
-  const reportGroups: ReportGroup[] = filteredData.map((group) => ({
-    id: group.id,
-    name: `${group.firstName} ${group.lastName}`,
-    fileName: `rapport-${group.lastName || "ayant-droit"}-${mode}.pdf`,
-    entries: buildReportEntries(group.items),
-  }));
 
   return (
     <div className="space-y-5">
@@ -247,7 +231,7 @@ export default function SeriesPage() {
       <PdfPreviewModal
         open={isReportsOpen}
         onClose={() => setIsReportsOpen(false)}
-        groups={reportGroups}
+        contentType="serie"
         mode={mode}
         title="Rapports PDF — Séries"
       />

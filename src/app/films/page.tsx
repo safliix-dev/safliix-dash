@@ -5,7 +5,7 @@ import Header from "@/ui/components/header";
 import VideoCard from "@/ui/specific/films/components/videoCard";
 import { StatusFilter } from "@/ui/components/statusFilter";
 import ConfirmationDialog from "@/ui/components/confirmationDialog";
-import PdfPreviewModal, { type ReportGroup } from "@/ui/components/pdfPreviewModal";
+import PdfPreviewModal from "@/ui/components/pdfPreviewModal";
 import { Plus, FileText } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -122,19 +122,6 @@ export default function FilmsPage() {
       body: JSON.stringify(body),
     });
   };
-
-  const reportGroups: ReportGroup[] = filteredData.map((group) => ({
-    id: group.id,
-    name: `${group.firstName} ${group.lastName}`,
-    fileName: `rapport-${group.lastName}-${mode}.pdf`,
-    entries: group.items.map((film, idx) => ({
-      order: `${idx + 1}`.padStart(3, "0"),
-      title: film.title,
-      share: film.stats?.stats?.revenue || 0,
-      views: film.stats?.type === "abonnement" ? (film.stats.stats as { totalViews: number }).totalViews : 0,
-      revenue: film.stats?.stats?.revenue || 0,
-    })),
-  }));
 
   return (
     <div className="space-y-5">
@@ -266,7 +253,7 @@ export default function FilmsPage() {
       <PdfPreviewModal
         open={isReportsOpen}
         onClose={() => setIsReportsOpen(false)}
-        groups={reportGroups}
+        contentType="movie"
         mode={mode}
         title="Rapports PDF — Films"
       />

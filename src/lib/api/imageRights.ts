@@ -57,18 +57,19 @@ export const imageRightsApi = {
   /** Liste globale de contenus filtrés par type et période */
   contentsList: (
     type: RightsHolderContentType,
-    accessTokenOrOptions?: string | { signal?: AbortSignal; from?: string; to?: string },
-    signal?: AbortSignal,
+    options?: { signal?: AbortSignal; from?: string; to?: string },
   ) => {
-    const options =
-      typeof accessTokenOrOptions === "string"
-        ? { accessTokenOrOptions, signal }
-        : accessTokenOrOptions || {};
-    const { signal: finalSignal } = options;
-
+    const { signal, from, to } = options ?? {};
     return apiRequest<RightsHolderContentResponse[]>(
       "/rights-holders/contents",
-      { params: { type }, signal: finalSignal },
+      {
+        params: {
+          type,
+          ...(from && { from }),
+          ...(to && { to }),
+        },
+        signal,
+      },
     );
   },
 
