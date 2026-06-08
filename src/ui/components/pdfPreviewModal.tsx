@@ -82,9 +82,12 @@ export default function PdfPreviewModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="bg-base-100 rounded-2xl border border-base-300 shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-base-300 flex-shrink-0">
-          <h2 className="font-bold text-base">{title}</h2>
-          <button onClick={onClose} className="btn btn-ghost btn-sm btn-circle">
+        <div className="flex items-center gap-4 px-6 py-4 border-b border-base-300 flex-shrink-0">
+          <h2 className="font-bold text-base flex-shrink-0">{title}</h2>
+          <div className="flex-1 flex justify-center">
+            <PeriodSelector value={reportPeriod} onChange={setReportPeriod} />
+          </div>
+          <button onClick={onClose} className="btn btn-ghost btn-sm btn-circle flex-shrink-0">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -93,11 +96,6 @@ export default function PdfPreviewModal({
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar */}
           <div className="w-60 flex-shrink-0 border-r border-base-300 flex flex-col p-4 gap-5">
-            <div>
-              <p className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-2">Période</p>
-              <PeriodSelector value={reportPeriod} onChange={setReportPeriod} />
-            </div>
-
             <div className="flex flex-col flex-1 min-h-0">
               <p className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-2">Ayants-droit</p>
               <div className="flex flex-col gap-1 overflow-y-auto flex-1">
