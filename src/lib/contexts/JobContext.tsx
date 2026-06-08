@@ -156,41 +156,40 @@ export const JobProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const loadInitialJobs = useCallback(async (): Promise<void> => {
-   
     if (isInitialized.current) return;
-    
+    isInitialized.current = true;
+
     console.log('🔄 [JobContext] Loading initial jobs...');
     setIsLoading(true);
-    
     try {
-      const data = await jobApi.list({status:"Processing"});
+      const data = await jobApi.list({ status: "Processing" });
       console.log(`✅ [JobContext] Loaded ${data.length} initial jobs`);
-      setJobs(data);
-      isInitialized.current = true;
+      // Merge with any socket-created jobs that arrived before this response.
+      upsertJobs(data);
     } catch (err) {
       const error = err as Error;
       console.error("❌ [JobContext] Error loading initial jobs:", error.message);
+      // Reset so a reconnect can retry.
+      isInitialized.current = false;
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [upsertJobs]);
 
   const refreshAll = useCallback(async (): Promise<void> => {
-    
-    
     console.log('🔄 [JobContext] Manual refresh...');
     setIsLoading(true);
-    
     try {
-      const data = await jobApi.list({  });
-      upsertJobs(data);
+      const data = await jobApi.list({ status: "Processing" });
+      // Replace the list entirely so stale failed/completed jobs don't linger.
+      setJobs(data);
     } catch (err) {
       const error = err as Error;
       console.error("❌ [JobContext] Error refreshing jobs:", error.message);
     } finally {
       setIsLoading(false);
     }
-  }, [, upsertJobs]);
+  }, []);
 
   // ============================================================
   // JOB ACTIONS
