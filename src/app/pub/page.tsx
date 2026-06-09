@@ -3,6 +3,7 @@
 
 import FilterBtn from "@/ui/components/filterBtn";
 import Header from "@/ui/components/header";
+import PubPdfModal from "@/ui/components/pubPdfModal";
 import { Eye, MousePointerClick } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -103,12 +104,13 @@ const periodOptions = [
 ];
 
 export default function Page() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]); // Plus de mock, tableau vide par défaut
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortFilter, setSortFilter] = useState<string>("best");
   const [periodFilter, setPeriodFilter] = useState<string>("dernier");
+  const [isPdfOpen, setIsPdfOpen] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
@@ -173,7 +175,12 @@ export default function Page() {
     <div className="space-y-4">
       <Header title="Liste et statistiques de pubs" className="rounded-xl px-4 py-3">
         <div className="flex shrink-0 gap-2">
-          <button className="btn btn-outline btn-primary border-primary/60 text-white">Exporter les rapports</button>
+          <button
+            onClick={() => setIsPdfOpen(true)}
+            className="btn btn-outline btn-primary border-primary/60 text-white"
+          >
+            Exporter les rapports
+          </button>
           <Link href="/pub/new" className="btn btn-primary font-semibold">
             Créer un pub
           </Link>
@@ -205,6 +212,8 @@ export default function Page() {
       {!loading && !error && filteredCampaigns.length === 0 && (
         <div className="text-sm text-white/70">Aucune campagne trouvée.</div>
       )}
+
+      <PubPdfModal open={isPdfOpen} onClose={() => setIsPdfOpen(false)} />
 
       <div className="flex items-center justify-center gap-1 pt-2">
         {[1, 2, 3].map((page) => (

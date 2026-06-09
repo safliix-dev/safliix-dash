@@ -232,7 +232,6 @@ export default function SeriesPage() {
         open={isReportsOpen}
         onClose={() => setIsReportsOpen(false)}
         contentType="serie"
-        mode={mode}
         title="Rapports PDF — Séries"
       />
     </div>

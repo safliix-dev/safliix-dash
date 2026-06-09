@@ -254,7 +254,6 @@ export default function FilmsPage() {
         open={isReportsOpen}
         onClose={() => setIsReportsOpen(false)}
         contentType="movie"
-        mode={mode}
         title="Rapports PDF — Films"
       />
     </div>

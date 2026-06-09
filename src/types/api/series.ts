@@ -66,6 +66,8 @@ export interface SeriesListItem {
   dp?: string;
   number?: number | string;
   category?: string;
+  format?: string;
+  entertainmentMode?: string;
   posterUrl: string;
   attachments: { type: string }[];
   stats: SerieStats;

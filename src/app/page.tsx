@@ -5,10 +5,16 @@ import MonthlyStatsChart from "@/ui/specific/stats/components/barChart";
 import { Banknote, Clock, Download, Flag, Lightbulb, Package, Play, PlayCircle, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDashboardData } from "@/lib/hooks/useDashboardData";
+import { useEffect, useState } from "react";
+
+const PAGE_SIZE = 5;
 
 export default function Home(){
 		const router = useRouter();
 		const { metrics, highlights, repartition, loading, error, refetch } = useDashboardData();
+		const [selectedCountry, setSelectedCountry] = useState<string>("all");
+		const [currentPage, setCurrentPage] = useState(1);
+		useEffect(() => { setCurrentPage(1); }, [highlights]);
 
 		const formatNumber = (value: number | undefined) => {
 			if (value === undefined || value === null || Number.isNaN(value)) return "-";
@@ -70,6 +76,14 @@ export default function Home(){
 		];
 
 		const countries = highlights?.topCountries ?? [];
+		const filteredCountries = selectedCountry === "all"
+			? countries
+			: countries.filter(c => c.name === selectedCountry);
+
+		const featuredContent = highlights?.recentContents?.[0];
+		const featuredImage = featuredContent?.poster || featuredContent?.image || featuredContent?.cover || "/elegbara.png";
+		const featuredViewsRaw = featuredContent?.stats?.views ?? featuredContent?.stats?.vues ?? 0;
+		const featuredViews = typeof featuredViewsRaw === "number" ? featuredViewsRaw : 0;
 
 		const contents = highlights?.recentContents?.map((content) => {
 			const qty = (content as { qty?: number }).qty ?? 1;
@@ -84,6 +98,9 @@ export default function Home(){
 				color: "text-white",
 			};
 		}) ?? [];
+
+		const totalPages = Math.max(1, Math.ceil(contents.length / PAGE_SIZE));
+		const paginatedContents = contents.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
 		const doughnutSegments = highlights?.donuts?.length
 			? highlights.donuts.map((d, idx) => ({
@@ -223,32 +240,44 @@ export default function Home(){
 								<h2 className="text-xl font-semibold text-white">Contenu le plus suivi</h2>
 								<p className="text-sm text-white/60">de la semaine based on country</p>
 							</div>
-							<select className="select select-sm bg-base-200 border-base-300 text-white">
-								<option>Country</option>
+							<select
+								className="select select-sm bg-base-200 border-base-300 text-white"
+								value={selectedCountry}
+								onChange={e => setSelectedCountry(e.target.value)}
+							>
+								<option value="all">Tous les pays</option>
+								{countries.map(c => (
+									<option key={c.name} value={c.name}>{c.name}</option>
+								))}
 							</select>
 						</div>
 						<div className="flex gap-4">
-							<BackgroundImg className="relative flex-[1.4] h-[290px] rounded-xl overflow-hidden" src="elegbara.png">
+							<BackgroundImg className="relative flex-[1.4] h-[290px] rounded-xl overflow-hidden" src={featuredImage}>
 								<div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/70"/>
-								<button className="absolute left-6 bottom-6 btn btn-primary btn-sm rounded-full gap-2">
+								{featuredContent && (
+									<div className="absolute left-3 bottom-3 right-3">
+										<p className="text-xs font-semibold text-white truncate">{featuredContent.title}</p>
+									</div>
+								)}
+								<button className="absolute left-6 bottom-10 btn btn-primary btn-sm rounded-full gap-2">
 									<PlayCircle className="w-4 h-4"/>
-									Read More
+									Voir plus
 								</button>
 								<div className="absolute right-6 top-6 bg-primary text-black rounded-xl px-3 py-2 flex items-center gap-3 shadow">
 									<div className="rounded-full h-10 w-10 bg-primary/40 flex items-center justify-center">
 										<Users className="w-5 h-5"/>
 									</div>
 									<div>
-										<h3 className="text-lg font-semibold">21.345</h3>
-										<p className="text-xs">Customer</p>
+										<h3 className="text-lg font-semibold">{formatNumber(featuredViews)}</h3>
+										<p className="text-xs">Vues</p>
 									</div>
 								</div>
 							</BackgroundImg>
 							<div className="flex-1 space-y-3">
-								{countries.length === 0 && (
+								{filteredCountries.length === 0 && (
 									<div className="text-sm text-white/60">Aucune donnée pays disponible.</div>
 								)}
-								{countries.map((country) => (
+								{filteredCountries.map((country) => (
 									<div key={country.name} className="flex items-center gap-3">
 										<div className="flex items-center gap-2 min-w-[140px]">
 											<Flag className="w-4 h-4 text-primary"/>
@@ -293,7 +322,7 @@ export default function Home(){
 											</tr>
 										</thead>
 										<tbody>
-											{contents.map((item) => (
+											{paginatedContents.map((item) => (
 												<tr key={item.product} className="hover:bg-base-200/30">
 													<td><input type="checkbox" className="checkbox checkbox-sm"/></td>
 													<td className={item.color}>{item.product}</td>
@@ -313,12 +342,27 @@ export default function Home(){
 									</table>
 								</div>
 								<div className="flex items-center justify-between text-xs text-white/60">
-									<span>Showing {contents.length} entries</span>
-									<div className="flex items-center gap-2">
-										<button className="btn btn-ghost btn-xs">Prev</button>
-										<button className="btn btn-primary btn-xs">1</button>
-										<button className="btn btn-ghost btn-xs">2</button>
-										<button className="btn btn-ghost btn-xs">Next</button>
+									<span>
+										{contents.length === 0 ? "0 entrée" : `${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(currentPage * PAGE_SIZE, contents.length)} sur ${contents.length}`}
+									</span>
+									<div className="flex items-center gap-1">
+										<button
+											className="btn btn-ghost btn-xs"
+											disabled={currentPage === 1}
+											onClick={() => setCurrentPage(p => p - 1)}
+										>Préc</button>
+										{Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+											<button
+												key={p}
+												className={`btn btn-xs ${p === currentPage ? "btn-primary" : "btn-ghost"}`}
+												onClick={() => setCurrentPage(p)}
+											>{p}</button>
+										))}
+										<button
+											className="btn btn-ghost btn-xs"
+											disabled={currentPage === totalPages}
+											onClick={() => setCurrentPage(p => p + 1)}
+										>Suiv</button>
 									</div>
 								</div>
 							</>

@@ -19,6 +19,9 @@ export interface HighlightContent {
   price: number;
   date: string;
   publisher: string;
+  poster?: string;
+  image?: string;
+  cover?: string;
   stats?: Record<string, unknown>;
 }
 

@@ -53,6 +53,8 @@ export interface FilmListItem {
   director: string;
   dp: string;
   category: string;
+  format?: string;
+  entertainmentMode?: string;
   posterUrl: string;
   attachments: { type: string }[];
   type: FilmDistributionType;

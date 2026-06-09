@@ -2,6 +2,7 @@
 
 import Header from "@/ui/components/header";
 import DataTable from "@/ui/components/dataTable";
+import UsersPdfModal from "@/ui/components/usersPdfModal";
 import { Person,columns } from "./mapper";
 import { useEffect, useState } from "react";
 import { usersApi } from "@/lib/api/users";
@@ -11,6 +12,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ConfirmationDialog from "@/ui/components/confirmationDialog";
 import { useDeleteWithConfirmation } from "@/lib/hooks/useDeletionWithConfirmation";
+import { FileText } from "lucide-react";
 
 const placeholderAvatar = "/gildas.png";
 
@@ -18,6 +20,7 @@ export default function Page() {
   const [personnes, setPersonnes] = useState<Person[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPdfOpen, setIsPdfOpen] = useState(false);
   const toast = useToast();
   const router = useRouter();
 
@@ -75,7 +78,17 @@ export default function Page() {
   return (
     <div className="">
       <Header title="Utilisateurs">
-        <Link href={"/users/edit/new"} className="btn btn-primary">Ajouter un utilisateur</Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsPdfOpen(true)}
+            disabled={personnes.length === 0}
+            className="btn btn-outline btn-primary btn-sm rounded-lg"
+          >
+            <FileText className="w-4 h-4" />
+            Exporter PDF
+          </button>
+          <Link href={"/users/edit/new"} className="btn btn-primary">Ajouter un utilisateur</Link>
+        </div>
       </Header>
       {loading && <div className="alert alert-info text-sm mt-3">Chargement des utilisateurs...</div>}
       {error && <div className="alert alert-error text-sm mt-3">{error}</div>}
@@ -103,6 +116,12 @@ export default function Page() {
         <p className="text-sm text-white/70 mt-3">Aucun utilisateur.</p>
        )}
       </div>
+      <UsersPdfModal
+        open={isPdfOpen}
+        onClose={() => setIsPdfOpen(false)}
+        users={personnes}
+      />
+
       <ConfirmationDialog
                 open={deletePerson.open}
                 title="Suppression définitive"
