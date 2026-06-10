@@ -19,6 +19,7 @@ export function AdsFormClient({ adsId }: AdsFormClientProps) {
   return (
     <MediaPage<AdsFormData, AdsSlot, null>
       useFormHook={() => formHook}
+      backHref="/pub"
       MetadataComponent={({ control, errors, meta }) => (
         <AdsMetadataStep
           control={control}

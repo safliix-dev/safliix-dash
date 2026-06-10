@@ -12,6 +12,7 @@ export interface FormStepLayoutProps {
   children: React.ReactNode;
   isLoading?: boolean;
   error?: string | null;
+  backHref?: string;
 }
 
 export function FormStepLayout({
@@ -21,13 +22,15 @@ export function FormStepLayout({
   stepLabel,
   children,
   isLoading,
-  error
+  error,
+  backHref,
 }: FormStepLayoutProps) {
   return (
     <div className="space-y-4">
       <Header
         title={title}
         className="rounded-2xl border border-base-300 shadow-sm px-5"
+        backHref={backHref}
       >
         <div className="text-sm text-white/80 flex items-center gap-3">
           <span className="px-3 py-1 rounded-lg bg-base-200/60 border border-base-300">

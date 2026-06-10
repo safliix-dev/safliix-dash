@@ -21,6 +21,7 @@ export function EpisodeFormClient({ seriesId, seasonId, episodeId }: EpisodeForm
   return (
     <MediaPage<EpisodeFormData, EpisodeSlot>
       useFormHook={() => formHook}
+      backHref={`/series/detail/${seriesId}`}
       MetadataComponent={({ control, errors }) => (
         <EpisodeMetadataStep
           control={control}

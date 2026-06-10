@@ -65,7 +65,7 @@ export default function Page() {
 
   return (
     <div className="space-y-5">
-      <Header title="Plans d'abonnement" className="rounded-2xl border border-base-300 px-5 py-3">
+      <Header title="Plans d'abonnement" backHref="/subscriptions" className="rounded-2xl border border-base-300 px-5 py-3">
         <div className="flex items-center gap-2">
           <Link href="/subscriptions/plans/edit" className="btn btn-primary btn-sm rounded-full">
             Créer un plan

@@ -62,6 +62,7 @@ export default function SeriesPage() {
     <MediaPage<SeriesFormData, SeriesSlot, SeriesMetaOptions>
       useFormHook={useSeriesForm}
       initialId={editId}
+      backHref="/series"
       MetadataComponent={SeriesMetadataComponent}
       FilesComponent={SeriesFilesComponent}
       title={editId ? "Modifier la série" : "Ajouter une série"}

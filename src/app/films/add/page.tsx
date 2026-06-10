@@ -66,6 +66,7 @@ export default function FilmPage() {
     <MediaPage<FilmFormData, FilmSlot, FilmMetaOptions>
       useFormHook={useFilmForm}
       initialId={editId}
+      backHref="/films"
       MetadataComponent={FilmMetadataComponent}
       FilesComponent={FilmFilesComponent}
       title={editId ? "Modifier le film" : "Ajouter un film"}

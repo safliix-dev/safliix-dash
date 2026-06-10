@@ -103,6 +103,7 @@ interface MediaPageProps<
   title: string;
   metaFields: (keyof TFormData)[];
   initialId?: string;
+  backHref?: string;
   shouldSkipFilesStep?: (data: TFormData) => boolean;
   sidebar?: {
     component?: React.ComponentType<SidebarProps>;
@@ -123,6 +124,7 @@ export function MediaPage<
   title,
   metaFields,
   initialId,
+  backHref,
   shouldSkipFilesStep,
   sidebar = {
     showDefaultLogo: true,
@@ -243,6 +245,7 @@ export function MediaPage<
       stepLabel={currentStep === 0 ? "Métadonnées" : "Fichiers"}
       isLoading={meta.loading}
       error={meta.error || undefined}
+      backHref={backHref}
     >
       <form
         onSubmit={handleSubmit(handleStepSubmit)}

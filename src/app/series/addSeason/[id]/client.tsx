@@ -19,6 +19,7 @@ export function SeasonFormClient({ seriesId }: SeasonFormClientProps) {
   return (
     <MediaPage<SeasonFormData, SeasonSlot, SeasonMetaOptions>
       useFormHook={() => formHook}
+      backHref={`/series/detail/${seriesId}`}
       MetadataComponent={({ control, errors, meta }) => (
         <SeasonMetadataStep
           control={control}
