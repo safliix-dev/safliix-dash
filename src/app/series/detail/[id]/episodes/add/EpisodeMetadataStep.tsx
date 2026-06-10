@@ -11,9 +11,10 @@ import type { EpisodeFormData } from "@/types/api/episode";
 interface EpisodeMetadataStepProps {
   control: Control<EpisodeFormData>;
   errors: FieldErrors<EpisodeFormData>;
+  loadingNumber?: boolean;
 }
 
-export function EpisodeMetadataStep({ control, errors }: EpisodeMetadataStepProps) {
+export function EpisodeMetadataStep({ control, errors, loadingNumber }: EpisodeMetadataStepProps) {
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -37,19 +38,24 @@ export function EpisodeMetadataStep({ control, errors }: EpisodeMetadataStepProp
 
         {/* Numéro d'épisode */}
         <div>
-          <label className="label text-sm mb-1">Numéro d&apos;épisode <span className="text-red-500">*</span></label>
+          <label className="label text-sm mb-1">Numéro d&apos;épisode</label>
           <Controller
             name="episodeNumber"
             control={control}
-            rules={{ required: "Le numéro d'épisode est obligatoire" }}
             render={({ field }) => (
-              <InputField
-                type="number"
-                {...field}
-                value={field.value ?? ""}
-                onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))}
-                className="input bg-base-200 border-base-300"
-              />
+              loadingNumber ? (
+                <div className="input bg-base-200 border-base-300 flex items-center gap-2 opacity-70">
+                  <span className="loading loading-spinner loading-xs" />
+                </div>
+              ) : (
+                <input
+                  type="number"
+                  {...field}
+                  value={field.value ?? ""}
+                  readOnly
+                  className="input bg-base-200 border-base-300 opacity-70 cursor-not-allowed w-full p-2 border rounded text-[#F0EDED]"
+                />
+              )
             )}
           />
           {errors.episodeNumber && <p className="text-red-600 text-sm">{errors.episodeNumber.message as string}</p>}

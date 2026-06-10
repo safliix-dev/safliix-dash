@@ -23,6 +23,7 @@ interface FormConfirmationProps<T, TSlot extends string> {
   title: string;
   message: string;
   status: DialogStatus;
+  errorMessage?: string;
   confirmLabel?: string;
   cancelLabel?: string;
   onCancel: () => void;
@@ -46,6 +47,7 @@ export function FormConfirmation<T extends BaseMetadata & MediaFileFields, TSlot
   title,
   message,
   status,
+  errorMessage,
   confirmLabel = "Confirmer",
   cancelLabel = "Annuler",
   onCancel,
@@ -274,7 +276,7 @@ export function FormConfirmation<T extends BaseMetadata & MediaFileFields, TSlot
             <div className="text-sm rounded-lg border border-red-600/40 bg-red-950/20 text-red-200 px-3 py-3 flex flex-col gap-2">
               <div className="flex items-center gap-2 font-medium">
                 <span>⚠️</span>
-                <span>L&apos;opération a échoué.</span>
+                <span>{errorMessage ?? "L’opération a échoué."}</span>
               </div>
               {hasErrors && upload?.errors && (
                 <ul className="text-[11px] text-red-300/70 list-disc list-inside ml-5 space-y-1">

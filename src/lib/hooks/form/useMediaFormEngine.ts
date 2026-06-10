@@ -6,6 +6,7 @@ import { useForm, DefaultValues } from "react-hook-form";
 import { DialogStatus } from "@/ui/components/confirmationDialog";
 import { useUploadWorkflow } from "./useUploadWorkerflow";
 import { PresignedSlot } from "@/types/upload";
+import { formatApiError } from "@/lib/api/errors";
 
 export type MediaFormEngineConfig<
   TForm,
@@ -41,6 +42,7 @@ export function useMediaFormEngine<
   const [pending, setPending] = useState<TForm | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogStatus, setDialogStatus] = useState<DialogStatus>("idle");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastSuccessfulSlots, setLastSuccessfulSlots] = useState<TPresigned[]>([]);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   
@@ -120,6 +122,7 @@ export function useMediaFormEngine<
     if (!pending) return;
     setDialogStatus("loading");
 
+    setErrorMessage(null);
     try {
       // CAS 1: Sauvegarde des métadonnées (STEP 0)
       if (step === 0) {
@@ -145,6 +148,8 @@ export function useMediaFormEngine<
     } catch (error) {
       console.error("[MediaFormEngine] Erreur critique:", error);
       if (isMountedRef.current) {
+        const { message } = formatApiError(error);
+        setErrorMessage(message);
         setDialogStatus("error");
       }
     }
@@ -221,19 +226,20 @@ export function useMediaFormEngine<
 
   return {
     // Form props
-    control, 
-    watch, 
-    handleSubmit, 
-    reset, 
-    formState, 
-    trigger, 
+    control,
+    watch,
+    handleSubmit,
+    reset,
+    formState,
+    trigger,
     setValue,
-    
+
     // Engine state
-    entityId, 
-    setEntityId, 
-    dialogOpen, 
-    dialogStatus, 
+    entityId,
+    setEntityId,
+    dialogOpen,
+    dialogStatus,
+    errorMessage,
     upload,
     pendingData: pending,
     lastSuccessfulSlots,

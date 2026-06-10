@@ -25,6 +25,7 @@ export function SeasonFormClient({ seriesId }: SeasonFormClientProps) {
           errors={errors}
           meta={meta}
           setValue={formHook.setValue}
+          loadingNumber={formHook.loadingNumber}
         />
       )}
       FilesComponent={({ control, setValue, onPreview, dialogStatus }) => (

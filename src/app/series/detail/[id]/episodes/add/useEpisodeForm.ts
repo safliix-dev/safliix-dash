@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useMediaFormEngine } from "@/lib/hooks/form/useMediaFormEngine";
 import { episodeAdapter } from "./episodeAdapter";
 import { EpisodeFormData } from "@/types/api/episode";
@@ -15,6 +15,7 @@ interface UseEpisodeFormProps {
 }
 
 export function useEpisodeForm({ seriesId, seasonId, episodeId }: UseEpisodeFormProps) {
+  const [loadingNumber, setLoadingNumber] = useState(true);
 
   const meta = { options: null, loading: false, error: null, refresh: async () => {} };
 
@@ -36,13 +37,16 @@ export function useEpisodeForm({ seriesId, seasonId, episodeId }: UseEpisodeForm
     } as EpisodeFormData
   );
 
+  const { setValue, reset, setEntityId } = engine;
+
   useEffect(() => {
     if (!episodeId) return;
 
-    engine.setEntityId(episodeId);
+    setEntityId(episodeId);
 
+    setLoadingNumber(true);
     void episodeApi.get(episodeId).then(data => {
-      engine.reset({
+      reset({
         title: data.title ?? "",
         description: data.description ?? "",
         duration: data.duration ?? null,
@@ -56,14 +60,23 @@ export function useEpisodeForm({ seriesId, seasonId, episodeId }: UseEpisodeForm
         trailerFile: null,
         subtitleFile: null,
       } as EpisodeFormData);
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => setLoadingNumber(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [episodeId]);
+
+  useEffect(() => {
+    if (episodeId) return;
+    setLoadingNumber(true);
+    episodeApi.list(seriesId, seasonId, { pageSize: 1 }).then(res => {
+      setValue("episodeNumber", res.pageInfo.totalItems + 1);
+    }).catch(() => {}).finally(() => setLoadingNumber(false));
+  }, [seriesId, seasonId, episodeId, setValue]);
 
   return {
     ...engine,
     meta,
     seriesId,
     seasonId,
+    loadingNumber,
   };
 }

@@ -25,6 +25,7 @@ export function EpisodeFormClient({ seriesId, seasonId, episodeId }: EpisodeForm
         <EpisodeMetadataStep
           control={control}
           errors={errors}
+          loadingNumber={formHook.loadingNumber}
         />
       )}
       FilesComponent={({ control, setValue, onPreview, dialogStatus }) => (

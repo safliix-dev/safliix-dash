@@ -12,13 +12,15 @@ import { FormMeta } from "@/ui/layout/mediaPage";
 interface SeasonMetadataStepProps {
   control: Control<SeasonFormData>;
   errors: FieldErrors<SeasonFormData>;
-  meta: FormMeta<SeasonMetaOptions>;  // 👈 Utiliser FormMeta générique
+  meta: FormMeta<SeasonMetaOptions>;
   setValue: UseFormSetValue<SeasonFormData>;
+  loadingNumber?: boolean;
 }
 
 export function SeasonMetadataStep({
   control,
-  errors
+  errors,
+  loadingNumber,
 }: SeasonMetadataStepProps) {
   return (
     <div className="space-y-6">
@@ -26,20 +28,23 @@ export function SeasonMetadataStep({
 
         {/* Numéro de saison */}
         <div>
-          <label className="label text-sm mb-1">Numéro de saison <span className="text-red-500">*</span></label>
+          <label className="label text-sm mb-1">Numéro de saison</label>
           <Controller
             name="numero"
             control={control}
-            rules={{ required: "Le numéro de saison est obligatoire" }}
             render={({ field }) => (
-              <InputField
-                type="number"
-                {...field}
-                value={field.value ?? ""}
-                onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))}
-                className="input bg-base-200 border-base-300"
-                placeholder="Ex: 1"
-              />
+              loadingNumber ? (
+                <div className="input bg-base-200 border-base-300 flex items-center gap-2 opacity-70">
+                  <span className="loading loading-spinner loading-xs" />
+                </div>
+              ) : (
+                <input
+                  type="number"
+                  {...field}
+                  readOnly
+                  className="input bg-base-200 border-base-300 opacity-70 cursor-not-allowed w-full p-2 border rounded text-[#F0EDED]"
+                />
+              )
             )}
           />
           {errors.numero && <p className="text-red-600 text-sm">{errors.numero.message as string}</p>}

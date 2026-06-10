@@ -45,6 +45,7 @@ export interface MediaFormEngineReturn<
 
   dialogOpen: boolean;
   dialogStatus: 'idle' | 'loading' | 'success' | 'error' | 'partial_success';
+  errorMessage: string | null;
 
   upload: UploadState<TSlot>;
   pendingData: TFormData | null;
@@ -141,6 +142,7 @@ export function MediaPage<
     closeDialog,
     dialogOpen,
     dialogStatus,
+    errorMessage,
     upload,
     pendingData,
     prepareForNextStep,
@@ -306,6 +308,7 @@ export function MediaPage<
             : "Les fichiers vont être envoyés."
         }
         status={dialogStatus}
+        errorMessage={errorMessage ?? undefined}
         fieldResolvers={{ rightHolderId: rightHolderResolver }}
         confirmLabel={
           currentStep === 0
