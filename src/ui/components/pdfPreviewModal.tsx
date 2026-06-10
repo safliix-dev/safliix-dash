@@ -69,7 +69,7 @@ function buildDocument(
 
   if (contentType === "movie" && mode === "location") {
     const entries: LocationEntry[] = rawGroup.movies
-      .filter(m => m.entertainmentMode !== "Divers")
+      .filter(m => m.entertainmentMode !== "Divers" && m.type === "location")
       .map((film, idx) => ({
         order: String(idx + 1).padStart(3, "0"),
         title: film.title,
@@ -91,7 +91,7 @@ function buildDocument(
   // abonnement (films ou séries)
   const items =
     contentType === "movie"
-      ? rawGroup.movies.filter(m => m.entertainmentMode !== "Divers")
+      ? rawGroup.movies.filter(m => m.entertainmentMode !== "Divers" && m.type === "abonnement")
       : rawGroup.series.filter(s => s.entertainmentMode !== "Divers");
 
   const entries: AbonnementEntry[] = items.map((item, idx) => {
