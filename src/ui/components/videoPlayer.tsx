@@ -431,9 +431,11 @@ const VideoPlayer = ({ src, title, onProgress, autoPlay = false, onSubscriptionE
       const video = videoRef.current;
       if (!video) return;
 
-      // Éviter les conflits avec les inputs
-      if (document.activeElement?.tagName === 'INPUT' || 
-          document.activeElement?.tagName === 'SELECT') return;
+      // Éviter les conflits avec les champs texte/select, mais pas les range sliders
+      const activeEl = document.activeElement as HTMLInputElement | null;
+      if (activeEl?.tagName === 'TEXTAREA') return;
+      if (activeEl?.tagName === 'SELECT') return;
+      if (activeEl?.tagName === 'INPUT' && activeEl.type !== 'range') return;
 
       switch (e.key.toLowerCase()) {
         case ' ':
@@ -502,13 +504,19 @@ const VideoPlayer = ({ src, title, onProgress, autoPlay = false, onSubscriptionE
     );
   }
 
+  // Focus le container au montage pour que les raccourcis clavier fonctionnent immédiatement
+  useEffect(() => {
+    containerRef.current?.focus();
+  }, []);
+
   return (
     <div
       ref={containerRef}
+      tabIndex={-1}
       onMouseMove={showControlsTemporarily}
       onMouseLeave={() => isPlaying && setShowControls(false)}
       onDoubleClick={handleDoubleClick}
-      className="relative rounded-3xl overflow-hidden bg-black group"
+      className="relative rounded-3xl overflow-hidden bg-black group outline-none"
     >
       <video
         ref={videoRef}

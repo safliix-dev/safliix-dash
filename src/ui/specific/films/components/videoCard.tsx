@@ -469,31 +469,6 @@ export default function VideoCard({
               </div>
             )}
 
-            {/* Sélecteur de média (plusieurs vidéos dans media[]) */}
-            {!playbackLoading && !playbackError && mediaList.length > 1 && (
-              <div className="flex gap-2 px-4 py-2 bg-black border-b border-white/10 overflow-x-auto">
-                {mediaList.map((media, idx) => {
-                  const typeLabel = ATTACHMENT_LABELS[media.type] ?? media.type;
-                  const label = mediaList.filter(m => m.type === media.type).length > 1
-                    ? `${typeLabel} ${mediaList.slice(0, idx + 1).filter(m => m.type === media.type).length}`
-                    : typeLabel;
-                  return (
-                    <button
-                      key={media.id}
-                      onClick={() => setSelectedMediaIdx(idx)}
-                      className={`px-3 py-1 rounded-full text-sm whitespace-nowrap transition-colors ${
-                        selectedMediaIdx === idx
-                          ? 'bg-primary text-black font-medium'
-                          : 'bg-white/10 text-white/70 hover:bg-white/20'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
             {/* Video Player */}
             {playbackLoading ? (
               <div className="flex items-center justify-center h-64 bg-black">
