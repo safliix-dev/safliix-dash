@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { MediaPage, MetadataComponentProps, FilesComponentProps } from "@/ui/layout/mediaPage";
 import { useSeriesForm } from "./useSerieForm";
@@ -27,18 +27,17 @@ export default function SeriesPage() {
     setCountries(getCountries("fr"));
   }, []);
 
-  const SeriesMetadataComponent = ({
-    control,
-    errors,
-    meta
-  }: MetadataComponentProps<SeriesFormData, SeriesMetaOptions>) => (
-    <SeriesMetadataStep
-      control={control}
-      errors={errors}
-      meta={meta}
-      countries={countries}
-      setValue={setValue}
-    />
+  const SeriesMetadataComponent = useCallback(
+    ({ control, errors, meta }: MetadataComponentProps<SeriesFormData, SeriesMetaOptions>) => (
+      <SeriesMetadataStep
+        control={control}
+        errors={errors}
+        meta={meta}
+        countries={countries}
+        setValue={setValue}
+      />
+    ),
+    [countries, setValue]
   );
 
   const SeriesFilesComponent = ({

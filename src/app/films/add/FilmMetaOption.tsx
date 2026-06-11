@@ -22,7 +22,6 @@ interface FilmMetadataStepProps {
     refresh: () => Promise<void>;
   };
   countries: CountryEntry[];
-  typeValue: string;
   setValue:  UseFormSetValue<FilmFormData>;
 }
 export function FilmMetadataStep({
@@ -30,7 +29,7 @@ export function FilmMetadataStep({
   errors,
   meta,
   countries,
-  setValue
+  setValue,
 }: FilmMetadataStepProps) {
   // Surveiller directement le champ "type" dans le composant (au lieu de recevoir typeValue en prop)
   const watchedType = useWatch({ control, name: "type" });

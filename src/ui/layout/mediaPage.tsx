@@ -281,8 +281,9 @@ export function MediaPage<
               onPrevious={() => setCurrentStep(0)}
               isSubmitting={dialogStatus === 'loading'}
               isLastStep={currentStep === 1}
-              nextLabel="Continuer vers les fichiers"
+              nextLabel={initialId && currentStep === 0 ? "Sauvegarder les modifications" : "Continuer vers les fichiers"}
               finalLabel="Publier"
+              skipAction={initialId && currentStep === 0 ? { label: "Passer aux fichiers →", onClick: () => setCurrentStep(1) } : undefined}
             />
           </div>
         </div>
