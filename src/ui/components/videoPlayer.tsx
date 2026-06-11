@@ -431,11 +431,13 @@ const VideoPlayer = ({ src, title, onProgress, autoPlay = false, onSubscriptionE
       const video = videoRef.current;
       if (!video) return;
 
-      // Éviter les conflits avec les champs texte/select, mais pas les range sliders
+      // Bloquer uniquement les champs texte/select — pas les range sliders ni les boutons
       const activeEl = document.activeElement as HTMLInputElement | null;
       if (activeEl?.tagName === 'TEXTAREA') return;
       if (activeEl?.tagName === 'SELECT') return;
       if (activeEl?.tagName === 'INPUT' && activeEl.type !== 'range') return;
+      // Empêcher le double-déclenchement quand un bouton du player a le focus
+      if (activeEl?.tagName === 'BUTTON') e.preventDefault();
 
       switch (e.key.toLowerCase()) {
         case ' ':
@@ -494,6 +496,11 @@ const VideoPlayer = ({ src, title, onProgress, autoPlay = false, onSubscriptionE
   }, [volume, togglePlay, handleVolumeChange, toggleMute,showControlsTemporarily, toggleFullScreen]);
 
 
+  // Focus le container au montage pour que les raccourcis clavier fonctionnent immédiatement
+  useEffect(() => {
+    containerRef.current?.focus();
+  }, []);
+
   if (!mounted) return null;
 
   if (!effectiveSrc) {
@@ -503,11 +510,6 @@ const VideoPlayer = ({ src, title, onProgress, autoPlay = false, onSubscriptionE
       </div>
     );
   }
-
-  // Focus le container au montage pour que les raccourcis clavier fonctionnent immédiatement
-  useEffect(() => {
-    containerRef.current?.focus();
-  }, []);
 
   return (
     <div
@@ -575,7 +577,10 @@ const VideoPlayer = ({ src, title, onProgress, autoPlay = false, onSubscriptionE
             onChange={(e) => handleSeek(Number(e.target.value))}
             onMouseDown={() => setIsDragging(true)}
             onMouseUp={() => setIsDragging(false)}
-            className="w-full h-1 bg-white/30 rounded-lg appearance-none cursor-pointer hover:h-1.5 transition-all [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white hover:[&::-webkit-slider-thumb]:w-4 hover:[&::-webkit-slider-thumb]:h-4"
+            style={{
+              background: `linear-gradient(to right, var(--color-primary) ${progress}%, rgba(255,255,255,0.2) ${progress}%)`
+            }}
+            className="w-full h-1 rounded-lg appearance-none cursor-pointer hover:h-1.5 transition-all [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white hover:[&::-webkit-slider-thumb]:w-4 hover:[&::-webkit-slider-thumb]:h-4"
             aria-label="Progression vidéo"
             aria-valuemin={0}
             aria-valuemax={100}
@@ -609,7 +614,10 @@ const VideoPlayer = ({ src, title, onProgress, autoPlay = false, onSubscriptionE
               step={0.01}
               value={isMuted ? 0 : volume}
               onChange={(e) => handleVolumeChange(Number(e.target.value))}
-              className="w-20 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+              style={{
+                background: `linear-gradient(to right, var(--color-primary) ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.2) ${(isMuted ? 0 : volume) * 100}%)`
+              }}
+              className="w-20 h-1 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
               aria-label="Volume"
             />
           </div>

@@ -7,6 +7,7 @@ import ConfirmationDialog from "@/ui/components/confirmationDialog";
 import type { ContentStatus, ContentAction } from "@/types/api/common";
 import VideoPlayer from "../../../components/videoPlayer";
 import { usePlayback } from "@/lib/hooks/usePlayback";
+import { isVideoAttachment } from "@/types/api/attachments";
 import type { PlaybackAttachmentType } from "@/types/api/playback";
 
 export type NormalizedStats = {
@@ -450,10 +451,10 @@ export default function VideoCard({
               Échap ✕
             </div>
 
-            {/* Sélecteur d'attachment */}
-            {attachments.length > 1 && (
+            {/* Sélecteur d'attachment — uniquement les types vidéo jouables */}
+            {attachments.filter(a => isVideoAttachment(a.type)).length > 1 && (
               <div className="flex gap-2 px-4 py-3 bg-black border-b border-white/10">
-                {attachments.map(({ type }) => (
+                {attachments.filter(a => isVideoAttachment(a.type)).map(({ type }) => (
                   <button
                     key={type}
                     onClick={() => handleSwitchAttachment(type as PlaybackAttachmentType)}
