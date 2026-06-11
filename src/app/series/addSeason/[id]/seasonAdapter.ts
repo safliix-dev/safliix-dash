@@ -93,7 +93,7 @@ export const seasonAdapter: MediaFormEngineConfig<
      mediaFileIds: slots.map(s => s.mediaFileId)
     };
 
-    const res = await uploadApi.finalizeUploads(id, payload);
+    const res = await uploadApi.finalizeUploads("season", id, payload);
     
     if (!res || (res.ok === false)) {
       throw new Error("La finalisation de l'upload a échoué côté serveur.");

@@ -60,7 +60,7 @@ export function AttachmentUpdateModal({
         },
       });
 
-      await uploadApi.finalizeUploads(contentId, {
+      await uploadApi.finalizeUploads(apiContentType, contentId, {
         entityId: contentId,
         mediaFileIds: [slots[0].mediaFileId],
       });

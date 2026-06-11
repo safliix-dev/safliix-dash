@@ -126,7 +126,7 @@ export const filmAdapter: MediaFormEngineConfig<
       entityId: id,
       mediaFileIds: slots.map((s) => s.mediaFileId),
     };
-    const res = await uploadApi.finalizeUploads(id, payload);
+    const res = await uploadApi.finalizeUploads("movie", id, payload);
     
     if (!res || (res.ok === false)) {
       throw new Error("La finalisation de l'upload a échoué côté serveur.");

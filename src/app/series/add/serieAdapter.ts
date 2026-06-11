@@ -142,7 +142,7 @@ export const seriesAdapter: MediaFormEngineConfig<
       mediaFileIds:slots.map(s => s.mediaFileId)
     };
 
-    const res = await uploadApi.finalizeUploads(id, payload);
+    const res = await uploadApi.finalizeUploads("serie", id, payload);
 
     if (!res || res.ok === false) {
       throw new Error("La finalisation des uploads série a échoué.");

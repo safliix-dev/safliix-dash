@@ -101,7 +101,7 @@ export const AdsAdapter: MediaFormEngineConfig<
       mediaFileIds:slots.map(s => s.mediaFileId)
     };
 
-    const res = await uploadApi.finalizeUploads(id, payload);
+    const res = await uploadApi.finalizeUploads("ad", id, payload);
     
     if (!res || (res.ok === false)) {
       throw new Error("La finalisation de l'upload a échoué côté serveur.");
