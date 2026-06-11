@@ -52,14 +52,10 @@ export function FilmMetadataStep({
     { value: "18", label: "Déconseillé aux moins de 18 ans" },
   ];
 
-  // Options pour les langues
-  const languageOptions = ([
-    { value: "fr", label: "français" },
-    { value: "en", label: "anglais" },
-  ]).map((item): { value: string; label: string } => ({
-    value: item.value,
-    label: item.label
-  }));
+  const defaultLanguages = [
+    "français", "anglais", "espagnol", "arabe", "portugais",
+    "wolof", "bambara", "haoussa", "swahili", "lingala",
+  ];
 
   return (
     <>
@@ -420,19 +416,14 @@ export function FilmMetadataStep({
             control={control}
             rules={{ required: "La langue est obligatoire" }}
             render={({ field }) => (
-              <select
+              <SuggestionsInput
+                optionList={
+                  (meta.options?.languages ?? defaultLanguages).map((l) => ({ label: l, value: l }))
+                }
                 {...field}
                 value={field.value ?? ""}
-                onChange={(e) => field.onChange(e.target.value)}
-                className="input bg-base-200 border-base-300 w-full"
-              >
-                <option value="">Sélectionnez une langue</option>
-                {languageOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                className="input bg-base-200 border-base-300"
+              />
             )}
           />
           {errors.language && <p className="text-red-600 text-sm">{errors.language.message as string}</p>}

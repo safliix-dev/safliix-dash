@@ -7,6 +7,11 @@ import { Controller } from "react-hook-form";
 import { Control, FieldErrors, UseFormSetValue } from "react-hook-form";
 import InputField, { MultipleInputField } from "@/ui/components/inputField";
 import SuggestionsInput from "@/ui/components/suggestionField";
+
+const defaultLanguages = [
+  "français", "anglais", "espagnol", "arabe", "portugais",
+  "wolof", "bambara", "haoussa", "swahili", "lingala",
+];
 import { ActorsSelector } from "@/ui/components/form/ActorSelector";
 import { CountryMultiSelect } from "@/ui/components/form/CountryMultiSelect";
 import type { SeriesFormData, SeriesMetaOptions } from "@/types/api/series";
@@ -331,8 +336,8 @@ export function SeriesMetadataStep({
         />
       </div>
 
-      {/* Langue et Classification */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Langue, Classification et Type du programme */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
           <label className="label text-sm mb-1">Langue <span className="text-red-500">*</span></label>
           <Controller
@@ -340,16 +345,14 @@ export function SeriesMetadataStep({
             control={control}
             rules={{ required: "La langue est obligatoire" }}
             render={({ field }) => (
-              <select
+              <SuggestionsInput
+                optionList={
+                  (meta.options?.languages ?? defaultLanguages).map((l) => ({ label: l, value: l }))
+                }
                 {...field}
                 value={field.value ?? ""}
-                onChange={(e) => field.onChange(e.target.value)}
-                className="input bg-base-200 border-base-300 w-full"
-              >
-                <option value="">Sélectionnez une langue</option>
-                <option value="fr">français</option>
-                <option value="en">anglais</option>
-              </select>
+                className="input bg-base-200 border-base-300"
+              />
             )}
           />
           {errors.language && <p className="text-red-600 text-sm">{errors.language.message as string}</p>}
@@ -373,6 +376,24 @@ export function SeriesMetadataStep({
                 <option value="14">Déconseillé aux moins de 14 ans</option>
                 <option value="16">Déconseillé aux moins de 16 ans</option>
                 <option value="18">Déconseillé aux moins de 18 ans</option>
+              </select>
+            )}
+          />
+        </div>
+        <div>
+          <label className="label text-sm mb-1">Type du programme</label>
+          <Controller
+            name="entertainmentMode"
+            control={control}
+            render={({ field }) => (
+              <select
+                {...field}
+                value={field.value ?? "SERIE"}
+                onChange={(e) => field.onChange(e.target.value)}
+                className="input bg-base-200 border-base-300 w-full"
+              >
+                <option value="SERIE">Série</option>
+                <option value="Divers">Divers</option>
               </select>
             )}
           />

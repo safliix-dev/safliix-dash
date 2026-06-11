@@ -48,7 +48,7 @@ function mapSeriesDetailToFormData(detail: SeriesDetail): SeriesFormData {
     haveSubtitles: detail.haveSubtitles ?? false,
     subtitleLanguages: detail.subtitleLanguages ?? [],
     rightHolderId: detail.rightHolderId ?? "",
-    entertainmentMode: "SERIE",
+    entertainmentMode: detail.entertainmentMode ?? "SERIE",
     mainImage: null,
     secondaryImage: null,
     trailerFile: null,

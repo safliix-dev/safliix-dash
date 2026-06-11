@@ -40,7 +40,7 @@ export const seriesAdapter: MediaFormEngineConfig<
     plateformDate: data.publishDate,
     seasonCount: data.seasonCount,
     category: data.category,
-    entertainmentMode: "SERIE",
+    entertainmentMode: data.entertainmentMode,
     gender: data.genre,
     director: data.director,
     actors: data.actors,

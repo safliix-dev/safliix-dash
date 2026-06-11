@@ -24,7 +24,7 @@ export type SeriesFormData = {
   mainImage: File | null;
   secondaryImage: File | null;
   trailerFile: File | null;
-  entertainmentMode: "SERIE";
+  entertainmentMode: string;
 };
 
 export interface SeriesMetaOptions {
@@ -122,7 +122,7 @@ export interface SeriesMetadataPayload {
   plateformDate: string;
   seasonCount: number | null;
   category: string;
-  entertainmentMode: "SERIE";
+  entertainmentMode: string;
   gender: string;
   director: string;
   actors: { actorId?: string; name: string }[];
