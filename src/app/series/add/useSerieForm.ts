@@ -59,7 +59,7 @@ export function useSeriesForm(initialId?: string) {
   const loadMetaOptions = useCallback(() => seriesApi.metaOptions(), []);
   const meta = useMetaOptions(loadMetaOptions);
 
-  const engine = useMediaFormEngine(seriesAdapter, {
+  const defaultValues: SeriesFormData = {
     title: "",
     description: "",
     productionHouse: "",
@@ -82,7 +82,9 @@ export function useSeriesForm(initialId?: string) {
     secondaryImage: null,
     mainImage: null,
     trailerFile: null,
-  });
+  };
+
+  const engine = useMediaFormEngine(seriesAdapter, defaultValues);
 
   useEffect(() => {
     if (!initialId) return;
