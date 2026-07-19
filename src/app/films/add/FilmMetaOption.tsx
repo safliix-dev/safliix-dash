@@ -24,6 +24,7 @@ interface FilmMetadataStepProps {
   countries: CountryEntry[];
   setValue:  UseFormSetValue<FilmFormData>;
 }
+
 export function FilmMetadataStep({
   control,
   errors,
@@ -52,10 +53,24 @@ export function FilmMetadataStep({
     { value: "18", label: "Déconseillé aux moins de 18 ans" },
   ];
 
+  // Langues par défaut (fallback si le backend n'en fournit pas)
   const defaultLanguages = [
     "français", "anglais", "espagnol", "arabe", "portugais",
     "wolof", "bambara", "haoussa", "swahili", "lingala",
+    "amharique", "yoruba", "igbo", "hausa", "peul",
+    "fon", "ewe", "kikongo", "tshiluba", "sango"
   ];
+
+  // Fusion des langues du backend avec les langues par défaut
+  // On utilise un Set pour éliminer les doublons
+  const getLanguageOptions = () => {
+    const backendLanguages = meta.options?.languages ?? [];
+    const allLanguages = [...new Set([...defaultLanguages, ...backendLanguages])];
+    return allLanguages.map((lang) => ({
+      label: lang,
+      value: lang
+    }));
+  };
 
   return (
     <>
@@ -406,7 +421,7 @@ export function FilmMetadataStep({
           />
         </div>
 
-        {/* Langue */}
+        {/* Langue - Version améliorée avec fusion des données */}
         <div>
           <label className="label text-sm mb-1">
             Langue <span className="text-red-500">*</span>
@@ -417,9 +432,7 @@ export function FilmMetadataStep({
             rules={{ required: "La langue est obligatoire" }}
             render={({ field }) => (
               <SuggestionsInput
-                optionList={
-                  (meta.options?.languages ?? defaultLanguages).map((l) => ({ label: l, value: l }))
-                }
+                optionList={getLanguageOptions()}
                 {...field}
                 value={field.value ?? ""}
                 className="input bg-base-200 border-base-300"
@@ -427,6 +440,10 @@ export function FilmMetadataStep({
             )}
           />
           {errors.language && <p className="text-red-600 text-sm">{errors.language.message as string}</p>}
+          {/* Affichage du nombre de langues disponibles */}
+          <p className="text-xs text-gray-500 mt-1">
+            {getLanguageOptions().length} langues disponibles
+          </p>
         </div>
 
         {/* Age rating */}

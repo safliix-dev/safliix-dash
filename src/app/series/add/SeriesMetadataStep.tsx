@@ -7,11 +7,6 @@ import { Controller } from "react-hook-form";
 import { Control, FieldErrors, UseFormSetValue } from "react-hook-form";
 import InputField, { MultipleInputField } from "@/ui/components/inputField";
 import SuggestionsInput from "@/ui/components/suggestionField";
-
-const defaultLanguages = [
-  "français", "anglais", "espagnol", "arabe", "portugais",
-  "wolof", "bambara", "haoussa", "swahili", "lingala",
-];
 import { ActorsSelector } from "@/ui/components/form/ActorSelector";
 import { CountryMultiSelect } from "@/ui/components/form/CountryMultiSelect";
 import type { SeriesFormData, SeriesMetaOptions } from "@/types/api/series";
@@ -36,6 +31,35 @@ export function SeriesMetadataStep({
   meta,
   countries,
 }: SeriesMetadataStepProps) {
+  // Langues par défaut (fallback si le backend n'en fournit pas)
+  const defaultLanguages = [
+    "français", "anglais", "espagnol", "arabe", "portugais",
+    "wolof", "bambara", "haoussa", "swahili", "lingala",
+    "amharique", "yoruba", "igbo", "hausa", "peul",
+    "fon", "ewe", "kikongo", "tshiluba", "sango"
+  ];
+
+  // Fusion des langues du backend avec les langues par défaut
+  // On utilise un Set pour éliminer les doublons
+  const getLanguageOptions = () => {
+    const backendLanguages = meta.options?.languages ?? [];
+    const allLanguages = [...new Set([...defaultLanguages, ...backendLanguages])];
+    return allLanguages.map((lang) => ({
+      label: lang,
+      value: lang
+    }));
+  };
+
+  // Options pour la classification d'âge
+  const ageRatingOptions = [
+    { value: "TP", label: "Tous publics" },
+    { value: "10", label: "Déconseillé aux moins de 10 ans" },
+    { value: "12", label: "Déconseillé aux moins de 12 ans" },
+    { value: "14", label: "Déconseillé aux moins de 14 ans" },
+    { value: "16", label: "Déconseillé aux moins de 16 ans" },
+    { value: "18", label: "Déconseillé aux moins de 18 ans" },
+  ];
+
   return (
     <div className="flex flex-col gap-3">
       {/* Titre */}
@@ -338,6 +362,7 @@ export function SeriesMetadataStep({
 
       {/* Langue, Classification et Type du programme */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* Langue - Version améliorée avec fusion des données */}
         <div>
           <label className="label text-sm mb-1">Langue <span className="text-red-500">*</span></label>
           <Controller
@@ -346,9 +371,7 @@ export function SeriesMetadataStep({
             rules={{ required: "La langue est obligatoire" }}
             render={({ field }) => (
               <SuggestionsInput
-                optionList={
-                  (meta.options?.languages ?? defaultLanguages).map((l) => ({ label: l, value: l }))
-                }
+                optionList={getLanguageOptions()}
                 {...field}
                 value={field.value ?? ""}
                 className="input bg-base-200 border-base-300"
@@ -356,7 +379,13 @@ export function SeriesMetadataStep({
             )}
           />
           {errors.language && <p className="text-red-600 text-sm">{errors.language.message as string}</p>}
+          {/* Affichage du nombre de langues disponibles */}
+          <p className="text-xs text-gray-500 mt-1">
+            {getLanguageOptions().length} langues disponibles
+          </p>
         </div>
+
+        {/* Classification (âge) */}
         <div>
           <label className="label text-sm mb-1">Classification (âge)</label>
           <Controller
@@ -370,16 +399,17 @@ export function SeriesMetadataStep({
                 className="input bg-base-200 border-base-300 w-full"
               >
                 <option value="">Sélectionnez une classification</option>
-                <option value="TP">Tous publics</option>
-                <option value="10">Déconseillé aux moins de 10 ans</option>
-                <option value="12">Déconseillé aux moins de 12 ans</option>
-                <option value="14">Déconseillé aux moins de 14 ans</option>
-                <option value="16">Déconseillé aux moins de 16 ans</option>
-                <option value="18">Déconseillé aux moins de 18 ans</option>
+                {ageRatingOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             )}
           />
         </div>
+
+        {/* Type du programme */}
         <div>
           <label className="label text-sm mb-1">Type du programme</label>
           <Controller

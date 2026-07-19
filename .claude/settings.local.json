@@ -16,7 +16,23 @@
       "Bash(xargs grep -l \"episode\")",
       "Bash(git diff *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(git commit *)",
+      "Bash(node -e \"const p=require\\('./package.json'\\); const deps={...p.dependencies,...p.devDependencies}; console.log\\('jszip:', deps['jszip']||'non installé'\\); console.log\\('@react-pdf/renderer:', deps['@react-pdf/renderer']||'non installé'\\);\")",
+      "Bash(npm install *)",
+      "Bash(node -e \"console.log\\(require\\('./package.json'\\).dependencies.jszip\\)\")",
+      "Bash(git pull *)",
+      "Bash(git stash *)",
+      "Bash(python *)",
+      "Bash(pip install *)",
+      "PowerShell(Get-ChildItem -Recurse -Path \"C:\\\\Users\\\\USER\\\\Desktop\\\\projet\\\\safliix\\\\safliix-dash\\\\src\\\\app\\\\series\" -ErrorAction SilentlyContinue | Where-Object {$_.Extension -match '\\\\.\\(tsx|ts|jsx|js\\)$'} | ForEach-Object {$_.FullName})",
+      "PowerShell(Get-ChildItem -Recurse -Path \"C:\\\\Users\\\\USER\\\\Desktop\\\\projet\\\\safliix\\\\safliix-dash\\\\src\\\\ui\\\\specific\" -ErrorAction SilentlyContinue | Where-Object {$_.Extension -match '\\\\.\\(tsx|ts|jsx|js\\)$'} | ForEach-Object {$_.FullName})",
+      "PowerShell(Get-ChildItem -Recurse -Path \"C:\\\\Users\\\\USER\\\\Desktop\\\\projet\\\\safliix\\\\safliix-dash\\\\src\\\\ui\\\\specific\" -ErrorAction SilentlyContinue | ForEach-Object {$_.FullName})",
+      "PowerShell(Get-ChildItem -Directory -Path \"C:\\\\Users\\\\USER\\\\Desktop\\\\projet\\\\safliix\\\\safliix-dash\\\\src\\\\ui\\\\specific\" -ErrorAction SilentlyContinue | ForEach-Object {$_.FullName})",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\USER\\\\Desktop\\\\projet\\\\safliix\\\\safliix-dash\" -Recurse -Directory | Where-Object { $_.Name -match \"\\(components|ui|layout\\)\" } | Select-Object -First 20)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\USER\\\\Desktop\\\\projet\\\\safliix\\\\safliix-dash\\\\src\\\\app\" -Recurse -Filter \"page.tsx\")",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(xargs grep -l \"report\" -i)"
     ]
   }
 }

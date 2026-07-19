@@ -23,8 +23,9 @@ interface AdsMetadataStepProps {
 export function AdsMetadataStep({
   control,
   errors,
-  meta
 }: AdsMetadataStepProps) {
+  
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -113,13 +114,12 @@ export function AdsMetadataStep({
             render={({ field }) => (
               <select
                 {...field}
-                value={field.value ?? ""}
+                value={field.value ?? "active"} // Valeur par défaut
                 onChange={(e) => field.onChange(e.target.value)}
                 className="input bg-base-200 border-base-300 w-full"
               >
-                {meta.options?.statusOptions?.map((status) => (
-                  <option key={status} value={status}>{status}</option>
-                ))}
+                <option value="active">Actif</option>
+                <option value="inactive">Inactif</option>
               </select>
             )}
           />
