@@ -13,7 +13,7 @@ export const uploadApi = {
   ) =>
     apiRequest<UploadSlot<TKey>[]>(`/uploads/presign-uploads`, {
       method: "POST",
-      body: { files },
+      body: { entityId, entityType, files },
     }),
 
   finalizeUploads: (
@@ -23,7 +23,7 @@ export const uploadApi = {
   ) =>
     apiRequest<{ ok: boolean }>(`/uploads/confirm-upload`, {
       method: "POST",
-      body: { mediaFileIds: payload.mediaFileIds },
+      body: { entityId, entityType, mediaFileIds: payload.mediaFileIds },
     }),
 
   changeStatus: (id: string, type: string, status: string) =>
