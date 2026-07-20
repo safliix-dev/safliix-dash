@@ -11,7 +11,7 @@ export const uploadApi = {
     entityType: string,
     files: UploadFileDescriptor<TKey>[],
   ) =>
-    apiRequest<UploadSlot<TKey>[]>(`/admin/contents/${entityType}/${entityId}/attachments`, {
+    apiRequest<UploadSlot<TKey>[]>(`/uploads/presign-uploads`, {
       method: "POST",
       body: { files },
     }),
@@ -21,8 +21,8 @@ export const uploadApi = {
     entityId: string,
     payload: UploadFinalizePayload,
   ) =>
-    apiRequest<{ ok: boolean }>(`/admin/contents/${entityType}/${entityId}/attachments`, {
-      method: "PATCH",
+    apiRequest<{ ok: boolean }>(`/uploads/confirm-upload`, {
+      method: "POST",
       body: { mediaFileIds: payload.mediaFileIds },
     }),
 

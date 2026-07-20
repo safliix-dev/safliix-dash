@@ -32,7 +32,7 @@ export function AdsFilesStep({
           id="main"
           label="Image principale"
           value={mainImage as File | null}
-          className="min-h-[220px]"
+          className="min-h-55"
           onFileSelect={(file) => setValue("mainImage", file ?? null, { shouldValidate: true })}
         />
 
@@ -41,7 +41,7 @@ export function AdsFilesStep({
           id="sec"
           label="Image secondaire"
           value={secondaryImage as File | null}
-          className="min-h-[220px]"
+          className="min-h-55"
           onFileSelect={(file) => setValue("secondaryImage", file ?? null, { shouldValidate: false })}
         />
       </div>
