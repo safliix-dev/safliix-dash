@@ -51,6 +51,7 @@ export const AdsAdapter: MediaFormEngineConfig<
     if (!res?.id) {
       throw new Error("Format de réponse invalide");
     }
+    console.log('pub id:'+id);
     
     return res.id;
   },
@@ -59,8 +60,8 @@ export const AdsAdapter: MediaFormEngineConfig<
     if (files.length === 0) return [];
 
     const attachmentTypeMap: Record<AdsSlot, string> = {
-      mainImage: "ADVERTISEMENT",
-      secondaryImage: "THUMBNAIL",
+      mainImage: "THUMBNAIL",
+      secondaryImage: "POSTER",
     };
 
     const descriptors: UploadFileDescriptor<AdsSlot>[] = files.map(f => ({
