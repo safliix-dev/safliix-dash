@@ -63,6 +63,7 @@ export default function FilmsPage() {
 
   const extractFilmStats = (film: FilmListItem): NormalizedStats => {
     const stats = film.stats;
+    console.dir('film stats:', stats);
     if (!stats) {
       return {
         locationsCount: 0,
@@ -76,6 +77,7 @@ export default function FilmsPage() {
 
     if (stats.type === "abonnement") {
       const s = stats.stats;
+      console.dir('abonnement stats:', s);
       return {
         locationsCount: 0,
         revenue: s.revenue,
@@ -88,6 +90,7 @@ export default function FilmsPage() {
 
     if (stats.type === "location") {
       const s = stats.stats;
+      console.dir('location stats:', s);
       return {
         locationsCount: s.totalRentals,
         revenue: s.revenue,

@@ -18,7 +18,6 @@ export interface AdsItem {
   number?: string | number;
   poster?: string;
   banner?: string;
-  image?: string;
   cover?: string;
   createdAt?: string;
   score?: number;
@@ -65,6 +64,7 @@ export interface AdsMetadataPayload {
   endDate: string;
   line: string;
   status: string;
+  poster?: string;
 }
 
 export interface AdsMetaOptions {

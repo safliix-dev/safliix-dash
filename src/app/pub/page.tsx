@@ -62,7 +62,7 @@ const normalizeAd = (ad: AdsItem, index: number): Campaign => {
 
   const addedAt = ad.createdAt || ad.startDate || new Date().toISOString();
   const number = String(ad.number ?? index + 1).padStart(2, "0");
-  const poster = ad.poster || ad.banner || ad.image || ad.cover || "/pub_stat.jpg";
+  const poster = ad.poster || ad.banner  || ad.cover || "/pub_stat.jpg";
   const status = ad.status || "Actif";
   const score = toNumber(ad.score ?? ad.stats?.views ?? views + interactions);
 
@@ -234,7 +234,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
         <div className="col-span-12 lg:col-span-4 flex gap-4">
           <div className="relative h-32 w-48 overflow-hidden rounded-xl border border-base-300/60 bg-neutral/60 shadow-inner">
             <Image src={campaign.poster ?? ""} alt={campaign.creative} className="h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-transparent" />
             <div className="absolute bottom-2 left-3">
               <p className="text-sm font-semibold text-white">{campaign.creative}</p>
             </div>
