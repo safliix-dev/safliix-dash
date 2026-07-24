@@ -11,6 +11,7 @@ import { ContentListReport, type ContentListEntry } from '@/ui/pdf/ContentListRe
 import { imageRightsApi } from '@/lib/api/imageRights';
 import type { RightsHolderContentResponse } from '@/types/api/imageRights';
 import type { JSX } from 'react';
+import { RentalFilmStats, SubscriptionFilmStats } from '@/types/api/films';
 
 // ─── Définition des rapports disponibles ─────────────────────────────────────
 
@@ -67,8 +68,8 @@ function buildFinanceLocation(
         title: film.title,
         category: film.category || '',
         format: film.format || '',
-        rentals: film.stats?.type === 'location' ? film.stats.stats.totalRentals : '',
-        totalRevenue: film.stats?.stats.revenue || '',
+        rentals: film.type === 'location' ? (film.stats as RentalFilmStats)?.totalRentals : '',
+        totalRevenue: film.stats?.revenue || '',
       }));
   });
   return <FinanceLocationReport periodStart={pStart} periodEnd={pEnd} entries={entries} />;
@@ -85,7 +86,7 @@ function buildFinanceAbonnement(
     return group.movies
       .filter(m => m.type === 'abonnement' && m.entertainmentMode !== 'Divers')
       .map(film => {
-        const s = film.stats?.type === 'abonnement' ? film.stats.stats : null;
+        const s = film.type === 'abonnement' ? film.stats as SubscriptionFilmStats : null;
         return {
           order: String(n++).padStart(3, '0'),
           rightsholderName: name,
