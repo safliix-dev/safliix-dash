@@ -11,7 +11,7 @@ import { ContentListReport, type ContentListEntry } from "@/ui/pdf/ContentListRe
 import { imageRightsApi } from "@/lib/api/imageRights";
 import type { RightsHolderContentResponse } from "@/types/api/imageRights";
 import type { JSX } from "react";
-import type { FilmListItem } from "@/types/api/films";
+import type { FilmListItem, RentalFilmStats, SubscriptionFilmStats } from "@/types/api/films";
 import type { SeriesListItem } from "@/types/api/series";
 
 type Mode = "location" | "abonnement";
@@ -75,8 +75,8 @@ function buildDocument(
         title: film.title,
         category: film.category || "",
         format: film.format || "",
-        rentals: film.stats?.type === "location" ? film.stats.stats.totalRentals : 0,
-        totalRevenue: film.stats?.stats.revenue || 0,
+        rentals: film.type === "location" ? (film.stats as RentalFilmStats)?.totalRentals : 0,
+        totalRevenue: film.stats?.revenue || 0,
       }));
     return (
       <LocationReport
@@ -97,7 +97,7 @@ function buildDocument(
   const entries: AbonnementEntry[] = items.map((item, idx) => {
     if (contentType === "movie") {
       const film = item as FilmListItem;
-      const s = film.stats?.type === "abonnement" ? film.stats.stats : null;
+      const s = film.type === "abonnement" ? film.stats as SubscriptionFilmStats : null;
       return {
         order: String(idx + 1).padStart(3, "0"),
         title: film.title,
