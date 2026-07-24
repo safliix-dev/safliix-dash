@@ -33,15 +33,8 @@ export interface RentalFilmStats {
 }
 
 
-export type FilmStatsByType =
-  | {
-      type: "abonnement";
-      stats: SubscriptionFilmStats;
-    }
-  | {
-      type: "location";
-      stats: RentalFilmStats;
-    };
+export type FilmStatsByType = SubscriptionFilmStats | RentalFilmStats;
+    
 
 
 

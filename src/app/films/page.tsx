@@ -14,7 +14,7 @@ import { useFilmManagement } from "./useFilmManagement";
 import { useContentAction } from "@/lib/hooks/useContentAction";
 import type { NormalizedStats } from "@/ui/specific/films/components/videoCard";
 import FilterBtn from "@/ui/components/filterBtn";
-import type { FilmListItem } from "@/types/api/films";
+import type { FilmListItem, RentalFilmStats, SubscriptionFilmStats } from "@/types/api/films";
 
 export default function FilmsPage() {
   const router = useRouter();
@@ -75,8 +75,8 @@ export default function FilmsPage() {
       };
     }
 
-    if (stats.type === "abonnement") {
-      const s = stats.stats;
+    if (film.type === "abonnement") {
+      const s = stats as SubscriptionFilmStats;
       console.dir('abonnement stats:', s);
       return {
         locationsCount: 0,
@@ -88,8 +88,8 @@ export default function FilmsPage() {
       };
     }
 
-    if (stats.type === "location") {
-      const s = stats.stats;
+    if (film.type === "location") {
+      const s = stats as RentalFilmStats;
       console.dir('location stats:', s);
       return {
         locationsCount: s.totalRentals,

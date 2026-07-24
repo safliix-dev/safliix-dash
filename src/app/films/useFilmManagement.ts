@@ -9,7 +9,7 @@ const getItemsFromGroup = (group: RightsHolderContentResponse): FilmListItem[] =
 };
 
 const getRevenue = (film: FilmListItem): number => {
-  return film.stats?.stats.revenue || 0;
+  return film.stats.revenue || 0;
 };
 
 const getCreatedAt = (film: FilmListItem): string | undefined => {
