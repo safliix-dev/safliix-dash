@@ -22,7 +22,7 @@ export const columns: ColumnConfig <PlanItem>[] = [
   {
     key: "price",
     header: "Tarif",
-    render: (plan) => `${plan.price} ${plan.currency || "XOF"}`,
+    render: (plan) => `${plan.price} "XOF"}`,
   },
   {
     header: "Rabais (%)",
