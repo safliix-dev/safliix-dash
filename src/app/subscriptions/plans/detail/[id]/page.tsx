@@ -53,7 +53,7 @@ export default function Page({ params }: Props) {
   const statsPreview = useMemo(
     () => [
       { label: "Abonnés actifs", value: plan?.devices ? `${plan.devices * 10}` : "—" },
-      { label: "Revenu mensuel estimé", value: plan?.price ? `${plan.price.toLocaleString()} ${plan.currency || ""}` : "—" },
+      { label: "Revenu mensuel estimé", value: plan?.price ? `${plan.price.toLocaleString()}  "CF"}` : "—" },
       { label: "Taux de churn (placeholder)", value: "2,1%" },
     ],
     [plan],
@@ -85,7 +85,7 @@ export default function Page({ params }: Props) {
           </div>
           <div className="space-y-1 text-sm text-white/70">
             <p>
-              Tarif : {plan?.price?.toLocaleString() ?? "—"} {plan?.currency || ""} · {plan?.yearlyDiscount || "—"}
+              Tarif : {plan?.price?.toLocaleString() ?? "—"} {"CFA"} · {plan?.yearlyDiscount || "—"}
             </p>
             <p>Appareils simultanés : {plan?.devices ?? "—"}</p>
             <p>Qualité max : {plan?.videoQuality ?? "—"}</p>
