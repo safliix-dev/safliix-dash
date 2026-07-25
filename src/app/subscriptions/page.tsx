@@ -43,7 +43,7 @@ export default function Page() {
           method: s.paymentMethod,
           type: s.planId,
           pays: s.country || "",
-          monnaie: s.currency || "XOF",
+          monnaie:  "XOF",
           cout: s.total ?? 0,
           tax: 0,
           total: s.total ?? 0,
