@@ -120,25 +120,7 @@ export default function Page() {
               )}
               </div>
 
-              <div>
-                <label className="label text-sm mb-1">Devise</label>
-                <Controller
-                  name="currency"
-                  control={control}
-                  rules={{required:false}}
-                  render={({ field }) => (
-                    <select 
-                      {...field}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      
-                      className="select bg-base-200 border-base-300 w-full">
-                      <option value="XOF">XOF</option>
-                      <option value="EUR">EUR</option>
-                      <option value="USD">USD</option>
-                    </select>
-                  )}
-                />
-              </div>
+             
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -242,7 +224,6 @@ export default function Page() {
             </div>
             <div className="flex justify-between">
               <span className="text-white/60">Tarif</span>
-              <span>{pendingPlan.price} {pendingPlan.currency ?? "XOF"}</span>
             </div>
             
             
@@ -264,7 +245,7 @@ export default function Page() {
                 <div className="flex justify-between">
                   <span className="text-white/60">Tarif annuel</span>
                   <span>
-                    {annual} {pendingPlan.currency ?? "XOF"}
+                    {annual}{" cfa"}
                     {discount > 0 && <span className="text-green-400 ml-1">(-{discount}%)</span>}
                   </span>
                 </div>

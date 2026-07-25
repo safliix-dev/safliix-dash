@@ -5,7 +5,6 @@ export type PlanForm = {
   name: string;
   price: number;
   yearlyDiscount?: number; // % — optionnel
-  currency: "XOF" | "EUR" | "USD";
   maxSharedAccounts: number;
   quality: string;
   description: string;
@@ -25,7 +24,6 @@ export interface SubscriptionItem {
   startDate?: string;
   status?: string;
   total?: number;
-  currency?: string;
   userName?: string;
   country?: string;
 }
@@ -44,7 +42,6 @@ export interface PlanItem {
   status?: string;
   maxSharedAccounts: number;
   videoQuality?: string;
-  currency: string;
   description:string;
   yearlyDiscount: number;
   devices:number;
@@ -62,7 +59,6 @@ export interface PlanPayload {
   status: string;
   maxSharedAccounts: number;
   quality?: string;
-  currency?: string;
   description?: string;
 }
 

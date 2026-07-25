@@ -21,7 +21,6 @@ export function usePlanForm(id:string) {
     formState: { errors, isSubmitting },
   } = useForm<PlanForm>({
     defaultValues: {
-      currency: "XOF",
       maxSharedAccounts: 1,
       quality: "HD",
     },
@@ -48,7 +47,6 @@ export function usePlanForm(id:string) {
             name: data.name,
             price: data.price,
             yearlyDiscount: data.yearlyDiscount,
-            currency: data.currency as "XOF" | "EUR" | "USD",
             maxSharedAccounts: data.maxSharedAccounts,
             quality: data.videoQuality,
             description: data.description,
@@ -100,7 +98,6 @@ export function usePlanForm(id:string) {
             status: "active",
             maxSharedAccounts: pendingPlan.maxSharedAccounts,
             quality: pendingPlan.quality,
-            currency: pendingPlan.currency,
             description: pendingPlan.description,
           },
         ),
@@ -126,7 +123,6 @@ export function usePlanForm(id:string) {
             yearlyDiscount: discount,
             maxSharedAccounts: pendingPlan.maxSharedAccounts,
             quality: pendingPlan.quality,
-            currency: pendingPlan.currency,
             description: pendingPlan.description,
           },
         ),
