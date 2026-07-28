@@ -46,7 +46,7 @@ export function useBaseContentManagement<T extends { status: ContentStatus; type
   getRevenue,
   getCreatedAt,
 }: UseBaseContentManagementParams<T>) {
-  const [mode, setMode] = useState<DistributionMode>("location");
+  const [mode, setMode] = useState<DistributionMode>("abonnement");
   const [rawContentByRightholder, setRawContentByRightholder] = useState<RightsHolderContentResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
