@@ -131,6 +131,7 @@ function buildDocument(
       periodStart={periodStart}
       periodEnd={periodEnd}
       entries={entries}
+      contentType={contentType}
     />
   );
 }
@@ -238,18 +239,18 @@ export default function PdfPreviewModal({
       <div className="bg-base-100 rounded-2xl border border-base-300 shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden">
 
         {/* Ligne 1 : titre + période + fermeture */}
-        <div className="flex items-center gap-4 px-6 py-4 border-b border-base-300 flex-shrink-0">
-          <h2 className="font-bold text-base flex-shrink-0">{title}</h2>
+        <div className="flex items-center gap-4 px-6 py-4 border-b border-base-300 shrink-0">
+          <h2 className="font-bold text-base shrink-0">{title}</h2>
           <div className="flex-1 flex justify-center">
             <PeriodSelector value={reportPeriod} onChange={setReportPeriod} />
           </div>
-          <button onClick={onClose} className="btn btn-ghost btn-sm btn-circle flex-shrink-0">
+          <button onClick={onClose} className="btn btn-ghost btn-sm btn-circle shrink-0">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Ligne 2 : onglets sous-type + onglets mode */}
-        <div className="flex items-center gap-3 px-6 py-2 border-b border-base-300 flex-shrink-0 bg-base-200/30">
+        <div className="flex items-center gap-3 px-6 py-2 border-b border-base-300 shrink-0 bg-base-200/30">
           {/* Sous-type : Films/Séries | Divers */}
           <div className="flex items-center gap-1">
             {([["regular", subtypeRegularLabel], ["divers", "Divers"]] as [ContentSubtype, string][]).map(([val, label]) => (
@@ -293,7 +294,7 @@ export default function PdfPreviewModal({
         {/* Corps */}
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar */}
-          <div className="w-60 flex-shrink-0 border-r border-base-300 flex flex-col p-4 gap-5">
+          <div className="w-60 shrink-0 border-r border-base-300 flex flex-col p-4 gap-5">
             <div className="flex flex-col flex-1 min-h-0">
               <p className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-2">
                 Ayants-droit
@@ -327,7 +328,7 @@ export default function PdfPreviewModal({
             <button
               onClick={handleDownloadAll}
               disabled={isZipping || displayGroups.length === 0 || isFetching}
-              className="btn btn-outline btn-primary btn-sm w-full flex-shrink-0"
+              className="btn btn-outline btn-primary btn-sm w-full shrink-0"
             >
               {isZipping
                 ? <span className="loading loading-spinner loading-xs" />
@@ -345,7 +346,7 @@ export default function PdfPreviewModal({
               </div>
             ) : selectedGroup ? (
               <>
-                <div className="flex items-center justify-between px-4 py-3 border-b border-base-300 flex-shrink-0">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-base-300 shrink-0">
                   <span className="font-medium text-sm truncate">{selectedGroup.name}</span>
                   <ClientPDFDownload
                     label="Télécharger"

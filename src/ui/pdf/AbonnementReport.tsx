@@ -17,6 +17,7 @@ type Props = {
   periodStart: string;
   periodEnd: string;
   entries: AbonnementEntry[];
+  contentType?: "movie" | "serie";
 };
 
 const styles = StyleSheet.create({
@@ -84,17 +85,27 @@ const fmt = (v: string | number | null | undefined): string => {
   return v;
 };
 
-export function AbonnementReport({ rightsholderName, periodStart, periodEnd, entries }: Props) {
+export function AbonnementReport({ 
+  rightsholderName, 
+  periodStart, 
+  periodEnd, 
+  entries, 
+  contentType = "movie" 
+ }: Props) {
   const rows = [...entries];
   while (rows.length < 10) {
     rows.push({ order: "", title: "", category: "", format: "", subscriptions: "", catalogDuration: "", viewingTime: "", viewingPercentage: "", revenue: "" });
   }
 
+   const title = contentType === "serie" 
+    ? "RAPPORT FINANCIER DES ABONNEMENTS DE SÉRIES"
+    : "RAPPORT FINANCIER DES ABONNEMENTS DE FILMS";
+
   return (
     <Document>
       <Page size="A4" orientation="landscape" style={styles.page}>
         <View style={styles.banner}>
-          <Text style={styles.bannerText}>RAPPORT FINANCIER DES ABONNEMENTS DE FILMS</Text>
+          <Text style={styles.bannerText}>{title}</Text>
         </View>
 
         <View style={styles.infoRow}>
