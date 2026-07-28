@@ -1,5 +1,5 @@
 // lib/hooks/useBaseContentManagement.ts
-import { useState, useMemo, useEffect,useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useToast } from "@/ui/components/toast/ToastProvider";
 import { formatApiError } from "@/lib/api/errors";
 import { imageRightsApi } from "@/lib/api/imageRights";
@@ -52,62 +52,71 @@ export function useBaseContentManagement<T extends { status: ContentStatus; type
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortFilter, setSortFilter] = useState<SortOption>("none");
 
- 
   const toast = useToast();
 
+  // Fonction de rafraîchissement manuel
   const refreshData = useCallback(async () => {
-  setLoading(true);
-  try {
-    const res = await imageRightsApi.contentsList(contentType, {  });
-    setRawContentByRightholder(res.filter((g) => getItemsFromGroup(g).length > 0));
-  } catch (err) {
-    const friendly = formatApiError(err);
-    toast.error({ title: "Erreur", description: friendly.message });
-  } finally {
-    setLoading(false);
-  }
-}, [, contentType, getItemsFromGroup, toast]);
-  // Chargement des données
+    setLoading(true);
+    try {
+      const res = await imageRightsApi.contentsList(contentType, {});
+      setRawContentByRightholder(res.filter((g) => getItemsFromGroup(g).length > 0));
+    } catch (err) {
+      const friendly = formatApiError(err);
+      toast.error({ title: "Erreur", description: friendly.message });
+    } finally {
+      setLoading(false);
+    }
+  }, [contentType, getItemsFromGroup, toast]);
+
+  // Chargement initial des données
   useEffect(() => {
     const controller = new AbortController();
     const load = async () => {
       setLoading(true);
       try {
-        const res = await imageRightsApi.contentsList(contentType, { 
-          
-          signal: controller.signal 
+        const res = await imageRightsApi.contentsList(contentType, {
+          signal: controller.signal,
         });
-        setRawContentByRightholder(res.filter((g) => {
-          const items = getItemsFromGroup(g);
-          return items.length > 0;
-        }));
+        setRawContentByRightholder(
+          res.filter((g) => {
+            const items = getItemsFromGroup(g);
+            return items.length > 0;
+          })
+        );
       } catch (err: unknown) {
-        if (err instanceof Error && err.name === 'AbortError') return;
+        if (err instanceof Error && err.name === "AbortError") return;
         const friendly = formatApiError(err);
         toast.error({ title: "Erreur", description: friendly.message });
       } finally {
         setLoading(false);
       }
     };
+
     load();
     return () => controller.abort();
-  }, [, toast, contentType, getItemsFromGroup]);
+  }, [contentType, getItemsFromGroup, toast]);
 
-  // Calcul des options du filtre statut (avec compteurs)
+  // Calcul des options du filtre statut (recalculé en fonction du mode actif)
   const statusFilterOptions = useMemo<StatusFilterOption[]>(() => {
-    const allItems = rawContentByRightholder.flatMap(group => getItemsFromGroup(group));
-    
+    const allItems = rawContentByRightholder
+      .flatMap((group) => getItemsFromGroup(group))
+      .filter((item) => {
+        // Mode fallback : si undefined, prend "abonnement" par défaut
+        const itemType = item.type ?? "abonnement";
+        return itemType === mode;
+      });
+
     const counters: Record<string, number> = { all: 0 };
-    allItems.forEach(item => {
+    allItems.forEach((item) => {
       counters.all++;
       counters[item.status] = (counters[item.status] || 0) + 1;
     });
-    
+
     const options: StatusFilterOption[] = [
-      { value: "all", label: "Tous", count: counters.all }
+      { value: "all", label: "Tous", count: counters.all },
     ];
-    
-    (Object.keys(STATUS_CONFIG) as ContentStatus[]).forEach(status => {
+
+    (Object.keys(STATUS_CONFIG) as ContentStatus[]).forEach((status) => {
       const count = counters[status];
       if (count && count > 0) {
         options.push({
@@ -117,17 +126,20 @@ export function useBaseContentManagement<T extends { status: ContentStatus; type
         });
       }
     });
-    
+
     return options;
-  }, [rawContentByRightholder, getItemsFromGroup]);
+  }, [rawContentByRightholder, getItemsFromGroup, mode]);
 
   // Données filtrées et triées
   const filteredData = useMemo((): FilteredGroup<T>[] => {
     return rawContentByRightholder
-      .map(group => {
+      .map((group) => {
         const items = getItemsFromGroup(group);
-        const filteredItems = items.filter(item => {
-          const typeMatch = item.type === undefined || mode === item.type;
+        const filteredItems = items.filter((item) => {
+          // Mode fallback : si undefined, prend "abonnement" par défaut
+          const itemType = item.type ?? "abonnement";
+
+          const typeMatch = itemType === mode;
           const statusMatch = statusFilter === "all" || item.status === statusFilter;
           return typeMatch && statusMatch;
         });
@@ -139,14 +151,14 @@ export function useBaseContentManagement<T extends { status: ContentStatus; type
           items: filteredItems,
         };
       })
-      .filter(group => group.items.length > 0)
-      .map(group => {
+      .filter((group) => group.items.length > 0)
+      .map((group) => {
         const sortedItems = [...group.items];
-        
+
         if (sortFilter === "best") {
           sortedItems.sort((a, b) => getRevenue(b) - getRevenue(a));
         }
-        
+
         if (sortFilter === "latest") {
           sortedItems.sort((a, b) => {
             const dateA = getCreatedAt(a) ? new Date(getCreatedAt(a)!).getTime() : 0;
@@ -154,10 +166,18 @@ export function useBaseContentManagement<T extends { status: ContentStatus; type
             return dateB - dateA;
           });
         }
-        
+
         return { ...group, items: sortedItems };
       });
-  }, [rawContentByRightholder, mode, statusFilter, sortFilter, getItemsFromGroup, getRevenue, getCreatedAt]);
+  }, [
+    rawContentByRightholder,
+    mode,
+    statusFilter,
+    sortFilter,
+    getItemsFromGroup,
+    getRevenue,
+    getCreatedAt,
+  ]);
 
   return {
     // États
@@ -171,7 +191,6 @@ export function useBaseContentManagement<T extends { status: ContentStatus; type
     refreshData,
     // Données
     filteredData,
-    
     // Pour le filtre statut
     statusFilterOptions,
   };
