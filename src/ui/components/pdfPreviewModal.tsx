@@ -12,7 +12,7 @@ import { imageRightsApi } from "@/lib/api/imageRights";
 import type { RightsHolderContentResponse } from "@/types/api/imageRights";
 import type { JSX } from "react";
 import type { FilmListItem, RentalFilmStats, SubscriptionFilmStats } from "@/types/api/films";
-import type { SeriesListItem } from "@/types/api/series";
+import type { SeriesListItem, SerieStats } from "@/types/api/series";
 
 type Mode = "location" | "abonnement";
 type ContentSubtype = "regular" | "divers";
@@ -35,6 +35,16 @@ function buildFileName(lastName: string, contentType: string, mode: Mode, subtyp
   if (subtype === "divers") return `rapport-${lastName}-divers.pdf`;
   const typeLabel = contentType === "movie" ? "films" : "series";
   return `rapport-${lastName}-${typeLabel}-${mode}.pdf`;
+}
+
+// Helper pour formater les durées
+function formatDuration(minutes: number): string {
+  if (!minutes || minutes === 0) return "";
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = Math.round(minutes % 60);
+  if (hours === 0) return `${remainingMinutes}`;
+  if (remainingMinutes === 0) return `${hours}`;
+  return `${hours}h${remainingMinutes}`;
 }
 
 function buildDocument(
@@ -75,7 +85,7 @@ function buildDocument(
         title: film.title,
         category: film.category || "",
         format: film.format || "",
-        rentals: film.type === "location" ? (film.stats as RentalFilmStats)?.totalRentals : 0,
+        rentals: film.type === "location" ? (film.stats as RentalFilmStats)?.revenue : 0,
         totalRevenue: film.stats?.revenue || 0,
       }));
     return (
@@ -88,11 +98,25 @@ function buildDocument(
     );
   }
 
-  // abonnement (films ou séries)
+  // Abonnement (films ou séries)
   const items =
     contentType === "movie"
       ? rawGroup.movies.filter(m => m.entertainmentMode !== "Divers" && m.type === "abonnement")
       : rawGroup.series.filter(s => s.entertainmentMode !== "Divers");
+
+  // Récupérer les stats globales depuis le premier élément
+  const firstItem = items[0];
+  let globalCatalogDuration = "";
+  let globalViewingTime = "";
+
+  if (firstItem) {
+    const stats = contentType === "movie" 
+      ? (firstItem as FilmListItem).stats as SubscriptionFilmStats
+      : (firstItem as SeriesListItem).stats as SerieStats;
+    
+    globalCatalogDuration = formatDuration(stats.globalCatalogTotalMinutes || 0);
+    globalViewingTime = formatDuration(stats.globalViewMinutes || 0);
+  }
 
   const entries: AbonnementEntry[] = items.map((item, idx) => {
     if (contentType === "movie") {
@@ -103,11 +127,13 @@ function buildDocument(
         title: film.title,
         category: film.category || "",
         format: film.format || "",
-        subscriptions: "",
-        catalogDuration: s?.catalogTotalMinutes ?? "",
-        viewingTime: s?.totalMinutesWatched ?? "",
-        viewingPercentage: s?.subscriberViewPercentage ?? "",
-        revenue: s?.revenue ?? "",
+        catalogDuration: s?.catalogTotalMinutes ? formatDuration(s.catalogTotalMinutes) : "",
+        viewingTime: s?.totalMinutesWatched ? formatDuration(s.totalMinutesWatched) : "",
+        viewingPercentage: s?.subscriberViewPercentage ? `${s.subscriberViewPercentage.toFixed(1)}%` : "",
+        revenue: s?.revenue ? `${s.revenue.toFixed(2)}` : "",
+        // Stats globales
+        globalCatalogDuration,
+        globalViewingTime,
       };
     }
     const serie = item as SeriesListItem;
@@ -117,11 +143,13 @@ function buildDocument(
       title: serie.title,
       category: serie.category || "",
       format: serie.format || "",
-      subscriptions: "",
-      catalogDuration: s?.catalogTotalMinutes ?? "",
-      viewingTime: s?.totalMinutesWatched ?? "",
-      viewingPercentage: s?.subscriberViewPercentage ?? "",
-      revenue: s?.revenue ?? "",
+      catalogDuration: s?.catalogTotalMinutes ? formatDuration(s.catalogTotalMinutes) : "",
+      viewingTime: s?.totalMinutesWatched ? formatDuration(s.totalMinutesWatched) : "",
+      viewingPercentage: s?.subscriberViewPercentage ? `${s.subscriberViewPercentage.toFixed(1)}%` : "",
+      revenue: s?.revenue ? `${s.revenue.toFixed(2)}` : "",
+      // Stats globales
+      globalCatalogDuration,
+      globalViewingTime,
     };
   });
 

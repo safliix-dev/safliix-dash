@@ -5,11 +5,14 @@ export type AbonnementEntry = {
   title: string;
   category: string;
   format: string;
-  subscriptions: string | number;
+  // subscriptions supprimé
   catalogDuration: string | number;
   viewingTime: string | number;
   viewingPercentage: string | number;
   revenue: string | number;
+  // Nouveaux champs pour les stats globales
+  globalCatalogDuration: string | number;
+  globalViewingTime: string | number;
 };
 
 type Props = {
@@ -65,18 +68,30 @@ const styles = StyleSheet.create({
     minHeight: 22,
     alignItems: "center",
   },
-  colOrder:       { width: "7%",  paddingHorizontal: 4 },
-  colTitle:       { width: "18%", paddingHorizontal: 4 },
-  colCategory:    { width: "10%", paddingHorizontal: 4 },
-  colFormat:      { width: "8%",  paddingHorizontal: 4 },
-  colSubs:        { width: "10%", paddingHorizontal: 4, textAlign: "center" },
-  colCatalog:     { width: "12%", paddingHorizontal: 4, textAlign: "center" },
-  colViewing:     { width: "12%", paddingHorizontal: 4, textAlign: "center" },
-  colPercent:     { width: "13%", paddingHorizontal: 4, textAlign: "center" },
+  // Ajustement des largeurs des colonnes (suppression de colSubs)
+  colOrder:       { width: "6%",  paddingHorizontal: 4 },
+  colTitle:       { width: "16%", paddingHorizontal: 4 },
+  colCategory:    { width: "9%",  paddingHorizontal: 4 },
+  colFormat:      { width: "7%",  paddingHorizontal: 4 },
+  colCatalog:     { width: "11%", paddingHorizontal: 4, textAlign: "center" },
+  colViewing:     { width: "11%", paddingHorizontal: 4, textAlign: "center" },
+  colPercent:     { width: "12%", paddingHorizontal: 4, textAlign: "center" },
   colRevenue:     { width: "10%", paddingHorizontal: 4, textAlign: "center" },
+  // Nouvelles colonnes pour les stats globales
+  colGlobalCatalog: { width: "9%", paddingHorizontal: 4, textAlign: "center" },
+  colGlobalViewing: { width: "9%", paddingHorizontal: 4, textAlign: "center" },
   headerText: { fontSize: 8, fontWeight: 700 },
   rowText: { fontSize: 9 },
   footerLine: { marginTop: 8, fontSize: 9, textAlign: "right", fontStyle: "italic" },
+  // Style pour la section des totaux
+  totalRow: {
+    flexDirection: "row",
+    backgroundColor: "#f0f9ff",
+    borderTop: "1.5 solid #0EA5E9",
+    minHeight: 22,
+    alignItems: "center",
+  },
+  totalText: { fontSize: 9, fontWeight: "bold" },
 });
 
 const fmt = (v: string | number | null | undefined): string => {
@@ -91,13 +106,29 @@ export function AbonnementReport({
   periodEnd, 
   entries, 
   contentType = "movie" 
- }: Props) {
+}: Props) {
   const rows = [...entries];
   while (rows.length < 10) {
-    rows.push({ order: "", title: "", category: "", format: "", subscriptions: "", catalogDuration: "", viewingTime: "", viewingPercentage: "", revenue: "" });
+    rows.push({ 
+      order: "", 
+      title: "", 
+      category: "", 
+      format: "", 
+      catalogDuration: "", 
+      viewingTime: "", 
+      viewingPercentage: "", 
+      revenue: "",
+      globalCatalogDuration: "",
+      globalViewingTime: "",
+    });
   }
 
-   const title = contentType === "serie" 
+  // Récupérer les stats globales depuis la première entrée non vide
+  const firstValidEntry = entries.find(e => e.title !== "");
+  const globalCatalogDuration = firstValidEntry?.globalCatalogDuration || "";
+  const globalViewingTime = firstValidEntry?.globalViewingTime || "";
+
+  const title = contentType === "serie" 
     ? "RAPPORT FINANCIER DES ABONNEMENTS DE SÉRIES"
     : "RAPPORT FINANCIER DES ABONNEMENTS DE FILMS";
 
@@ -112,8 +143,12 @@ export function AbonnementReport({
           <Text style={styles.infoCell}>
             <Text style={styles.infoCellLabel}>NOM DE L&apos;AYANT DROIT :</Text> {rightsholderName}
           </Text>
-          <Text style={styles.infoCell}></Text>
-          <Text style={styles.infoCell}></Text>
+          <Text style={styles.infoCell}>
+            <Text style={styles.infoCellLabel}>TOTAL CATALOGUE :</Text> {fmt(globalCatalogDuration)}
+          </Text>
+          <Text style={styles.infoCell}>
+            <Text style={styles.infoCellLabel}>VISIONNAGE TOTAL :</Text> {fmt(globalViewingTime)}
+          </Text>
           <Text style={[styles.infoCell, { textAlign: "right" }, styles.infoCellLast]}>
             <Text style={styles.infoCellLabel}>Période</Text>{"  "}{periodStart}{"  au  "}{periodEnd}
           </Text>
@@ -121,27 +156,30 @@ export function AbonnementReport({
 
         <View style={styles.table}>
           <View style={styles.headerRow}>
-            <Text style={[styles.colOrder,    styles.headerText]}>N° D&apos;ORDRE</Text>
-            <Text style={[styles.colTitle,    styles.headerText]}>TITRE DU FILMS</Text>
-            <Text style={[styles.colCategory, styles.headerText]}>CATEGORIE</Text>
-            <Text style={[styles.colFormat,   styles.headerText]}>FORMAT</Text>
-            <Text style={[styles.colSubs,     styles.headerText]}>NOMBRE D&apos;ABONNEMENT</Text>
-            <Text style={[styles.colCatalog,  styles.headerText]}>TEMPS TOTAL DU CATALOGUE</Text>
-            <Text style={[styles.colViewing,  styles.headerText]}>TEMPS DE VISIONNAGE</Text>
-            <Text style={[styles.colPercent,  styles.headerText]}>POURCENTAGE DU TEMPS DE VISIONNAGE</Text>
-            <Text style={[styles.colRevenue,  styles.headerText]}>REVENUS DES ABONNEMENTS</Text>
+            <Text style={[styles.colOrder, styles.headerText]}>N°</Text>
+            <Text style={[styles.colTitle, styles.headerText]}>TITRE</Text>
+            <Text style={[styles.colCategory, styles.headerText]}>CATÉGORIE</Text>
+            <Text style={[styles.colFormat, styles.headerText]}>FORMAT</Text>
+            <Text style={[styles.colCatalog, styles.headerText]}>CATALOGUE (min)</Text>
+            <Text style={[styles.colViewing, styles.headerText]}>VISIONNAGE (min)</Text>
+            <Text style={[styles.colPercent, styles.headerText]}>% VISIONNAGE</Text>
+            <Text style={[styles.colRevenue, styles.headerText]}>REVENUS (€)</Text>
+            <Text style={[styles.colGlobalCatalog, styles.headerText]}>TOTAL CATALOGUE (min)</Text>
+            <Text style={[styles.colGlobalViewing, styles.headerText]}>VISIONNAGE TOTAL (min)</Text>
           </View>
+          
           {rows.map((row, idx) => (
             <View key={idx} style={[styles.row, idx === rows.length - 1 ? { borderBottomWidth: 0 } : {}]}>
-              <Text style={[styles.colOrder,    styles.rowText]}>{fmt(row.order)}</Text>
-              <Text style={[styles.colTitle,    styles.rowText]}>{fmt(row.title)}</Text>
+              <Text style={[styles.colOrder, styles.rowText]}>{fmt(row.order)}</Text>
+              <Text style={[styles.colTitle, styles.rowText]}>{fmt(row.title)}</Text>
               <Text style={[styles.colCategory, styles.rowText]}>{fmt(row.category)}</Text>
-              <Text style={[styles.colFormat,   styles.rowText]}>{fmt(row.format)}</Text>
-              <Text style={[styles.colSubs,     styles.rowText]}>{fmt(row.subscriptions)}</Text>
-              <Text style={[styles.colCatalog,  styles.rowText]}>{fmt(row.catalogDuration)}</Text>
-              <Text style={[styles.colViewing,  styles.rowText]}>{fmt(row.viewingTime)}</Text>
-              <Text style={[styles.colPercent,  styles.rowText]}>{fmt(row.viewingPercentage)}</Text>
-              <Text style={[styles.colRevenue,  styles.rowText]}>{fmt(row.revenue)}</Text>
+              <Text style={[styles.colFormat, styles.rowText]}>{fmt(row.format)}</Text>
+              <Text style={[styles.colCatalog, styles.rowText]}>{fmt(row.catalogDuration)}</Text>
+              <Text style={[styles.colViewing, styles.rowText]}>{fmt(row.viewingTime)}</Text>
+              <Text style={[styles.colPercent, styles.rowText]}>{fmt(row.viewingPercentage)}</Text>
+              <Text style={[styles.colRevenue, styles.rowText]}>{fmt(row.revenue)}</Text>
+              <Text style={[styles.colGlobalCatalog, styles.rowText]}>{fmt(row.globalCatalogDuration)}</Text>
+              <Text style={[styles.colGlobalViewing, styles.rowText]}>{fmt(row.globalViewingTime)}</Text>
             </View>
           ))}
         </View>

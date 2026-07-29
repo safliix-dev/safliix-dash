@@ -47,6 +47,11 @@ export interface SerieStats {
   catalogTotalMinutes: number;
   cumulativeViewMinutes: number;
   revenue: number;
+  
+  // Nouveaux champs pour les statistiques globales
+  globalCatalogTotalMinutes: number; // Temps total du catalogue (tous les films + séries en abonnement)
+  globalViewMinutes: number; // Temps total visionné (tous les films + séries en abonnement)
+  globalViewHours: number; // Temps total visionné en heures
 }
 
 export interface SeriesListParams extends Record<string,unknown> {
