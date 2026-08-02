@@ -155,9 +155,13 @@ export function useUploadWorkflow<TSlot extends string>() {
         return await attemptFn(abortControllerRef.current!.signal);
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
+        console.log(`[useUploadWorkflow] Tentative ${attempt + 1}/${maxRetries + 1} pour ${String(key)} a échoué:`, lastError.message);
         if (attempt === maxRetries) break;
         const shouldRetry = retryConfig?.retryCondition ? retryConfig.retryCondition(lastError, key as string) : true;
-        if (!shouldRetry) break;
+        if (!shouldRetry) {
+          console.log(`[useUploadWorkflow] Pas de nouvelle tentative pour ${String(key)} (condition non remplie)`);
+          break;
+        }
         setDetail(`Nouvelle tentative pour ${String(key)} (${attempt + 1}/${maxRetries})...`);
         await new Promise(resolve => setTimeout(resolve, retryDelay));
       }
@@ -176,6 +180,14 @@ export function useUploadWorkflow<TSlot extends string>() {
     } = {}
   ): Promise<UploadResult<TSlot>> => {
     
+    console.log('[useUploadWorkflow] 🚀 runUpload démarré', {
+      filesCount: files.length,
+      fileKeys: files.map(f => f.key),
+      retryKeys: options.retryKeys,
+      hasExistingSlots: !!options.existingSlots,
+      existingSlotsCount: options.existingSlots?.length || 0
+    });
+
     const uniqueKeys = new Set(files.map(f => f.key));
     if (uniqueKeys.size !== files.length) throw new Error("Les clés des fichiers doivent être uniques");
 
@@ -185,6 +197,12 @@ export function useUploadWorkflow<TSlot extends string>() {
     const filesToProcess = options.retryKeys && options.retryKeys.length > 0
       ? files.filter(f => options.retryKeys!.includes(f.key))
       : files;
+
+    console.log('[useUploadWorkflow] 📁 filesToProcess:', {
+      count: filesToProcess.length,
+      keys: filesToProcess.map(f => f.key),
+      sizes: filesToProcess.map(f => f.file.size)
+    });
 
     if (!options.retryKeys) {
       setFailedKeys([]);
@@ -202,12 +220,18 @@ export function useUploadWorkflow<TSlot extends string>() {
       f => !filesWithExistingSlots.some(existing => existing.key === f.key)
     );
 
+    console.log('[useUploadWorkflow] 📋 Répartition des slots:', {
+      filesWithExistingSlots: filesWithExistingSlots.map(f => f.key),
+      filesNeedingPresign: filesNeedingPresign.map(f => f.key)
+    });
+
     let allSlots: PresignedSlot<TSlot>[] = options.existingSlots || [];
 
     const totalBytes = filesToProcess.reduce((acc, f) => acc + f.file.size, 0);
     setStats(prev => ({ ...prev, totalFiles: filesToProcess.length, totalBytes, startTime: Date.now() }));
 
     if (filesToProcess.length === 0) {
+      console.log('[useUploadWorkflow] ⚠️ Aucun fichier à traiter');
       return { 
         successful: [], 
         failed: [], 
@@ -221,6 +245,7 @@ export function useUploadWorkflow<TSlot extends string>() {
     try {
       // 1. PRESIGN
       if (filesNeedingPresign.length > 0) {
+        console.log('[useUploadWorkflow] 🔑 Début PRESIGN pour:', filesNeedingPresign.map(f => f.key));
         setStep("presign");
         setDetail(`Préparation des accès pour ${filesNeedingPresign.length} fichier(s)...`);
         setProgress(prev => ({
@@ -235,25 +260,36 @@ export function useUploadWorkflow<TSlot extends string>() {
         
         try {
           const newSlots = await presignPromise;
+          console.log('[useUploadWorkflow] ✅ PRESIGN réussi, nouveaux slots:', newSlots.map(s => s.key));
           allSlots = [...allSlots, ...newSlots];
         } catch (presignError) {
+          console.error('[useUploadWorkflow] ❌ PRESIGN échoué:', presignError);
           filesNeedingPresign.forEach(file => {
             setFailedAtStage(prev => new Map(prev).set(file.key, 'presign'));
             setFailedKeys(prev => [...prev, file.key]);
           });
           throw presignError;
         }
+      } else {
+        console.log('[useUploadWorkflow] 🔑 Pas de PRESIGN nécessaire (tous les slots existent déjà)');
       }
+
+      console.log('[useUploadWorkflow] 📦 allSlots après presign:', allSlots.map(s => s.key));
 
       // 2. UPLOAD
       setStep("upload");
       
       const uploadTask = async (slot: PresignedSlot<TSlot>): Promise<PresignedSlot<TSlot> | { key: TSlot; error: Error }> => {
+        console.log(`[useUploadWorkflow] 📤 Début upload pour ${slot.key}`);
         const fileDesc = filesToProcess.find((f) => f.key === slot.key);
-        if (!fileDesc) return { key: slot.key, error: new Error("Fichier introuvable") };
+        if (!fileDesc) {
+          console.error(`[useUploadWorkflow] ❌ Fichier introuvable pour ${slot.key}`);
+          return { key: slot.key, error: new Error("Fichier introuvable") };
+        }
 
         try {
           await attemptWithRetry(slot.key, async (signal) => {
+            console.log(`[useUploadWorkflow] ⬆️ Uploading ${slot.key} (${fileDesc.file.size} bytes) to ${slot.uploadUrl.substring(0, 50)}...`);
             let uploadPromise = handlers.uploadToUrl(slot.uploadUrl, fileDesc.file, (p) => {
               setProgress(prev => ({ ...prev, [slot.key]: p }));
               uploadedBytesPerFileRef.current.set(slot.key, (p / 100) * fileDesc.file.size);
@@ -265,10 +301,12 @@ export function useUploadWorkflow<TSlot extends string>() {
               uploadPromise = withTimeout(uploadPromise, handlers.timeouts.upload, `Timeout upload ${String(slot.key)}`);
             }
             await uploadPromise;
+            console.log(`[useUploadWorkflow] ✅ Upload terminé pour ${slot.key}`);
           }, options.retryConfig);
 
           return slot;
         } catch (err) {
+          console.error(`[useUploadWorkflow] ❌ Upload échoué pour ${slot.key}:`, err);
           setFailedAtStage(prev => new Map(prev).set(slot.key, 'upload'));
           setFailedKeys(prev => [...prev, slot.key]);
           return { key: slot.key, error: err instanceof Error ? err : new Error("Erreur upload") };
@@ -289,6 +327,12 @@ export function useUploadWorkflow<TSlot extends string>() {
         return f && f.file.size >= LARGE_FILE_THRESHOLD;
       });
 
+      console.log('[useUploadWorkflow] 📊 Répartition des uploads:', {
+        smallSlots: smallSlots.map(s => s.key),
+        largeSlots: largeSlots.map(s => s.key),
+        parallel: options.parallel
+      });
+
       const smallResults = await Promise.all(smallSlots.map(uploadTask));
 
       const largeResults = [];
@@ -302,6 +346,12 @@ export function useUploadWorkflow<TSlot extends string>() {
       const successful = results.filter((r): r is PresignedSlot<TSlot> => 'finalUrl' in r);
       const failed = results.filter((r): r is { key: TSlot; error: Error } => 'error' in r);
 
+      console.log('[useUploadWorkflow] 📊 Résultats des uploads:', {
+        successful: successful.map(s => s.key),
+        failed: failed.map(f => f.key),
+        total: results.length
+      });
+
       const successfulKeysFromResults = successful.map(s => s.key);
       const failedKeysFromResults = failed.map(f => f.key);
 
@@ -313,23 +363,44 @@ export function useUploadWorkflow<TSlot extends string>() {
       });
 
       if (successful.length === 0 && failed.length > 0 && !signal.aborted) {
+        console.error('[useUploadWorkflow] ❌ Aucun fichier uploadé avec succès');
         throw new Error("Aucun fichier n'a pu être transféré.");
       }
 
       // 3. FINALIZE
+      console.log('[useUploadWorkflow] 🔍 Vérification condition FINALIZE:', {
+        successfulLength: successful.length,
+        signalAborted: signal.aborted,
+        willFinalize: successful.length > 0 && !signal.aborted
+      });
+
       if (successful.length > 0 && !signal.aborted) {
+        console.log('[useUploadWorkflow] 🎯 Début FINALIZE pour:', successful.map(s => s.key));
         setStep("finalize");
         setDetail("Finalisation de l'enregistrement...");
         
-        let finalizePromise = handlers.finalize(successful);
-        if (handlers.timeouts?.finalize) {
-          finalizePromise = withTimeout(finalizePromise, handlers.timeouts.finalize, "Timeout finalisation");
+        try {
+          let finalizePromise = handlers.finalize(successful);
+          if (handlers.timeouts?.finalize) {
+            finalizePromise = withTimeout(finalizePromise, handlers.timeouts.finalize, "Timeout finalisation");
+          }
+          await finalizePromise;
+          console.log('[useUploadWorkflow] ✅ FINALIZE réussi');
+        } catch (finalizeError) {
+          console.error('[useUploadWorkflow] ❌ FINALIZE échoué:', finalizeError);
+          throw finalizeError;
         }
-        await finalizePromise;
+      } else {
+        console.log('[useUploadWorkflow] ⚠️ FINALIZE NON DÉCLENCHÉ car:', {
+          reason: !successful.length ? 'successful est vide' : 'signal aborted',
+          successfulLength: successful.length,
+          signalAborted: signal.aborted
+        });
       }
 
       const endTime = Date.now();
       if (signal.aborted) {
+        console.log('[useUploadWorkflow] 🛑 Opération annulée');
         setStep("idle");
         return { 
           successful: [], 
@@ -341,7 +412,12 @@ export function useUploadWorkflow<TSlot extends string>() {
         };
       }
 
-      setStep(failed.length > 0 ? "partial_success" : "done");
+      const finalStep = failed.length > 0 ? "partial_success" : "done";
+      console.log(`[useUploadWorkflow] 🏁 Terminé avec statut: ${finalStep}`, {
+        successful: successful.length,
+        failed: failed.length
+      });
+      setStep(finalStep);
       
       return { 
         successful, 
@@ -353,6 +429,7 @@ export function useUploadWorkflow<TSlot extends string>() {
       };
 
     } catch (e) {
+      console.error('[useUploadWorkflow] 💥 Erreur fatale:', e);
       const endTime = Date.now();
       setStep("error");
       setDetail(e instanceof Error ? e.message : "Erreur fatale");

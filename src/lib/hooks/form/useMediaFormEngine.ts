@@ -74,6 +74,12 @@ export function useMediaFormEngine<
   ) => {
     const currentId = idRef.current;
     if (!currentId) throw new Error("ID d'entité manquant. L'étape 0 doit être validée.");
+    console.log('[MediaFormEngine] 📦 executeUploadSequence', {
+      filesCount: filesToProcess.length,
+      fileKeys: filesToProcess.map(f => f.key),
+      currentId,
+      options
+  });
 
     const result = await upload.runUpload(filesToProcess, {
       presign: (f) => cfg.presignUploads(currentId, f),
@@ -90,6 +96,12 @@ export function useMediaFormEngine<
           return !error.message.includes('400') && !error.message.includes('401') && !error.message.includes('403');
         }
       }
+    });
+     console.log('[MediaFormEngine] 📊 Résultat executeUploadSequence:', {
+      successful: result.successful.map(s => s.key),
+      failed: result.failed.map(f => f.key),
+      cancelled: result.cancelled,
+      step: upload.step
     });
 
     // Vérifier si le composant est toujours monté avant de mettre à jour l'état
@@ -120,12 +132,15 @@ export function useMediaFormEngine<
 
   const confirmSubmit = useCallback(async (step?: number) => {
     if (!pending) return;
+    console.log('[MediaFormEngine] 🎬 confirmSubmit', { step, hasPending: !!pending, entityId });
+
     setDialogStatus("loading");
 
     setErrorMessage(null);
     try {
       // CAS 1: Sauvegarde des métadonnées (STEP 0)
       if (step === 0) {
+        console.log('[MediaFormEngine] 📝 Étape 0: Sauvegarde des métadonnées');
         const payload = cfg.buildMetadata(pending);
         const newId = await cfg.submitMetadata(payload, entityId);
         updateEntityId(newId);
@@ -135,7 +150,11 @@ export function useMediaFormEngine<
 
       // CAS 2: Lancement de l'upload (STEP 1)
       const allFiles = cfg.collectFiles(pending);
+      console.log('[MediaFormEngine] 📤 Étape 1: Upload des fichiers');
+
       if (allFiles.length === 0) {
+        console.log('[MediaFormEngine] ⚠️ Aucun fichier à uploader');
+    
         setDialogStatus("success");
         setTimeout(() => {
           if (isMountedRef.current) resetEngine();
