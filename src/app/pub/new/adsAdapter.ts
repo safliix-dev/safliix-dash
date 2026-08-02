@@ -3,18 +3,18 @@
 import axios from "axios";
 import { uploadApi } from "@/lib/api/uploads";
 import { adsApi } from "@/lib/api/ads";
-import { AdsFormData, AdsSlot,AdsMetadataPayload } from "@/types/api/ads";
+import { AdsFormData, AdsSlot, AdsMetadataPayload } from "@/types/api/ads";
 import { MediaFormEngineConfig } from "@/lib/hooks/form/useMediaFormEngine";
 import { 
   UploadFinalizePayload, 
-  UploadFileDescriptor, 
+  UploadFileDescriptor,
 } from "@/types/upload";
 
 export interface AdsPresignedSlot {
   key: AdsSlot;
   uploadUrl: string;
   finalUrl: string;
-  mediaFileId:string;
+  mediaFileId: string;
 }
 
 export const AdsAdapter: MediaFormEngineConfig<
@@ -35,9 +35,10 @@ export const AdsAdapter: MediaFormEngineConfig<
   },
 
   collectFiles: (form): { key: AdsSlot; file: File }[] => {
+    // Aligné sur filmAdapter : utilisation des mêmes clés que le backend
     const slots: { key: AdsSlot; file: File | null | undefined }[] = [
-      { key: 'mainImage', file: form.mainImage },
-      { key: 'secondaryImage', file: form.secondaryImage },
+      { key: 'THUMBNAIL', file: form.mainImage },      // Changé: mainImage → THUMBNAIL
+      { key: 'POSTER', file: form.secondaryImage },    // Changé: secondaryImage → POSTER
     ];
     
     return slots.filter((s): s is { key: AdsSlot; file: File } => s.file instanceof File);
@@ -51,7 +52,6 @@ export const AdsAdapter: MediaFormEngineConfig<
     if (!res?.id) {
       throw new Error("Format de réponse invalide");
     }
-    console.log('pub id:'+id);
     
     return res.id;
   },
@@ -59,16 +59,12 @@ export const AdsAdapter: MediaFormEngineConfig<
   presignUploads: async (id, files): Promise<AdsPresignedSlot[]> => {
     if (files.length === 0) return [];
 
-    const attachmentTypeMap: Record<AdsSlot, string> = {
-      mainImage: "THUMBNAIL",
-      secondaryImage: "POSTER",
-    };
-
+    // Aligné sur filmAdapter : plus de mapping, on utilise directement la clé
     const descriptors: UploadFileDescriptor<AdsSlot>[] = files.map(f => ({
-      key: f.key,
+      key: f.key,  // 'THUMBNAIL' ou 'POSTER'
       name: f.file.name,
       type: f.file.type || "application/octet-stream",
-      attachmentType: attachmentTypeMap[f.key],
+      attachmentType: f.key,  // Directement 'THUMBNAIL' ou 'POSTER'
       file: f.file,
     }));
 
@@ -77,8 +73,8 @@ export const AdsAdapter: MediaFormEngineConfig<
     return slots.map(slot => ({
       uploadUrl: slot.uploadUrl,
       finalUrl: slot.finalUrl,
-      key: slot.key,
-      mediaFileId:slot.mediaFileId
+      key: slot.key as AdsSlot,
+      mediaFileId: slot.mediaFileId
     }));
   },
 
@@ -98,8 +94,8 @@ export const AdsAdapter: MediaFormEngineConfig<
 
   finalizeUploads: async (id, slots) => {
     const payload: UploadFinalizePayload = {
-      entityId:id,
-      mediaFileIds:slots.map(s => s.mediaFileId)
+      entityId: id,
+      mediaFileIds: slots.map(s => s.mediaFileId)
     };
 
     const res = await uploadApi.finalizeUploads("ad", id, payload);
@@ -110,6 +106,6 @@ export const AdsAdapter: MediaFormEngineConfig<
   },
 
   deleteEntity: async (_id) => {
-   throw new Error("La suppression d'une publicité n'est pas encore implémentée."+ _id); 
+    throw new Error("La suppression d'une publicité n'est pas encore implémentée." + _id); 
   },
 };

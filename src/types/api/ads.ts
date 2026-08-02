@@ -72,4 +72,4 @@ export interface AdsMetaOptions {
   lineOptions: string[];
 }
 
-export type AdsSlot = 'mainImage' | 'secondaryImage';
+export type AdsSlot = 'THUMBNAIL' | 'POSTER';  // Changé de 'mainImage' | 'secondaryImage'
