@@ -41,7 +41,7 @@ export function useSeasonForm({ seriesId, seasonId }: UseSeasonFormProps) {
     setLoadingNumber(true);
     if (seasonId) {
       seasonsApi.get(seasonId).then(season => {
-        setValue("numero", season.numero ?? 0);
+        setValue("numero", season.number ?? 0);
       }).catch(() => {}).finally(() => setLoadingNumber(false));
     } else {
       seriesApi.detail(seriesId).then(detail => {
