@@ -30,7 +30,11 @@ export function SeasonRow({ season, seriesId }: SeasonRowProps) {
         <div className="flex items-center gap-4">
           <div className="w-7 h-7 bg-blue-500 rounded-md" />
           <div className="space-y-1">
-            <h1 className="text-white font-bold">SAISON {season.numero}</h1>
+            <h1 className="text-white font-bold">SAISON {season.number}</h1>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-white/60">{season.title}</p>
+              <p className="text-xs text-white/40">{season.episodesCount} épisodes</p>
+            </div>
             <button
               type="button"
               className="btn btn-ghost btn-xs text-white/70"

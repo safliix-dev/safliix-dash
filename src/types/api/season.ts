@@ -22,8 +22,9 @@ export interface SeasonMetaOptions {
 
 export interface SeasonSummary {
   id:string;
-  numero: number | null;
+  number: number | null;
   title: string;
+  episodesCount: number;
   description: string;
   seriesId: string;
   poster?: string;
